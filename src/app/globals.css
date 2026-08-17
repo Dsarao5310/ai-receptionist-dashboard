@@ -1,0 +1,324 @@
+@import "tailwindcss";
+
+/* ============================================================
+   DESIGN TOKENS
+   Semantic variables that drive every surface in the app.
+   Never hard-code colors in components — reference these tokens.
+   ============================================================ */
+
+:root {
+  /* --- Radii --- */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+
+  /* --- Light theme (default) --- */
+  --color-page: #faf9f7;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-hover: #f5f4f1;
+  --color-surface-sunken: #f2f1ee;
+
+  --color-text-primary: #201d1a;
+  --color-text-secondary: #57534e;
+  --color-text-muted: #8a8580;
+  --color-text-on-accent: #ffffff;
+
+  --color-border: #e8e5e0;
+  --color-border-strong: #d9d5cf;
+
+  --color-focus-ring: var(--color-accent);
+
+  --color-success: #16794f;
+  --color-success-bg: #e7f5ee;
+  --color-warning: #92610a;
+  --color-warning-bg: #fbf1de;
+  --color-danger: #b6392c;
+  --color-danger-bg: #fbebe8;
+  --color-info: #2563a8;
+  --color-info-bg: #e9f1fb;
+
+  --shadow-sm: 0 1px 2px rgba(30, 25, 15, 0.05);
+  --shadow-md: 0 2px 8px rgba(30, 25, 15, 0.07), 0 1px 2px rgba(30, 25, 15, 0.05);
+  --shadow-lg: 0 8px 24px rgba(30, 25, 15, 0.10), 0 2px 6px rgba(30, 25, 15, 0.06);
+  --shadow-xl: 0 16px 40px rgba(30, 25, 15, 0.14), 0 4px 10px rgba(30, 25, 15, 0.08);
+
+  /* --- Spacing scale (density-adjustable) --- */
+  --space-density-unit: 4px;
+
+  /* --- Accent (default: indigo) — overridden by [data-accent] below --- */
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-active: #3730a3;
+  --color-accent-subtle: #eef0fd;
+  --color-accent-text: #4338ca;
+}
+
+/* ---------- Accent palettes ---------- */
+:root[data-accent="blue"] {
+  --color-accent: #2563a8;
+  --color-accent-hover: #1e5389;
+  --color-accent-active: #184472;
+  --color-accent-subtle: #e9f1fb;
+  --color-accent-text: #1e5389;
+}
+:root[data-accent="indigo"] {
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-active: #3730a3;
+  --color-accent-subtle: #eef0fd;
+  --color-accent-text: #4338ca;
+}
+:root[data-accent="emerald"] {
+  --color-accent: #16794f;
+  --color-accent-hover: #12613f;
+  --color-accent-active: #0f4f34;
+  --color-accent-subtle: #e7f5ee;
+  --color-accent-text: #12613f;
+}
+:root[data-accent="orange"] {
+  --color-accent: #c2590e;
+  --color-accent-hover: #a54a0a;
+  --color-accent-active: #883d09;
+  --color-accent-subtle: #fbede0;
+  --color-accent-text: #a54a0a;
+}
+:root[data-accent="rose"] {
+  --color-accent: #be3455;
+  --color-accent-hover: #a02a47;
+  --color-accent-active: #84233b;
+  --color-accent-subtle: #fbe9ee;
+  --color-accent-text: #a02a47;
+}
+:root[data-accent="neutral"] {
+  --color-accent: #44403c;
+  --color-accent-hover: #322f2b;
+  --color-accent-active: #24211e;
+  --color-accent-subtle: #f2f1ee;
+  --color-accent-text: #322f2b;
+}
+
+/* ---------- Density ---------- */
+:root[data-density="compact"] {
+  --space-density-unit: 3px;
+  --density-row-h: 36px;
+  --density-control-h: 32px;
+}
+:root[data-density="comfortable"] {
+  --space-density-unit: 4px;
+  --density-row-h: 44px;
+  --density-control-h: 38px;
+}
+:root[data-density="spacious"] {
+  --space-density-unit: 5px;
+  --density-row-h: 52px;
+  --density-control-h: 42px;
+}
+
+/* ---------- Dark theme: system preference ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-page: #17140f;
+    --color-surface: #201c17;
+    --color-surface-raised: #262119;
+    --color-surface-hover: #2c261d;
+    --color-surface-sunken: #14110d;
+
+    --color-text-primary: #f2ede4;
+    --color-text-secondary: #c7bfb2;
+    --color-text-muted: #8f867a;
+    --color-text-on-accent: #ffffff;
+
+    --color-border: #38322a;
+    --color-border-strong: #453e33;
+
+    --color-success: #4ade9c;
+    --color-success-bg: #163527;
+    --color-warning: #f0b64c;
+    --color-warning-bg: #3a2c11;
+    --color-danger: #f2887a;
+    --color-danger-bg: #3a1e19;
+    --color-info: #7db3ec;
+    --color-info-bg: #16283b;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
+    --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  :root:not([data-theme="light"])[data-accent="blue"] { --color-accent-subtle: #16283b; --color-accent-text: #8fc0f2; }
+  :root:not([data-theme="light"])[data-accent="indigo"] { --color-accent-subtle: #221f3d; --color-accent-text: #b3ace8; }
+  :root:not([data-theme="light"])[data-accent="emerald"] { --color-accent-subtle: #163527; --color-accent-text: #7cd6ab; }
+  :root:not([data-theme="light"])[data-accent="orange"] { --color-accent-subtle: #3a2712; --color-accent-text: #f0a768; }
+  :root:not([data-theme="light"])[data-accent="rose"] { --color-accent-subtle: #391822; --color-accent-text: #ef94ab; }
+  :root:not([data-theme="light"])[data-accent="neutral"] { --color-accent-subtle: #2c261d; --color-accent-text: #d3ccc0; }
+}
+
+/* ---------- Dark theme: explicit toggle wins either direction ---------- */
+:root[data-theme="dark"] {
+  --color-page: #17140f;
+  --color-surface: #201c17;
+  --color-surface-raised: #262119;
+  --color-surface-hover: #2c261d;
+  --color-surface-sunken: #14110d;
+
+  --color-text-primary: #f2ede4;
+  --color-text-secondary: #c7bfb2;
+  --color-text-muted: #8f867a;
+  --color-text-on-accent: #ffffff;
+
+  --color-border: #38322a;
+  --color-border-strong: #453e33;
+
+  --color-success: #4ade9c;
+  --color-success-bg: #163527;
+  --color-warning: #f0b64c;
+  --color-warning-bg: #3a2c11;
+  --color-danger: #f2887a;
+  --color-danger-bg: #3a1e19;
+  --color-info: #7db3ec;
+  --color-info-bg: #16283b;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+:root[data-theme="dark"][data-accent="blue"] { --color-accent-subtle: #16283b; --color-accent-text: #8fc0f2; }
+:root[data-theme="dark"][data-accent="indigo"] { --color-accent-subtle: #221f3d; --color-accent-text: #b3ace8; }
+:root[data-theme="dark"][data-accent="emerald"] { --color-accent-subtle: #163527; --color-accent-text: #7cd6ab; }
+:root[data-theme="dark"][data-accent="orange"] { --color-accent-subtle: #3a2712; --color-accent-text: #f0a768; }
+:root[data-theme="dark"][data-accent="rose"] { --color-accent-subtle: #391822; --color-accent-text: #ef94ab; }
+:root[data-theme="dark"][data-accent="neutral"] { --color-accent-subtle: #2c261d; --color-accent-text: #d3ccc0; }
+
+/* ---------- Tailwind theme bridge ---------- */
+@theme inline {
+  --color-page: var(--color-page);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-surface-sunken: var(--color-surface-sunken);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-on-accent: var(--color-text-on-accent);
+
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-active: var(--color-accent-active);
+  --color-accent-subtle: var(--color-accent-subtle);
+  --color-accent-text: var(--color-accent-text);
+
+  --color-success: var(--color-success);
+  --color-success-bg: var(--color-success-bg);
+  --color-warning: var(--color-warning);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-danger: var(--color-danger);
+  --color-danger-bg: var(--color-danger-bg);
+  --color-info: var(--color-info);
+  --color-info-bg: var(--color-info-bg);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: light;
+}
+html:has([data-theme="dark"]) {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+::selection {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Respect reduced motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbar aesthetics */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+/* ============================================================
+   ANIMATION KEYFRAMES (150-350ms, referenced via Tailwind's
+   arbitrary animate-[name_duration_ease] utility)
+   ============================================================ */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.96) translateY(2px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes pop-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.96) translateY(2px); }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slide-out-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes slide-in-bottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes slide-out-bottom {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
