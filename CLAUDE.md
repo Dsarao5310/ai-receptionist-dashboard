@@ -1512,12 +1512,19 @@ Supabase/persistence is **not** the current unfinished phase. It is done and pro
 - users, memberships, workspaces, customers, conversations, calls, appointments, business configuration, AI configuration, integrations, workflow mappings, and audit events are all database-backed
 - client stores are no longer authoritative for business-domain data (see §13)
 - `app` and `app_test` are column-identical
-- five Supabase hardening migrations were applied and remain represented in source control:
+- five Supabase hardening migrations were applied to production historically:
   - `20260818171718_security_and_fk_indexes`
   - `20260818172351_harden_sensitive_config_guard`
   - `20260818173100_enforce_tenant_relationship_integrity`
   - `20260818173437_index_tenant_foreign_keys`
   - `20260818173513_lock_down_private_schema_functions`
+- the numbered `0001`-`0009` migration chain did not reproduce that live
+  hardening on a clean project; idempotent source migration
+  `0010_production_hardening_parity.sql` now closes the gap, and
+  `0011_twilio_fk_indexes.sql` covers the two foreign keys introduced by `0009`
+- `0010` and `0011` have been applied and tested in the separate staging
+  project; they have not been applied to production in the staging-foundation
+  phase
 - Security Advisor has 0 findings; Performance Advisor has only unused-index INFO findings
 - composite tenant relationships were hardened; cross-workspace FK tampering was tested and rejected
 - private helper functions are locked down; `app_runtime` is the runtime database role
@@ -1538,6 +1545,13 @@ Persistence is complete (§50) and the dashboard ↔ n8n orchestration architect
 After Google Calendar live validation is fully complete and reported done, the likely next provider is **Twilio**, followed later by **Vapi**. Gmail, Pinecone, and real model-provider credentials remain further out still.
 
 Do not begin Twilio, Vapi, Gmail, Pinecone, or any other provider automatically — each still requires its own explicit user instruction, even once Google Calendar validation is complete.
+
+The isolated staging database is Supabase project `AI Receptionist Staging`
+(`jhkbsfsbnynysplvnwca`) in `ca-central-1`. It contains fixture data only, no
+real identity overrides, and no provider/OAuth secrets. Staging uses the same
+Vercel project through a dedicated `staging` branch with branch-scoped Preview
+variables; production variables, the production OAuth client, and production
+database credentials must never be reused there.
 
 ---
 
