@@ -6,10 +6,29 @@ import { TopBar } from "./TopBar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { CommandPalette } from "./CommandPalette";
 import { ALL_NAV_ITEMS } from "@/lib/nav-config";
+import type { AuthenticatedSession } from "@/types/identity";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+/** Routes that render without a session. Everything else requires one. */
+const PUBLIC_PATHS = ["/sign-in"];
+
+/**
+ * The application chrome, shown only to a signed-in session.
+ *
+ * Public pages (sign-in) render bare — they are full-page and should not be
+ * wrapped in navigation belonging to a workspace the visitor may not be in.
+ *
+ * An authenticated route reached *without* a session renders nothing at all.
+ * Middleware will already be redirecting to sign-in; rendering the page anyway
+ * would run components that legitimately assume a session and throw, which is a
+ * worse experience than a blank frame for one paint.
+ */
+export function AppShell({ session, children }: { session: AuthenticatedSession | null; children: React.ReactNode }) {
   const pathname = usePathname();
   const title = ALL_NAV_ITEMS.find((i) => i.href === pathname)?.label;
+
+  if (!session) {
+    return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ? <>{children}</> : null;
+  }
 
   return (
     <div className="flex min-h-screen">

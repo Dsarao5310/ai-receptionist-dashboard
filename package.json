@@ -6,7 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "deploy:check": "tsx scripts/validate-production-env.ts",
+    "deploy:build": "npm run deploy:check && next build",
+    "audit:client-secrets": "node scripts/audit-client-secrets.mjs",
+    "db:migrate": "node scripts/db.mjs migrate",
+    "db:status": "node scripts/db.mjs status",
+    "db:reset": "node scripts/db.mjs reset",
+    "db:seed": "tsx scripts/seed.ts",
+    "calendar:preflight": "node scripts/calendar-preflight.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
@@ -21,12 +33,16 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^13.1.0",
+    "jose": "^6.2.9",
     "lucide-react": "^1.31.0",
     "next": "16.3.1",
+    "next-auth": "^5.0.0-beta.32",
+    "nodemailer": "^8.0.11",
+    "postgres": "^3.4.9",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
-    "sonner": "^2.0.8",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
     "zustand": "^5.0.15"
   },
@@ -38,6 +54,11 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.12",
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }

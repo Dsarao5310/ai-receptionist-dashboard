@@ -70,9 +70,11 @@ export function DrawerClose({ className, ...props }: React.ComponentPropsWithout
   );
 }
 
-export function DrawerBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-5 overflow-y-auto flex-1", className)} {...props} />;
-}
+/** Forwards a ref so callers can control scrolling (e.g. following a conversation). */
+export const DrawerBody = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-5 overflow-y-auto flex-1", className)} {...props} />
+);
+DrawerBody.displayName = "DrawerBody";
 
 export function DrawerFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (

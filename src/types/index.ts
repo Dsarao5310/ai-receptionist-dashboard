@@ -1,3 +1,5 @@
+import type { PriceModel } from "./config";
+
 export type Channel = "voice" | "sms" | "email";
 
 export type Intent =
@@ -25,9 +27,14 @@ export type AppointmentStatus =
   | "cancelled"
   | "completed";
 
-export type AppointmentSource = "voice" | "sms" | "email" | "manual";
+export type AppointmentSyncState =
+  | "synced"
+  | "pending"
+  | "sync_required"
+  | "error"
+  | "external_change_detected";
 
-export type IntegrationStatus = "connected" | "needs_attention" | "not_connected";
+export type AppointmentSource = "voice" | "sms" | "email" | "manual";
 
 export type NotificationSeverity = "info" | "success" | "warning" | "critical";
 
@@ -81,67 +88,65 @@ export interface Call {
   actions: ActionStep[];
 }
 
+/**
+ * What was actually agreed with the customer when the appointment was booked.
+ *
+ * Held on the appointment itself and never rewritten when the service catalogue
+ * changes later: repricing a haircut must not silently restate what past
+ * customers were quoted, and deleting a service must not erase the history of
+ * appointments that used it. The live catalogue entry is reached through
+ * `serviceId` when current details are wanted.
+ */
+export interface ServiceSnapshot {
+  name: string;
+  priceModel: PriceModel;
+  price: number;
+  durationMin: number;
+}
+
 export interface Appointment {
   id: string;
   customerId: string;
   customerName: string;
   customerPhone: string;
   customerEmail: string;
-  service: string;
-  date: string; // ISO date (day)
-  time: string; // HH:mm
-  durationMin: number;
+  /** Stable reference into the service catalogue; null once that service is deleted. */
+  serviceId: string | null;
+  /** Historical record of the booking — see ServiceSnapshot. */
+  service: ServiceSnapshot;
+  /** Wall-clock day in the business timezone (YYYY-MM-DD). */
+  date: string;
+  /** Wall-clock time in the business timezone (HH:mm). */
+  time: string;
   source: AppointmentSource;
   status: AppointmentStatus;
+  /**
+   * Whether the external calendar agrees with this record.
+   *
+   * Null when no calendar is connected, which is the ordinary case for a
+   * business that has not set one up. Deliberately carries no calendar id and
+   * no event id - those are provider mappings for admin surfaces, and this
+   * object is serialised into every business user's page payload.
+   */
+  syncState?: AppointmentSyncState | null;
   notes: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Service {
-  id: string;
-  name: string;
-  price: number;
-  durationMin: number;
-  description: string;
-  active: boolean;
-}
+/**
+ * Business + AI configuration lives in ./config — one normalized model shared by
+ * the Business Profile and AI Receptionist pages. Re-exported here so `@/types`
+ * stays the single import point.
+ */
+export * from "./config";
 
-export interface BusinessHours {
-  day: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
-  isOpen: boolean;
-  open: string; // HH:mm
-  close: string; // HH:mm
-}
-
-export interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-}
-
-export interface BusinessProfile {
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  timezone: string;
-  hours: BusinessHours[];
-  services: Service[];
-  faqs: FAQ[];
-  policies: string;
-  parkingInfo: string;
-  specialInstructions: string;
-}
-
-export interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  status: IntegrationStatus;
-  lastSync: string | null;
-  icon: string;
-}
+/**
+ * Provider integrations, workspaces and the normalized error/event model live
+ * in ./integrations — the provider-level truth that every client-facing
+ * capability status is derived from.
+ */
+export * from "./integrations";
 
 export interface AppNotification {
   id: string;
@@ -166,7 +171,7 @@ export interface KPI {
 
 export interface DashboardStats {
   kpis: KPI[];
-  trend: { date: string; conversations: number; appointments: number }[];
+  trend: TrendPoint[];
 }
 
 export type DateRangeKey = "today" | "7d" | "30d" | "90d" | "custom";
@@ -177,24 +182,64 @@ export interface DateRange {
   end: Date;
 }
 
-export interface AIReceptionistSettings {
-  status: {
-    overall: "online" | "offline" | "degraded";
-    voice: "connected" | "disconnected";
-    sms: "connected" | "disconnected";
-    email: "connected" | "disconnected";
-  };
-  greeting: string;
-  voice: {
-    name: string;
-    speed: number;
-    tone: string;
-  };
-  personality: "friendly" | "professional" | "concise" | "energetic";
-  rules: {
-    defaultAppointmentDurationMin: number;
-    maxConcurrentAppointments: number;
-    minBookingNoticeHours: number;
-    advanceBookingWindowDays: number;
-  };
+export type ActivityEventType =
+  | "appointment_booked"
+  | "appointment_rescheduled"
+  | "appointment_cancelled"
+  | "call_completed"
+  | "question_answered"
+  | "conversation_escalated"
+  | "conversation_missed";
+
+export interface ActivityEvent {
+  id: string;
+  type: ActivityEventType;
+  timestamp: string; // ISO date, real (client-generated) anchor
+  customerId: string;
+  customerName: string;
+  channel: Channel;
+  summary: string;
+  detail: string;
+  conversationId?: string;
+  callId?: string;
+  appointmentId?: string;
 }
+
+export interface Dataset {
+  generatedAt: string;
+  customers: Customer[];
+  conversations: Conversation[];
+  calls: Call[];
+  appointments: Appointment[];
+  activityEvents: ActivityEvent[];
+}
+
+export interface ChannelBreakdownEntry {
+  channel: Channel;
+  count: number;
+  percent: number;
+}
+
+export interface IntentBreakdownEntry {
+  intent: Intent;
+  count: number;
+  percent: number;
+}
+
+export interface TrendPoint {
+  date: string;
+  label: string;
+  conversations: number;
+  appointments: number;
+}
+
+export type ConnectionState = "connected" | "needs_attention" | "disconnected";
+
+export interface ReceptionistStatus {
+  overall: "online" | "offline" | "degraded";
+  voice: ConnectionState;
+  sms: ConnectionState;
+  email: ConnectionState;
+  calendar: ConnectionState;
+}
+

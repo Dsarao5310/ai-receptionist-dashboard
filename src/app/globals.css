@@ -22,7 +22,9 @@
 
   --color-text-primary: #201d1a;
   --color-text-secondary: #57534e;
-  --color-text-muted: #8a8580;
+  /* Muted still reads as secondary, but clears WCAG AA (4.5:1) for small text
+     on every light surface — 4.9:1 on the darkest of them, surface-sunken. */
+  --color-text-muted: #6d6862;
   --color-text-on-accent: #ffffff;
 
   --color-border: #e8e5e0;
@@ -127,7 +129,8 @@
 
     --color-text-primary: #f2ede4;
     --color-text-secondary: #c7bfb2;
-    --color-text-muted: #8f867a;
+    /* AA (4.9:1) against the lightest dark surface, surface-hover. */
+    --color-text-muted: #9c9386;
     --color-text-on-accent: #ffffff;
 
     --color-border: #38322a;
@@ -166,7 +169,8 @@
 
   --color-text-primary: #f2ede4;
   --color-text-secondary: #c7bfb2;
-  --color-text-muted: #8f867a;
+  /* AA (4.9:1) against the lightest dark surface, surface-hover. */
+  --color-text-muted: #9c9386;
   --color-text-on-accent: #ffffff;
 
   --color-border: #38322a;

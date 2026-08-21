@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
-import { NAV_GROUPS } from "@/lib/nav-config";
+import { getNavGroups } from "@/lib/nav-config";
+import { useOptionalSession } from "@/lib/session-context";
 import { usePreferences } from "@/lib/store/preferences";
 import { Tooltip, TooltipProvider } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,13 @@ export function Sidebar() {
   const collapsed = usePreferences((s) => s.sidebarCollapsed);
   const toggleSidebar = usePreferences((s) => s.toggleSidebar);
   const pathname = usePathname();
+  // The Administration group is hidden for roles without it. Presentation only
+  // — see lib/permissions.ts.
+  const session = useOptionalSession();
+  const navGroups = getNavGroups({
+    platformRole: session?.user.platformRole ?? "member",
+    workspaceRole: session?.workspaceRole ?? null,
+  });
 
   return (
     <aside
@@ -32,7 +40,7 @@ export function Sidebar() {
 
       <TooltipProvider>
         <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-5">
-          {NAV_GROUPS.map((group) => (
+          {navGroups.map((group) => (
             <div key={group.label}>
               {!collapsed && (
                 <div className="px-2 mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">

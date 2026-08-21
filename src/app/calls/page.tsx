@@ -1,12 +1,26 @@
-import { Phone } from "lucide-react";
-import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
+import type { SearchParams } from "@/lib/filter-params";
+import { readParam } from "@/lib/filter-params";
+import type { ConversationOutcome, Intent } from "@/types";
+import CallsView from "./view";
 
-export default function CallsPage() {
+const INTENTS: (Intent | "all")[] = ["all", "booking", "reschedule", "cancel", "hours", "pricing", "services", "other"];
+const OUTCOMES: (ConversationOutcome | "all")[] = [
+  "all", "booked", "rescheduled", "cancelled", "answered", "escalated", "missed", "no_action",
+];
+
+export default async function CallsPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = new URLSearchParams(
+    Object.entries(await searchParams).flatMap(([k, v]) =>
+      v === undefined ? [] : [[k, Array.isArray(v) ? v[0] : v] as [string, string]]
+    )
+  );
+
   return (
-    <PagePlaceholder
-      icon={Phone}
-      title="Calls"
-      description="Call list with AI summaries, transcripts, recording placeholders, and action timelines is coming in the next build phase."
+    <CallsView
+      initial={{
+        intent: readParam(params, "intent", INTENTS, "all"),
+        outcome: readParam(params, "outcome", OUTCOMES, "all"),
+      }}
     />
   );
 }

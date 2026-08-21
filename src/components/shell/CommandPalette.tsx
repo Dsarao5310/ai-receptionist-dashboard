@@ -4,12 +4,20 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { Search } from "lucide-react";
-import { ALL_NAV_ITEMS } from "@/lib/nav-config";
+import { getNavGroups } from "@/lib/nav-config";
+import { useOptionalSession } from "@/lib/session-context";
 import { cn } from "@/lib/utils";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  // Same role filter as the sidebar, so the palette cannot become a back door
+  // into admin routes for a role that has no business seeing them listed.
+  const session = useOptionalSession();
+  const navItems = getNavGroups({
+    platformRole: session?.user.platformRole ?? "member",
+    workspaceRole: session?.workspaceRole ?? null,
+  }).flatMap((g) => g.items);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -52,7 +60,7 @@ export function CommandPalette() {
       <Command.List className="max-h-80 overflow-y-auto p-2">
         <Command.Empty className="py-8 text-center text-sm text-text-muted">No results found.</Command.Empty>
         <Command.Group heading="Navigate" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-text-muted">
-          {ALL_NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <Command.Item
               key={item.href}
               value={item.label}

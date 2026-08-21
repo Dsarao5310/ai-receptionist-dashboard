@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
-import { MOBILE_NAV_ITEMS } from "@/lib/nav-config";
+import { getMobileNavItems } from "@/lib/nav-config";
+import { useOptionalSession } from "@/lib/session-context";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { MoreMenuSheet } from "./MoreMenuSheet";
@@ -11,12 +12,17 @@ import { MoreMenuSheet } from "./MoreMenuSheet";
 export function MobileBottomNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const session = useOptionalSession();
+  const items = getMobileNavItems({
+    platformRole: session?.user.platformRole ?? "member",
+    workspaceRole: session?.workspaceRole ?? null,
+  });
 
   return (
     <>
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="grid grid-cols-5 h-14">
-          {MOBILE_NAV_ITEMS.map((item) => {
+          {items.map((item) => {
             const active = pathname === item.href;
             return (
               <Link

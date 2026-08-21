@@ -1,12 +1,14 @@
-import { Building2 } from "lucide-react";
-import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
+import type { SearchParams } from "@/lib/filter-params";
+import { readParam } from "@/lib/filter-params";
+import BusinessProfileView, { type ProfileTab, PROFILE_TABS } from "./view";
 
-export default function BusinessProfilePage() {
-  return (
-    <PagePlaceholder
-      icon={Building2}
-      title="Business Profile"
-      description="Business details, hours editor, services, and knowledge base sections are coming in a later build phase."
-    />
+/** The AI Receptionist page links straight to a section, e.g. "?tab=knowledge". */
+export default async function BusinessProfilePage({ searchParams }: { searchParams: SearchParams }) {
+  const params = new URLSearchParams(
+    Object.entries(await searchParams).flatMap(([k, v]) =>
+      v === undefined ? [] : [[k, Array.isArray(v) ? v[0] : v] as [string, string]]
+    )
   );
+
+  return <BusinessProfileView initialTab={readParam<ProfileTab>(params, "tab", PROFILE_TABS, "details")} />;
 }

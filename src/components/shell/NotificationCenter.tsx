@@ -3,6 +3,7 @@
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Bell, CalendarCheck, CalendarX, PhoneMissed, Plug, AlertCircle, Info } from "lucide-react";
 import { useNotifications } from "@/lib/store/notifications";
+import { useBusinessFormat } from "@/lib/business-format";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
 import type { AppNotification, NotificationSeverity } from "@/types";
@@ -26,6 +27,9 @@ export function NotificationCenter() {
   const markRead = useNotifications((s) => s.markRead);
   const markAllRead = useNotifications((s) => s.markAllRead);
   const unreadCount = notifications.filter((n) => !n.read).length;
+  // The stored value is an instant; "26 min ago" is produced here, against the
+  // business clock, rather than being baked in when the row was written.
+  const fmt = useBusinessFormat();
 
   return (
     <PopoverPrimitive.Root>
@@ -83,7 +87,7 @@ export function NotificationCenter() {
                         {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
                       </span>
                       <span className="mt-0.5 block text-xs text-text-muted line-clamp-2">{n.description}</span>
-                      <span className="mt-1 block text-[11px] text-text-muted">{n.timestamp}</span>
+                      <span className="mt-1 block text-[11px] text-text-muted">{fmt.relative(n.timestamp)}</span>
                     </span>
                   </button>
                 );

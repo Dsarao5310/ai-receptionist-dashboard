@@ -3,13 +3,21 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ALL_NAV_ITEMS, MOBILE_NAV_ITEMS } from "@/lib/nav-config";
+import { getMobileNavItems, getNavGroups } from "@/lib/nav-config";
+import { useOptionalSession } from "@/lib/session-context";
 import { cn } from "@/lib/utils";
 
 export function MoreMenuSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const pathname = usePathname();
-  const mobileHrefs = new Set(MOBILE_NAV_ITEMS.map((i) => i.href));
-  const rest = ALL_NAV_ITEMS.filter((i) => !mobileHrefs.has(i.href));
+  const session = useOptionalSession();
+  const context = {
+    platformRole: session?.user.platformRole ?? ("member" as const),
+    workspaceRole: session?.workspaceRole ?? null,
+  };
+  const mobileHrefs = new Set(getMobileNavItems(context).map((i) => i.href));
+  const rest = getNavGroups(context)
+    .flatMap((g) => g.items)
+    .filter((i) => !mobileHrefs.has(i.href));
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>

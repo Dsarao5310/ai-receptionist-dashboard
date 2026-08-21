@@ -1,12 +1,13 @@
-import { Plug } from "lucide-react";
-import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
+import { redirect } from "next/navigation";
 
-export default function IntegrationsPage() {
-  return (
-    <PagePlaceholder
-      icon={Plug}
-      title="Integrations"
-      description="Connection cards for Vapi, Google Calendar, Gmail, Twilio, Pinecone, and n8n are coming in a later build phase."
-    />
-  );
+/**
+ * The provider-facing page moved under /admin when the admin and client
+ * surfaces were separated. Kept as a redirect so older links and bookmarks
+ * still land somewhere sensible.
+ *
+ * Business users want /connections, which shows the same state without naming
+ * a provider.
+ */
+export default function IntegrationsRedirect() {
+  redirect("/admin/integrations");
 }
