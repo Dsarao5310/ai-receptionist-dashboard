@@ -30,7 +30,12 @@ Why this model:
 - Production branch: `master`.
 - Production origin: `https://ai-receptionist-dashboard-jade.vercel.app`.
 - Vercel Preview branch tracking: enabled for all non-production branches.
-- Preview environment variables: none.
+- Staging origin:
+  `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
+- Latest verified Preview deployment: `dpl_4u5ZV3bevHqAJnGvky6SD6DRKmGY`,
+  commit `8c0285f`, `READY`.
+- Preview variables: the eight required values are scoped to branch `staging`
+  only. Other Preview branches receive none of them.
 - Production-only variables: `AUTH_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`,
   `AUTH_GOOGLE_SECRET`, `DATABASE_URL`, `N8N_MODE`,
   `GOOGLE_CALENDAR_MODE`, and `TWILIO_MODE`.
@@ -39,8 +44,8 @@ Why this model:
 - Supabase staging project: `AI Receptionist Staging`
   (`jhkbsfsbnynysplvnwca`), healthy in `ca-central-1`.
 - Staging database: migrations `0001` through `0011` applied, guarded fixture
-  seed verified, no real identity overrides, no provider/OAuth secrets, and one
-  staging-only audit marker.
+  seed verified, one explicitly authorized real owner identity, no
+  provider/OAuth secrets, and staging-only environment/identity audit markers.
 - Staging Security Advisor: 0 findings. Performance Advisor reports only 56
   expected unused-index INFO findings on the fresh fixture database.
 
@@ -123,6 +128,9 @@ AUTH_URL=https://<stable-staging-branch-alias>
 
 Do not use the random deployment URL.
 
+Completed. Branch `staging` points to commit `8c0285f`, and the stable alias is
+`https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
+
 ### 5. Create the staging Google OAuth client
 
 In Google Cloud create an **OAuth 2.0 Client ID** with application type
@@ -144,6 +152,10 @@ Store the client ID and secret only as `staging`-branch Preview variables named
 `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`. Never paste the secret into source
 control or documentation.
 
+Completed. A separate staging Web application client uses the stable branch
+origin and its exact `/api/auth/callback/google` redirect. The production OAuth
+client was not reused or changed.
+
 ### 6. Add branch-scoped Preview variables
 
 The `staging` branch receives only:
@@ -162,6 +174,12 @@ TWILIO_MODE=disabled
 `DATABASE_URL` must be the staging `app_runtime` transaction-pooler connection.
 Do not add `MIGRATION_DATABASE_URL` or any production/provider secret.
 
+Completed. All eight variables are Sensitive, Preview-only, and branch-scoped
+to `staging`. The three provider modes are explicitly `disabled`. The runtime
+database password and `AUTH_SECRET` were rotated before the successful deploy
+after an unsaved form preview exposed their initial generated values; the
+discarded values were never deployed.
+
 ### 7. Certify before providers
 
 After a successful Preview deployment, complete the Auth/RBAC browser matrix,
@@ -169,6 +187,25 @@ prove the staging marker is absent from production, prove a harmless known
 production-only record is absent from staging, rerun the client-secret audit,
 and re-check production owner sign-in. Only then may live n8n certification be
 considered.
+
+Current certification:
+
+- the production configuration gate passed without printing secrets;
+- Next.js 16.3.1 compiled, TypeScript passed, and deployment
+  `dpl_4u5ZV3bevHqAJnGvky6SD6DRKmGY` is `READY`;
+- the signed-out `/sign-in` page returns `200` over HTTPS with HSTS and
+  private/no-store caching;
+- first Google callback created an ordinary active member with no workspace
+  access and failed closed with `AccessDenied`;
+- after explicit authorization, that existing identity received one audited
+  active `owner` membership for Coastal Bloom Salon;
+- Google OAuth then completed, the account menu showed
+  `Coastal Bloom Salon · Owner`, business settings were allowed, and
+  platform-only settings returned `Access denied`;
+- sign-out returned to `/sign-in`, and a protected analytics deep link retained
+  only the safe same-origin continuation;
+- manager, staff, platform-operator, and second-tenant real identity checks are
+  not provisioned. Their tenant/role coverage remains automated only.
 
 ## Stop conditions
 

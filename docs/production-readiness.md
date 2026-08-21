@@ -81,12 +81,13 @@ fail-closed deployable path; it does not certify provider functionality.
 
 - Production safety boundary: complete for environment scoping. Preview no longer receives any production Auth.js secret, Google OAuth credential, database URL, or provider-mode value.
 - Selected model: the existing Vercel project with a dedicated `staging` branch, stable branch alias, and branch-scoped Preview variables, backed by a separate Supabase staging project. A second Vercel project and paid custom environment are not justified.
-- Live account audit: Preview branch tracking is enabled, Preview has no environment variables or deployments, custom Vercel environments require Pro, the Supabase organization has one production project and no branches, and the current quotes are $0/month for a separate project versus $0.01344/hour for a branch.
-- Destructive-certification database: ready and isolated. The explicitly approved separate Supabase project `jhkbsfsbnynysplvnwca` is healthy in `ca-central-1`; `app_migrator` and `app_runtime` are separated, migrations `0001` through `0011` are applied, the guarded seed passed with two fixture workspaces and no real identity overrides, Security Advisor has 0 findings, and the fresh-project Performance Advisor has only 56 unused-index INFO notices.
+- Live staging: branch `staging` uses stable origin `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`; deployment `dpl_4u5ZV3bevHqAJnGvky6SD6DRKmGY` built commit `8c0285f` and is `READY`. All eight required variables are Sensitive, Preview-only, and scoped to `staging`; no production credential was reused.
+- Destructive-certification database: ready and isolated. The explicitly approved separate Supabase project `jhkbsfsbnynysplvnwca` is healthy in `ca-central-1`; `app_migrator` and `app_runtime` are separated, migrations `0001` through `0011` are applied, the guarded seed passed with two fixture workspaces, Security Advisor has 0 findings, and the fresh-project Performance Advisor has only 56 unused-index INFO notices.
 - Reproducibility defect found and fixed: numbered migrations `0001` through `0009` initially lacked hardening present in production. Idempotent `0010_production_hardening_parity.sql` restores the composite tenant FKs, indexes, recursive sensitive-config guard, pinned function search paths, and function ACLs; `0011_twilio_fk_indexes.sql` covers the two later Twilio FKs. Staging and its disposable `app_test` schema received both; production was not modified.
-- Isolation proof: staging contains exactly one staging marker and no non-fixture users, provider secrets, or OAuth states; production contains no staging marker and retains its known non-fixture user. No production data was copied into staging.
+- Isolation proof: staging contains its staging marker, one explicitly authorized real owner identity, and no provider secrets or provider OAuth states; production contains no staging marker and retains its independent user. No production data was copied into staging.
 - Focused staging database suite: 5 files and 66 tests passed, covering Auth.js identity resolution, role authorization, bidirectional tenant tampering, runtime limits, production configuration, and safe redirects.
-- Hosted staging remains incomplete: create/push the `staging` branch, record its stable Vercel branch alias, create a separate Google OAuth Web client, add branch-scoped Preview variables with a unique `AUTH_SECRET`, authorize real role/tenant identities, and run the HTTPS matrix.
+- Hosted staging owner path is verified: an unknown Google identity was first recorded as an ordinary member and denied, then received an audited Coastal Bloom Salon owner membership only after explicit authorization. OAuth, session persistence, business settings, owner/operator separation, sign-out, and safe continuation passed over the stable staging HTTPS origin.
+- Hosted staging remains incomplete only for the broader matrix: no real manager, staff, platform-operator, or second-tenant identity is provisioned. Those cases remain automated only and must not be reported as live HTTPS verified.
 - Provider modes must remain explicitly `disabled` in staging until each provider's own certification phase begins.
 - Do not reuse the production OAuth client or production database for Preview/staging, and do not claim staging isolation merely because Preview now fails closed.
 - Repository preparation: `docs/staging-foundation.md` records the exact sequence, and `npm run db:seed:staging` refuses the known production project, requires explicit project-ref confirmation, verifies runtime/migration role separation, supports authorized real identity overrides, creates a staging-only marker, and verifies that provider/OAuth secret tables remain empty.
@@ -98,6 +99,13 @@ The OAuth 2.0 web client used by `AUTH_GOOGLE_ID` now accepts this exact Authori
 `https://ai-receptionist-dashboard-jade.vercel.app/api/auth/callback/google`
 
 Do not add deployment-specific preview callbacks to this production client. A future staging environment needs its own origin, callback, OAuth client, secrets, database, and provisioned test identities.
+
+The separate staging OAuth client accepts exactly:
+
+`https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app/api/auth/callback/google`
+
+It is stored only as branch-scoped Preview configuration and was verified by a
+real authorization-code callback. It must not be reused for production.
 
 ## Security changes in this audit
 

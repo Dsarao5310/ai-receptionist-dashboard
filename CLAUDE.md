@@ -1547,11 +1547,15 @@ After Google Calendar live validation is fully complete and reported done, the l
 Do not begin Twilio, Vapi, Gmail, Pinecone, or any other provider automatically — each still requires its own explicit user instruction, even once Google Calendar validation is complete.
 
 The isolated staging database is Supabase project `AI Receptionist Staging`
-(`jhkbsfsbnynysplvnwca`) in `ca-central-1`. It contains fixture data only, no
-real identity overrides, and no provider/OAuth secrets. Staging uses the same
-Vercel project through a dedicated `staging` branch with branch-scoped Preview
-variables; production variables, the production OAuth client, and production
-database credentials must never be reused there.
+(`jhkbsfsbnynysplvnwca`) in `ca-central-1`. It contains fixture business data,
+one explicitly authorized real Coastal Bloom Salon owner identity, and no
+provider/OAuth secrets. Staging uses the same Vercel project through a dedicated
+`staging` branch, stable branch alias, separate Google OAuth client, and
+branch-scoped Preview variables. The owner OAuth, business access,
+owner/operator separation, sign-out, and safe continuation paths are live
+verified; manager, staff, platform-operator, and second-tenant real identities
+are not provisioned. Production variables, OAuth client, and database
+credentials must never be reused there.
 
 ---
 
