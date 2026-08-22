@@ -1002,6 +1002,7 @@ Confirmed established properties:
 - there is no generic arbitrary webhook/workflow execution surface exposed anywhere
 - inbound n8n events use authenticated, signed ingestion (HMAC over the raw body + timestamp, replay-windowed)
 - the inbound payload's own claimed workspace is never trusted — the workspace is resolved through the trusted `workflow_mappings.workflow_ref` mapping, not from a field in the body
+- an `inactive` workflow mapping has no inbound webhook authority; disabling the mapping immediately makes its workflow reference unrecognised, while a non-inactive mapping may remain callable during a recoverable provider-health error
 - idempotency is enforced through durable database constraints/operation records (`integration_operations`), not in-memory state
 - Supabase remains the dashboard's source of truth; n8n is orchestration, not page-data storage
 - reconciliation / `sync_required` exists for the case where the external system succeeds but the local database write fails
@@ -1540,21 +1541,30 @@ Do not re-open persistence work, and do not describe it as pending or as "the cu
 
 Persistence is complete (§50) and the dashboard ↔ n8n orchestration architecture is already implemented (§29) — neither is the current phase, and neither should be described as upcoming or unfinished.
 
-**The current active phase is: finish Google Calendar real-provider validation and reconciliation hardening** (§54, §55) — including the fix for the cancelled-event-tombstone defect described in §44 and §55.
+Google Calendar real-provider validation and reconciliation hardening are complete
+(§54, §55). The current completed local phase is **n8n staging-certification
+readiness**: the read-only preflight, configuration and inbound-authority
+hardening, focused tests, non-deploying CI, and certification/operations runbooks
+exist locally. Real n8n certification remains externally blocked until a
+staging-only n8n instance, two independent signing secrets, and activated
+staging workflow mappings are supplied.
 
-After Google Calendar live validation is fully complete and reported done, the likely next provider is **Twilio**, followed later by **Vapi**. Gmail, Pinecone, and real model-provider credentials remain further out still.
+The next approved operational phase is to provision and live-certify n8n in the
+isolated staging environment. Twilio remains simulator-verified and externally
+blocked on an SMS-capable number; Vapi, Gmail, Pinecone, and real model-provider
+credentials remain later explicit phases.
 
 Do not begin Twilio, Vapi, Gmail, Pinecone, or any other provider automatically — each still requires its own explicit user instruction, even once Google Calendar validation is complete.
 
 The isolated staging database is Supabase project `AI Receptionist Staging`
 (`jhkbsfsbnynysplvnwca`) in `ca-central-1`. It contains fixture business data,
-one explicitly authorized real Coastal Bloom Salon owner identity, and no
-provider/OAuth secrets. Staging uses the same Vercel project through a dedicated
+five explicitly authorized real role-test identities, and no provider/OAuth
+secrets. Staging uses the same Vercel project through a dedicated
 `staging` branch, stable branch alias, separate Google OAuth client, and
 branch-scoped Preview variables. The owner OAuth, business access,
-owner/operator separation, sign-out, and safe continuation paths are live
-verified; manager, staff, platform-operator, and second-tenant real identities
-are not provisioned. Production variables, OAuth client, and database
+owner/operator separation, sign-out, safe continuation, Coastal owner/manager/
+staff role gates, Harbour owner isolation, and platform-operator workspace
+switching are live verified. Production variables, OAuth client, and database
 credentials must never be reused there.
 
 ---

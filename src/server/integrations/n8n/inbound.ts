@@ -82,7 +82,8 @@ async function resolveWorkspaceFromWorkflowRef(
   sql: Sql = getDb()
 ): Promise<{ workspaceId: string; mappingId: string } | null> {
   const [row] = await sql`
-    select workspace_id, id from workflow_mappings where workflow_ref = ${workflowRef}`;
+    select workspace_id, id from workflow_mappings
+    where workflow_ref = ${workflowRef} and status <> 'inactive'`;
   return row ? { workspaceId: String(row.workspace_id), mappingId: String(row.id) } : null;
 }
 

@@ -60,4 +60,54 @@ describe("production configuration", () => {
     expect(problems).toContain("AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET must be configured together");
     expect(problems).toContain("production requires Google sign-in via AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET");
   });
+
+  it("requires strong independent n8n secrets and a positive timeout", () => {
+    const problems = productionConfigurationProblems(
+      valid({
+        N8N_MODE: "live",
+        N8N_BASE_URL: "https://automation.example.com",
+        N8N_REQUEST_SIGNING_SECRET: "same-short-secret",
+        N8N_WEBHOOK_SIGNING_SECRET: "same-short-secret",
+        N8N_TIMEOUT_MS: "0",
+      })
+    );
+    expect(problems).toContain("N8N_REQUEST_SIGNING_SECRET must contain at least 32 characters");
+    expect(problems).toContain("N8N_WEBHOOK_SIGNING_SECRET must contain at least 32 characters");
+    expect(problems).toContain("n8n inbound and outbound signing secrets must be different");
+    expect(problems).toContain("N8N_TIMEOUT_MS must be a positive integer");
+  });
+
+  it("rejects production and staging database cross-wiring", () => {
+    const previewProblems = productionConfigurationProblems(
+      valid({
+        VERCEL_ENV: "preview",
+        DATABASE_URL: "postgresql://app_runtime.rkzwubwogtezqbuhieuo:x@pooler.example.com:6543/postgres",
+      })
+    );
+    expect(previewProblems).toContain("Preview deployments must not use the production Supabase project");
+
+    const productionProblems = productionConfigurationProblems(
+      valid({
+        VERCEL_ENV: "production",
+        DATABASE_URL: "postgresql://app_runtime.jhkbsfsbnynysplvnwca:x@pooler.example.com:6543/postgres",
+      })
+    );
+    expect(productionProblems).toContain("Production deployments must not use the staging Supabase project");
+  });
+
+  it("allows live providers only on the dedicated staging Preview branch", () => {
+    const common = {
+      VERCEL_ENV: "preview",
+      N8N_MODE: "live",
+      N8N_BASE_URL: "https://automation.example.com",
+      N8N_REQUEST_SIGNING_SECRET: "request-signing-secret-with-32-characters",
+      N8N_WEBHOOK_SIGNING_SECRET: "webhook-signing-secret-with-32-characters",
+    };
+    expect(
+      productionConfigurationProblems(valid({ ...common, VERCEL_GIT_COMMIT_REF: "feature/demo" }))
+    ).toContain("live providers in Preview are restricted to the staging branch");
+    expect(
+      productionConfigurationProblems(valid({ ...common, VERCEL_GIT_COMMIT_REF: "staging" }))
+    ).not.toContain("live providers in Preview are restricted to the staging branch");
+  });
 });

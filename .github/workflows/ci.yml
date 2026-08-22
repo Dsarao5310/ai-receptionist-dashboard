@@ -1,0 +1,47 @@
+name: Repository validation
+
+on:
+  push:
+    branches: [master, staging]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.5
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+      # Database-backed suites deliberately skip without the two staging DB
+      # credentials. They remain a protected release gate, never a PR secret.
+      - name: Unit and source-boundary tests
+        run: npm test
+
+      - name: Fail-closed production build and client-secret audit
+        run: npm run deploy:build && npm run audit:client-secrets
+        env:
+          AUTH_SECRET: ci-only-auth-secret-with-more-than-32-characters
+          AUTH_URL: https://ci.example.com
+          AUTH_GOOGLE_ID: ci-google-client-id
+          AUTH_GOOGLE_SECRET: ci-only-google-secret
+          DATABASE_URL: postgresql://app_runtime.ciproject:ci-password@db.invalid:6543/postgres
+          N8N_MODE: disabled
+          GOOGLE_CALENDAR_MODE: disabled
+          TWILIO_MODE: disabled

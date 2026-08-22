@@ -1,6 +1,6 @@
 # Isolated staging foundation
 
-Status date: 2026-08-21 (America/Vancouver)
+Status date: 2026-08-22 (America/Vancouver)
 
 ## Selected model
 
@@ -32,8 +32,8 @@ Why this model:
 - Vercel Preview branch tracking: enabled for all non-production branches.
 - Staging origin:
   `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
-- Latest verified Preview deployment: `dpl_4u5ZV3bevHqAJnGvky6SD6DRKmGY`,
-  commit `8c0285f`, `READY`.
+- Latest verified Preview deployment: `dpl_2YM2FkEQ3MPEjv5PeEqzhpfDME3E`,
+  commit `96a124d`, `READY`.
 - Preview variables: the eight required values are scoped to branch `staging`
   only. Other Preview branches receive none of them.
 - Production-only variables: `AUTH_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`,
@@ -44,7 +44,7 @@ Why this model:
 - Supabase staging project: `AI Receptionist Staging`
   (`jhkbsfsbnynysplvnwca`), healthy in `ca-central-1`.
 - Staging database: migrations `0001` through `0011` applied, guarded fixture
-  seed verified, one explicitly authorized real owner identity, no
+  seed verified, five explicitly authorized real role-test identities, no
   provider/OAuth secrets, and staging-only environment/identity audit markers.
 - Staging Security Advisor: 0 findings. Performance Advisor reports only 56
   expected unused-index INFO findings on the fresh fixture database.
@@ -128,7 +128,7 @@ AUTH_URL=https://<stable-staging-branch-alias>
 
 Do not use the random deployment URL.
 
-Completed. Branch `staging` points to commit `8c0285f`, and the stable alias is
+Completed. Branch `staging` points to commit `96a124d`, and the stable alias is
 `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
 
 ### 5. Create the staging Google OAuth client
@@ -192,7 +192,7 @@ Current certification:
 
 - the production configuration gate passed without printing secrets;
 - Next.js 16.3.1 compiled, TypeScript passed, and deployment
-  `dpl_4u5ZV3bevHqAJnGvky6SD6DRKmGY` is `READY`;
+  `dpl_2YM2FkEQ3MPEjv5PeEqzhpfDME3E` is `READY`;
 - the signed-out `/sign-in` page returns `200` over HTTPS with HSTS and
   private/no-store caching;
 - first Google callback created an ordinary active member with no workspace
@@ -204,8 +204,15 @@ Current certification:
   platform-only settings returned `Access denied`;
 - sign-out returned to `/sign-in`, and a protected analytics deep link retained
   only the safe same-origin continuation;
-- manager, staff, platform-operator, and second-tenant real identity checks are
-  not provisioned. Their tenant/role coverage remains automated only.
+- Coastal Bloom owner, manager, and staff, Harbour Dental owner, and the
+  platform operator all completed real Google OAuth over the stable HTTPS
+  staging origin;
+- role gates passed for business settings, analytics, connections,
+  appointments, customers, and platform-only administration;
+- the operator could switch between Coastal Bloom Salon and Harbour Dental,
+  while ordinary users saw only their authorized workspace;
+- cross-workspace isolation, Google account selection, sign-out, and safe
+  continuation passed, with no staging Vercel runtime errors during the matrix.
 
 ## Stop conditions
 
