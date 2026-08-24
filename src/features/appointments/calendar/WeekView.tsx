@@ -23,7 +23,10 @@ export function WeekView({
     byDay.set(a.date, list);
   }
   const todayKey = isoDay(today);
-  const hasAny = appointments.length > 0;
+  // Whether *this week* has anything, not whether the filtered set does.
+  // Testing `appointments.length` meant navigating to an empty week rendered
+  // seven columns each saying "No appointments" instead of the empty state.
+  const hasAny = days.some((day) => (byDay.get(isoDay(day))?.length ?? 0) > 0);
 
   if (!hasAny) {
     return <EmptyState title="No appointments this week" description="Try a different week or clear a filter." />;

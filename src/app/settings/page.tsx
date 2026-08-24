@@ -23,7 +23,7 @@ export default function SettingsPage() {
   const { can } = usePermissions();
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-text-primary">Settings</h1>

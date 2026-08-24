@@ -45,7 +45,7 @@ export default function ConversationsView({ initial }: { initial: { channel: Cha
 
   if (error) {
     return (
-      <div className="p-4 md:p-6">
+      <div>
         <Card>
           <ErrorState title="Couldn't load conversations" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
@@ -54,7 +54,7 @@ export default function ConversationsView({ initial }: { initial: { channel: Cha
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <ConversationsFilters
         search={search}
         onSearch={setSearch}

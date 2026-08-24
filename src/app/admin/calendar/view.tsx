@@ -128,7 +128,7 @@ export function CalendarAdminView(props: CalendarAdminProps) {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold text-text-primary">Calendar</h1>
         <p className="text-sm text-text-secondary">
@@ -270,8 +270,8 @@ export function CalendarAdminView(props: CalendarAdminProps) {
               />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <div>
+              <Table minWidth="min-w-[880px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Customer</TableHead>

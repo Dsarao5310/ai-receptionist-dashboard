@@ -50,7 +50,7 @@ export function AccountSettings() {
           <div>
             <p className="text-sm text-text-primary">{draft.name || "Unnamed"}</p>
             <p className="text-xs text-text-muted">
-              Profile photos arrive with accounts. Initials are used until then.
+              Initials are shown here. Uploading a photo is not available yet.
             </p>
           </div>
         </div>

@@ -60,7 +60,7 @@ function AdminSettingsView() {
 
   if (!hydrated) {
     return (
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-7 w-56" />
         <Skeleton className="h-40 w-full" />
         <Skeleton className="h-32 w-full" />
@@ -82,7 +82,7 @@ function AdminSettingsView() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold text-text-primary">Workspace administration</h1>
         <p className="text-sm text-text-secondary">

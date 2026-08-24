@@ -35,7 +35,7 @@ export default function AIReceptionistPage() {
   const completeness = useMemo(() => getSetupCompleteness(config), [config]);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-text-primary">AI Receptionist</h2>

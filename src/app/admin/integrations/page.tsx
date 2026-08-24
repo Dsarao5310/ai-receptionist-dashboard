@@ -63,7 +63,7 @@ function IntegrationsView() {
   // seeded defaults — those would briefly present placeholder state as real.
   if (!hydrated) {
     return (
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-7 w-40" />
         <Skeleton className="h-32 w-full" />
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -76,7 +76,7 @@ function IntegrationsView() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-text-primary">Integrations</h1>

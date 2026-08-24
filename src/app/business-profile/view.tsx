@@ -49,7 +49,7 @@ export default function BusinessProfileView({ initialTab }: { initialTab: Profil
   const handleHoursDirty = useCallback((d: boolean) => setHoursDirty(d), []);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <div>
         <h2 className="text-base font-semibold text-text-primary">Business profile</h2>
         <p className="mt-0.5 text-xs text-text-muted">This is the information your AI receptionist uses when helping customers.</p>

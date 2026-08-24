@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ActivityEvent, Conversation } from "@/types";
 import { useOverviewData } from "@/features/overview/useOverviewData";
 import { DateRangeControl } from "@/components/shared/DateRangeControl";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusStrip } from "@/features/overview/StatusStrip";
 import { KPIGrid, KPIGridSkeleton } from "@/features/overview/KPIGrid";
 import { TrendChart, TrendChartSkeleton } from "@/features/overview/TrendChart";
@@ -30,7 +31,7 @@ export default function OverviewPage() {
 
   if (error) {
     return (
-      <div className="p-4 md:p-6">
+      <div>
         <Card>
           <ErrorState title="Couldn't load your dashboard" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
@@ -39,15 +40,17 @@ export default function OverviewPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-text-muted">A snapshot of what your AI receptionist has handled.</p>
-        {loading ? (
-          <Skeleton className="h-10 w-64 rounded-lg" />
-        ) : (
-          <DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={setRange} />
-        )}
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        description="A snapshot of what your AI receptionist has handled."
+        actions={
+          loading ? (
+            <Skeleton className="h-10 w-64 rounded-lg" />
+          ) : (
+            <DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={setRange} />
+          )
+        }
+      />
 
       {loading ? (
         <Card className="p-4">
@@ -65,16 +68,25 @@ export default function OverviewPage() {
 
       {loading || !stats ? <KPIGridSkeleton /> : <KPIGrid kpis={stats.kpis} />}
 
-      {loading || !stats ? <TrendChartSkeleton /> : <TrendChart trend={stats.trend} />}
-
+      {/* The trend used to run full-width with the three lists in a row beneath
+          it, which left the lower half of a desktop viewport empty. Pairing the
+          chart with what is coming up next fills the row and puts the two
+          things you actually act on — the trend and today's diary — side by
+          side. The remaining two lists split the row below. */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {loading ? <RecentActivitySkeleton /> : <RecentActivity events={activity} onSelect={openActivity} />}
-        {loading ? <RecentConversationsSkeleton /> : <RecentConversations conversations={conversations} onSelect={setSelectedConversation} />}
+        <div className="lg:col-span-2">
+          {loading || !stats ? <TrendChartSkeleton /> : <TrendChart trend={stats.trend} />}
+        </div>
         {loading ? (
           <UpcomingAppointmentsSkeleton />
         ) : (
           <UpcomingAppointments appointments={appointments} onSelect={(a) => setSelectedAppointmentId(a.id)} />
         )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {loading ? <RecentActivitySkeleton /> : <RecentActivity events={activity} onSelect={openActivity} />}
+        {loading ? <RecentConversationsSkeleton /> : <RecentConversations conversations={conversations} onSelect={setSelectedConversation} />}
       </div>
 
       <ConversationDrawer

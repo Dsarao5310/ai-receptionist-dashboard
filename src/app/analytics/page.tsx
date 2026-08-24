@@ -22,7 +22,7 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="p-4 md:p-6">
+      <div>
         <Card>
           <ErrorState title="Couldn't load analytics" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-text-primary">Performance</h2>
