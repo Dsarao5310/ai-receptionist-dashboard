@@ -11,9 +11,11 @@ import { TrendChart, TrendChartSkeleton } from "@/features/overview/TrendChart";
 import { RecentActivity, RecentActivitySkeleton } from "@/features/overview/RecentActivity";
 import { RecentConversations, RecentConversationsSkeleton } from "@/features/overview/RecentConversations";
 import { UpcomingAppointments, UpcomingAppointmentsSkeleton } from "@/features/overview/UpcomingAppointments";
+import { Gauge } from "@/components/shared/Gauge";
+import { getReadiness } from "@/features/overview/readiness";
 import { ConversationDrawer } from "@/features/conversations/ConversationDrawer";
 import { AppointmentDrawer } from "@/features/appointments/AppointmentDrawer";
-import { Card } from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 
@@ -23,6 +25,14 @@ export default function OverviewPage() {
 
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
+
+  // The chart carries this number directly in its own header, so it is not
+  // repeated as a separate tile in the grid below.
+  const HERO_KEY = "appointments_booked";
+  const heroKpi = stats?.kpis.find((k) => k.key === HERO_KEY);
+  const secondaryKpis = stats?.kpis.filter((k) => k.key !== HERO_KEY) ?? [];
+
+  const readiness = getReadiness(status);
 
   function openActivity(event: ActivityEvent) {
     const match = dataset?.conversations.find((c) => c.id === event.conversationId) ?? null;
@@ -66,25 +76,35 @@ export default function OverviewPage() {
         <StatusStrip status={status} />
       )}
 
-      {loading || !stats ? <KPIGridSkeleton /> : <KPIGrid kpis={stats.kpis} />}
+      {/* The chart carries the headline number itself, so this row is one real
+          analytical surface next to one compact score, rather than a decorative
+          panel next to an unrelated dial. */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {loading || !stats ? <TrendChartSkeleton /> : <TrendChart trend={stats.trend} headline={heroKpi} />}
 
-      {/* The trend used to run full-width with the three lists in a row beneath
-          it, which left the lower half of a desktop viewport empty. Pairing the
-          chart with what is coming up next fills the row and puts the two
-          things you actually act on — the trend and today's diary — side by
-          side. The remaining two lists split the row below. */}
+        <Card className="flex flex-col rounded-2xl card-raised">
+          <CardHeader className="flex-col items-start gap-1 p-5 pb-0">
+            <CardTitle className="text-section">Receptionist readiness</CardTitle>
+            <CardDescription>How ready your channels are to do the job right now.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 items-center justify-center p-5">
+            {loading ? (
+              <Skeleton className="h-[130px] w-[130px] rounded-full" />
+            ) : (
+              <Gauge value={readiness.score} label="Receptionist readiness" caption={readiness.caption} showLabel={false} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {loading || !stats ? <KPIGridSkeleton /> : <KPIGrid kpis={secondaryKpis} />}
+
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          {loading || !stats ? <TrendChartSkeleton /> : <TrendChart trend={stats.trend} />}
-        </div>
         {loading ? (
           <UpcomingAppointmentsSkeleton />
         ) : (
           <UpcomingAppointments appointments={appointments} onSelect={(a) => setSelectedAppointmentId(a.id)} />
         )}
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {loading ? <RecentActivitySkeleton /> : <RecentActivity events={activity} onSelect={openActivity} />}
         {loading ? <RecentConversationsSkeleton /> : <RecentConversations conversations={conversations} onSelect={setSelectedConversation} />}
       </div>

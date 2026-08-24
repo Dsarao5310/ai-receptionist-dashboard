@@ -2,24 +2,20 @@ import type { KPI } from "@/types";
 import { KPICard } from "@/components/shared/KPICard";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 
-const EMPHASIZED_KEY = "appointments_booked";
-
 /**
- * Six metrics on one row at desktop.
+ * The secondary metrics, below the hero.
  *
- * The emphasized card used to span two columns of a seven-column grid, which
- * made every other card narrower than it needed to be and left the row ragged
- * at the breakpoints where the span did not divide evenly. Emphasis is now
- * carried by the card's own accent treatment instead of by width, so the grid
- * stays regular and each card gets an equal, readable share.
+ * There is no emphasized card here any more: the page's emphasis now lives in
+ * the hero panel above, and a second highlighted tile would compete with it.
+ * Five equal cards read as a set; one loud one among them reads as a mistake.
  */
-const GRID = "grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6";
+const GRID = "grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5";
 
 export function KPIGrid({ kpis }: { kpis: KPI[] }) {
   return (
     <div className={GRID}>
       {kpis.map((kpi) => (
-        <KPICard key={kpi.key} kpi={kpi} emphasize={kpi.key === EMPHASIZED_KEY} />
+        <KPICard key={kpi.key} kpi={kpi} raised />
       ))}
     </div>
   );
@@ -28,7 +24,7 @@ export function KPIGrid({ kpis }: { kpis: KPI[] }) {
 export function KPIGridSkeleton() {
   return (
     <div className={GRID}>
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: 5 }).map((_, i) => (
         <SkeletonCard key={i} />
       ))}
     </div>

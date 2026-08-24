@@ -15,9 +15,9 @@ export function RecentConversations({ conversations, onSelect }: { conversations
   // Timestamps are rendered on the business's clock, not the viewer's.
   const fmt = useBusinessFormat();
   return (
-    <Card>
+    <Card className="rounded-2xl card-raised">
       <CardHeader>
-        <CardTitle>Recent conversations</CardTitle>
+        <CardTitle className="text-section">Recent conversations</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         {conversations.length === 0 ? (
@@ -59,9 +59,9 @@ export function RecentConversations({ conversations, onSelect }: { conversations
 
 export function RecentConversationsSkeleton() {
   return (
-    <Card>
+    <Card className="rounded-2xl card-raised">
       <CardHeader>
-        <CardTitle>Recent conversations</CardTitle>
+        <CardTitle className="text-section">Recent conversations</CardTitle>
       </CardHeader>
       <CardContent className="pt-4 -mx-5 -my-1">
         {Array.from({ length: 5 }).map((_, i) => (
