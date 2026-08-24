@@ -19,8 +19,26 @@ export interface Bucket {
  * same data.
  */
 export function buildBuckets(bounds: Bounds, timeZone: string): Bucket[] {
-  const stepDays = bucketGranularity(bounds) === "day" ? 1 : 7;
+  const granularity = bucketGranularity(bounds);
   const buckets: Bucket[] = [];
+
+  if (granularity === "hour") {
+    const stepMs = 4 * 60 * 60 * 1000;
+    let cursor = bounds.start;
+    while (cursor <= bounds.end) {
+      const next = new Date(cursor.getTime() + stepMs);
+      buckets.push({
+        start: cursor,
+        end: new Date(Math.min(next.getTime() - 1, bounds.end.getTime())),
+        label: formatInZone(cursor, timeZone, { hour: "numeric" }),
+        dateKey: cursor.toISOString(),
+      });
+      cursor = next;
+    }
+    return buckets;
+  }
+
+  const stepDays = granularity === "day" ? 1 : 7;
 
   let cursor = startOfZonedDay(bounds.start, timeZone);
   while (cursor <= bounds.end) {

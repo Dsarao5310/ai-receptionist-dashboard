@@ -37,12 +37,12 @@ export function KPICard({ kpi, emphasize = false }: { kpi: KPI; emphasize?: bool
   return (
     <Card
       className={cn(
-        "p-5 flex flex-col justify-between min-h-[132px]",
+        "min-w-0 overflow-hidden p-4 flex flex-col justify-between min-h-[124px]",
         emphasize && "border-accent/40 bg-accent-subtle/40 shadow-md"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className={cn("text-xs font-medium min-w-0", emphasize ? "text-accent-text" : "text-text-muted")}>{kpi.label}</span>
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_2.75rem] items-start gap-2">
+        <span className={cn("min-w-0 break-words text-xs font-medium leading-snug", emphasize ? "text-accent-text" : "text-text-muted")}>{kpi.label}</span>
         <Sparkline values={kpi.sparkline} tone={emphasize ? "accent" : "muted"} />
       </div>
       <div className="mt-3 flex items-end justify-between gap-2">

@@ -18,7 +18,7 @@ export function Sparkline({
   tone?: "accent" | "success" | "danger" | "muted";
   className?: string;
 }) {
-  const sizing = cn("h-7 w-14 shrink-0 sm:w-[88px]", className);
+  const sizing = cn("h-7 w-full min-w-0 max-w-[2.75rem] justify-self-end", className);
   if (values.length < 2) return <svg className={sizing} aria-hidden />;
 
   const max = Math.max(...values, 1);
