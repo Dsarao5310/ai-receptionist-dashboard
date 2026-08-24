@@ -5,7 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { CommandPalette } from "./CommandPalette";
-import { ALL_NAV_ITEMS } from "@/lib/nav-config";
+import { findNavItem } from "@/lib/nav-config";
 import type { AuthenticatedSession } from "@/types/identity";
 
 /** Routes that render without a session. Everything else requires one. */
@@ -24,7 +24,9 @@ const PUBLIC_PATHS = ["/sign-in"];
  */
 export function AppShell({ session, children }: { session: AuthenticatedSession | null; children: React.ReactNode }) {
   const pathname = usePathname();
-  const title = ALL_NAV_ITEMS.find((i) => i.href === pathname)?.label;
+  // Prefix-aware, so a nested route such as /customers/abc keeps its heading
+  // instead of silently rendering no <h1> at all.
+  const title = findNavItem(pathname)?.label;
 
   if (!session) {
     return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ? <>{children}</> : null;

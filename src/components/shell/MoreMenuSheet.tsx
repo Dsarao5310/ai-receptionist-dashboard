@@ -3,7 +3,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getMobileNavItems, getNavGroups } from "@/lib/nav-config";
+import { getMobileNavItems, getNavGroups, isNavItemActive } from "@/lib/nav-config";
 import { useOptionalSession } from "@/lib/session-context";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,7 @@ export function MoreMenuSheet({ open, onOpenChange }: { open: boolean; onOpenCha
           <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-border-strong" />
           <div className="grid grid-cols-3 gap-1.5 p-4">
             {rest.map((item) => {
-              const active = pathname === item.href;
+              const active = isNavItemActive(item.href, pathname);
               return (
                 <DialogPrimitive.Close asChild key={item.href}>
                   <Link

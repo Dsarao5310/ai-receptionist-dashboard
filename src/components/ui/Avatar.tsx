@@ -1,13 +1,21 @@
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/utils";
 
+/**
+ * Identity tints, expressed through the theme's own semantic colors.
+ *
+ * These were previously six hardcoded light-mode hex pairs, which meant a row
+ * of avatars stayed as bright pastel chips on the near-black dark surface —
+ * legible, but visibly outside the system. Each entry now pairs a `*-bg` token
+ * with its matching foreground token, so both themes recolor automatically.
+ */
 const PALETTE = [
-  "bg-[#e9f1fb] text-[#1e5389]",
-  "bg-[#eef0fd] text-[#4338ca]",
-  "bg-[#e7f5ee] text-[#12613f]",
-  "bg-[#fbede0] text-[#a54a0a]",
-  "bg-[#fbe9ee] text-[#a02a47]",
-  "bg-[#f2f1ee] text-[#322f2b]",
+  "bg-info-bg text-info",
+  "bg-accent-subtle text-accent-text",
+  "bg-success-bg text-success",
+  "bg-warning-bg text-warning",
+  "bg-danger-bg text-danger",
+  "bg-surface-sunken text-text-secondary",
 ];
 
 function paletteFor(name: string) {

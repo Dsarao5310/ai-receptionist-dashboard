@@ -12,6 +12,7 @@ import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { useIntegrations } from "@/lib/store/integrations";
 import { useHydrated } from "@/lib/store/hydration";
 import { useSession } from "@/lib/session-context";
+import { WORKSPACE_ROLE_LABELS } from "@/lib/permissions";
 import { toast } from "@/lib/store/toast";
 import { useBusinessFormat } from "@/lib/business-format";
 import { AdminGate } from "@/features/integrations/AdminGate";
@@ -226,7 +227,13 @@ function AdminSettingsView() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="accent">Platform operator</Badge>
+            {/* Derived, not asserted. The description above promises this comes
+                from the verified session, so it must actually read from it. */}
+            <Badge tone={session.user.platformRole === "operator" ? "accent" : "neutral"}>
+              {session.user.platformRole === "operator"
+                ? "Platform operator"
+                : (session.workspaceRole && WORKSPACE_ROLE_LABELS[session.workspaceRole]) || "Member"}
+            </Badge>
             <span className="text-text-secondary">
               {session.user.name} · {session.user.email}
             </span>

@@ -44,7 +44,7 @@ export default function CallsView({ initial }: { initial: { intent: Intent | "al
     return (
       <div className="p-4 md:p-6">
         <Card>
-          <ErrorState title="Couldn't load calls" description="Something went wrong generating your demo data." onRetry={retry} />
+          <ErrorState title="Couldn't load calls" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
       </div>
     );

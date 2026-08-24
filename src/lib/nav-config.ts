@@ -95,3 +95,28 @@ export function getMobileNavItems(context: PermissionContext): NavItem[] {
     .filter((i) => MOBILE_HREFS.includes(i.href))
     .filter((i) => !i.permission || granted.has(i.permission));
 }
+
+/**
+ * Does `pathname` belong to `href`?
+ *
+ * Exact equality was compared in four separate places (sidebar, mobile bar,
+ * more-sheet, and the title lookup in AppShell). A nested route such as
+ * `/customers/abc` matched none of them, so it lost both the sidebar highlight
+ * and — because the title came from the same comparison — its heading.
+ *
+ * "/" is special-cased: as a prefix it matches everything, so it must be exact.
+ */
+export function isNavItemActive(href: string, pathname: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/**
+ * The nav item a route belongs to, preferring the most specific match so
+ * `/admin/settings` resolves to itself rather than to a shorter `/admin` entry.
+ */
+export function findNavItem(pathname: string): NavItem | undefined {
+  return ALL_NAV_ITEMS.filter((i) => isNavItemActive(i.href, pathname)).sort(
+    (a, b) => b.href.length - a.href.length
+  )[0];
+}

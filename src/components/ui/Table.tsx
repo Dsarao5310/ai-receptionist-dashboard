@@ -2,16 +2,41 @@ import * as React from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
+/**
+ * A horizontally scrollable table.
+ *
+ * `min-w` is a prop because the old fixed 640px was wrong in both directions:
+ * a five-column list wasted the guarantee, while the nine-column workflows
+ * table was crushed to ~71px per column. Callers state what their content
+ * actually needs.
+ *
+ * `tabIndex`/`role` make the scroll region reachable by keyboard — a mouse-only
+ * scroll container hides the right-hand columns from anyone not using a
+ * pointer, which on the admin tables is where the action buttons live.
+ */
+export function Table({
+  className,
+  minWidth = "min-w-[640px]",
+  ...props
+}: React.TableHTMLAttributes<HTMLTableElement> & { minWidth?: string }) {
   return (
-    <div className="w-full overflow-x-auto">
-      <table className={cn("w-full min-w-[640px] border-collapse text-sm", className)} {...props} />
+    <div className="w-full overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
+      <table className={cn("w-full border-collapse text-sm", minWidth, className)} {...props} />
     </div>
   );
 }
 
+/**
+ * Not sticky.
+ *
+ * It used to carry `sticky top-0`, but the only scroll container above it is
+ * the horizontal wrapper, which never scrolls vertically — so the header never
+ * stuck to anything. Where it did resolve against the page it slid underneath
+ * the z-30 top bar. Dead styling either way; removed rather than left implying
+ * behaviour that does not exist.
+ */
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("sticky top-0 z-10 bg-surface", className)} {...props} />;
+  return <thead className={cn("bg-surface", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {

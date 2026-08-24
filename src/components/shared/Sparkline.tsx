@@ -1,14 +1,20 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Width/height define the coordinate space only — the rendered size comes from
- * CSS so the sparkline can shrink inside a narrow KPI card instead of pushing
- * the card (and the page) into horizontal overflow on small screens.
+ * A compact trend line.
+ *
+ * `width`/`height` define the SVG coordinate space only — the rendered size
+ * comes from CSS, so the sparkline stretches to whatever column it is given
+ * instead of forcing its container wider.
+ *
+ * The default sizing is a full-width strip: KPI tiles now place the sparkline
+ * on its own row rather than beside the label, so it no longer has to survive
+ * being squeezed into ~44px next to wrapping text.
  */
 export function Sparkline({
   values,
-  width = 88,
-  height = 28,
+  width = 120,
+  height = 32,
   tone = "accent",
   className,
 }: {
@@ -18,7 +24,7 @@ export function Sparkline({
   tone?: "accent" | "success" | "danger" | "muted";
   className?: string;
 }) {
-  const sizing = cn("h-7 w-full min-w-0 max-w-[2.75rem] justify-self-end", className);
+  const sizing = cn("h-8 w-full min-w-0", className);
   if (values.length < 2) return <svg className={sizing} aria-hidden />;
 
   const max = Math.max(...values, 1);

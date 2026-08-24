@@ -74,7 +74,7 @@ export default function CustomersView({ openCustomerId }: { openCustomerId: stri
     return (
       <div className="p-4 md:p-6">
         <Card>
-          <ErrorState title="Couldn't load customers" description="Something went wrong generating your demo data." onRetry={retry} />
+          <ErrorState title="Couldn't load customers" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
       </div>
     );

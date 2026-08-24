@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
-import { getNavGroups } from "@/lib/nav-config";
+import { getNavGroups, isNavItemActive } from "@/lib/nav-config";
 import { useOptionalSession } from "@/lib/session-context";
 import { usePreferences } from "@/lib/store/preferences";
 import { Tooltip, TooltipProvider } from "@/components/ui/Tooltip";
@@ -49,7 +49,7 @@ export function Sidebar() {
               )}
               <div className="space-y-0.5">
                 {group.items.map((item) => {
-                  const active = pathname === item.href;
+                  const active = isNavItemActive(item.href, pathname);
                   const link = (
                     <Link
                       key={item.href}
