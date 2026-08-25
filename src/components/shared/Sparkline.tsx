@@ -3,13 +3,16 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 
-type Tone = "accent" | "success" | "danger" | "muted";
+type Tone = "accent" | "success" | "danger" | "muted" | "hero";
 
 const TONE_COLOR: Record<Tone, string> = {
   accent: "var(--color-accent)",
   success: "var(--color-success)",
   danger: "var(--color-danger)",
   muted: "var(--color-text-muted)",
+  // For bars drawn on a solid --color-hero fill, where the surface tokens
+  // above would have no contrast against their own background.
+  hero: "var(--color-hero-text)",
 };
 
 /**

@@ -7,6 +7,7 @@ import type { IntegrationOperation, InboundEventReceipt } from "@/server/db/repo
 import { useBusinessFormat } from "@/lib/business-format";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { CAPABILITY_LABELS } from "@/services/integrations";
@@ -121,12 +122,7 @@ export function WorkflowsView({
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-text-primary">Workflows</h1>
-        <p className="text-sm text-text-secondary">
-          Automation assigned to this workspace, and what has crossed the boundary in both directions.
-        </p>
-      </div>
+      <PageHeader description="Automation assigned to this workspace, and what has crossed the boundary in both directions." />
 
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-3">
@@ -207,50 +203,48 @@ export function WorkflowsView({
               />
             </div>
           ) : (
-            <div>
-              <Table minWidth="min-w-[1040px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Workflow</TableHead>
-                    <TableHead>Operation</TableHead>
-                    <TableHead>Capability</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead>Version</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Last run</TableHead>
-                    <TableHead>Last success</TableHead>
-                    <TableHead className="text-right">Failures</TableHead>
+            <Table minWidth="min-w-[1040px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Workflow</TableHead>
+                  <TableHead>Operation</TableHead>
+                  <TableHead>Capability</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Version</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last run</TableHead>
+                  <TableHead>Last success</TableHead>
+                  <TableHead className="text-right">Failures</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {workflows.map((w) => (
+                  <TableRow key={w.id}>
+                    <TableCell className="font-medium text-text-primary">{w.name}</TableCell>
+                    <TableCell className="text-text-secondary">
+                      {w.operation ? WORKFLOW_OPERATION_LABELS[w.operation] : "—"}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">{CAPABILITY_LABELS[w.capability]}</TableCell>
+                    <TableCell className="font-mono text-xs text-text-secondary">{w.workflowRef}</TableCell>
+                    <TableCell className="text-text-secondary">{w.version}</TableCell>
+                    <TableCell>
+                      <Badge tone={STATUS_TONE[w.status]} className="capitalize">
+                        {w.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {w.lastExecutionAt ? fmt.relative(w.lastExecutionAt) : "Never"}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {w.lastSuccessAt ? fmt.relative(w.lastSuccessAt) : "Never"}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-text-secondary">
+                      {w.failedExecutions}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {workflows.map((w) => (
-                    <TableRow key={w.id}>
-                      <TableCell className="font-medium text-text-primary">{w.name}</TableCell>
-                      <TableCell className="text-text-secondary">
-                        {w.operation ? WORKFLOW_OPERATION_LABELS[w.operation] : "—"}
-                      </TableCell>
-                      <TableCell className="text-text-secondary">{CAPABILITY_LABELS[w.capability]}</TableCell>
-                      <TableCell className="font-mono text-xs text-text-secondary">{w.workflowRef}</TableCell>
-                      <TableCell className="text-text-secondary">{w.version}</TableCell>
-                      <TableCell>
-                        <Badge tone={STATUS_TONE[w.status]} className="capitalize">
-                          {w.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-text-secondary">
-                        {w.lastExecutionAt ? fmt.relative(w.lastExecutionAt) : "Never"}
-                      </TableCell>
-                      <TableCell className="text-text-secondary">
-                        {w.lastSuccessAt ? fmt.relative(w.lastSuccessAt) : "Never"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums text-text-secondary">
-                        {w.failedExecutions}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -280,34 +274,32 @@ export function WorkflowsView({
           {receipts.length === 0 ? (
             <p className="px-4 text-sm text-text-muted">Nothing received yet.</p>
           ) : (
-            <div>
-              <Table minWidth="min-w-[820px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Outcome</TableHead>
-                    <TableHead>Received</TableHead>
-                    <TableHead>Detail</TableHead>
+            <Table minWidth="min-w-[820px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Outcome</TableHead>
+                  <TableHead>Received</TableHead>
+                  <TableHead>Detail</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {receipts.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-mono text-xs text-text-secondary">{r.externalEventId}</TableCell>
+                    <TableCell className="text-text-secondary">{r.eventType}</TableCell>
+                    <TableCell>
+                      <Badge tone={RECEIPT_TONE[r.outcome]} className="capitalize">
+                        {r.outcome}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-text-secondary">{fmt.relative(r.receivedAt)}</TableCell>
+                    <TableCell className="text-text-secondary">{r.detail ?? "—"}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {receipts.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-mono text-xs text-text-secondary">{r.externalEventId}</TableCell>
-                      <TableCell className="text-text-secondary">{r.eventType}</TableCell>
-                      <TableCell>
-                        <Badge tone={RECEIPT_TONE[r.outcome]} className="capitalize">
-                          {r.outcome}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-text-secondary">{fmt.relative(r.receivedAt)}</TableCell>
-                      <TableCell className="text-text-secondary">{r.detail ?? "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -334,40 +326,38 @@ function OperationTable({
   showError?: boolean;
 }) {
   return (
-    <div>
-      <Table minWidth="min-w-[820px]">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Operation</TableHead>
-            <TableHead>Target</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Attempts</TableHead>
-            <TableHead>Execution</TableHead>
-            <TableHead>Started</TableHead>
-            {showError ? <TableHead>Detail</TableHead> : null}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {operations.map((op) => (
-            <TableRow key={op.id}>
-              <TableCell className="text-text-primary">{WORKFLOW_OPERATION_LABELS[op.operation]}</TableCell>
-              <TableCell className="font-mono text-xs text-text-secondary">{op.targetId ?? "—"}</TableCell>
-              <TableCell>
-                <Badge tone={OPERATION_TONE[op.status]}>{OPERATION_LABELS[op.status]}</Badge>
+    <Table minWidth="min-w-[820px]">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Operation</TableHead>
+          <TableHead>Target</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Attempts</TableHead>
+          <TableHead>Execution</TableHead>
+          <TableHead>Started</TableHead>
+          {showError ? <TableHead>Detail</TableHead> : null}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {operations.map((op) => (
+          <TableRow key={op.id}>
+            <TableCell className="text-text-primary">{WORKFLOW_OPERATION_LABELS[op.operation]}</TableCell>
+            <TableCell className="font-mono text-xs text-text-secondary">{op.targetId ?? "—"}</TableCell>
+            <TableCell>
+              <Badge tone={OPERATION_TONE[op.status]}>{OPERATION_LABELS[op.status]}</Badge>
+            </TableCell>
+            <TableCell className="text-right tabular-nums text-text-secondary">{op.attempts}</TableCell>
+            <TableCell className="font-mono text-xs text-text-secondary">{op.executionRef ?? "—"}</TableCell>
+            <TableCell className="text-text-secondary">{fmt.relative(op.createdAt)}</TableCell>
+            {showError ? (
+              <TableCell className="text-text-secondary">
+                {op.error.message ?? "—"}
+                {op.error.detail ? <span className="block text-xs text-text-muted">{op.error.detail}</span> : null}
               </TableCell>
-              <TableCell className="text-right tabular-nums text-text-secondary">{op.attempts}</TableCell>
-              <TableCell className="font-mono text-xs text-text-secondary">{op.executionRef ?? "—"}</TableCell>
-              <TableCell className="text-text-secondary">{fmt.relative(op.createdAt)}</TableCell>
-              {showError ? (
-                <TableCell className="text-text-secondary">
-                  {op.error.message ?? "—"}
-                  {op.error.detail ? <span className="block text-xs text-text-muted">{op.error.detail}</span> : null}
-                </TableCell>
-              ) : null}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+            ) : null}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

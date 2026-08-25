@@ -39,16 +39,26 @@ export function WeekView({
         const dayAppointments = (byDay.get(key) ?? []).sort((a, b) => a.time.localeCompare(b.time));
         const isToday = key === todayKey;
         return (
-          <div key={key} className="rounded-lg border border-border overflow-hidden min-w-0">
-            <div className={cn("px-2.5 py-2 border-b border-border text-center", isToday ? "bg-accent-subtle" : "bg-surface-sunken")}>
+          <div
+            key={key}
+            className={cn(
+              "min-w-0 overflow-hidden rounded-xl border",
+              isToday ? "border-accent/40" : "border-border"
+            )}
+          >
+            <div className={cn("px-2.5 py-2 text-center", isToday ? "bg-accent-subtle" : "bg-surface-sunken")}>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                 {day.toLocaleDateString("en-US", { weekday: "short" })}
               </p>
-              <p className={cn("text-sm font-semibold", isToday ? "text-accent-text" : "text-text-primary")}>{day.getDate()}</p>
+              <p className={cn("text-sm font-semibold tabular-nums", isToday ? "text-accent-text" : "text-text-primary")}>
+                {day.getDate()}
+              </p>
             </div>
-            <div className="p-1.5 space-y-1 min-h-[80px]">
+            <div className="min-h-[96px] space-y-1 p-1.5">
               {dayAppointments.length === 0 ? (
-                <p className="px-1.5 py-2 text-center text-[11px] text-text-muted">No appointments</p>
+                <div className="flex h-full min-h-[72px] items-center justify-center rounded-lg border border-dashed border-border">
+                  <p className="text-[11px] text-text-muted">No appointments</p>
+                </div>
               ) : (
                 dayAppointments.map((a) => <AppointmentChip key={a.id} appointment={a} onSelect={onSelect} />)
               )}

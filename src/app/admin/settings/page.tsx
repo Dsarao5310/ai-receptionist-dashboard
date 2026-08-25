@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
+import { Activity } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Switch } from "@/components/ui/Switch";
 import { Textarea, Label } from "@/components/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { SaveBar } from "@/components/shared/SaveBar";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { useIntegrations } from "@/lib/store/integrations";
@@ -83,12 +87,14 @@ function AdminSettingsView() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-text-primary">Workspace administration</h1>
-        <p className="text-sm text-text-secondary">
-          Operator-level configuration for {workspace.name}. Not visible in the business-facing product.
-        </p>
-      </div>
+      <PageHeader
+        description={`Operator-level configuration for ${workspace.name}. Not visible in the business-facing product.`}
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/privacy"><Activity className="h-3.5 w-3.5" /> Privacy operations</Link>
+          </Button>
+        }
+      />
 
       <Card>
         <CardHeader>

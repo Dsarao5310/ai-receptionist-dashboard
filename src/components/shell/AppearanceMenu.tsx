@@ -72,7 +72,7 @@ export function AppearanceMenu() {
               key={opt.value}
               onClick={() => setAccent(opt.value)}
               aria-label={opt.label}
-              className="relative flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-inset ring-black/10"
+              className="relative flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-inset ring-border-strong"
               style={{ backgroundColor: opt.swatch }}
             >
               {accent === opt.value && <Check className="h-3.5 w-3.5 text-white drop-shadow" />}

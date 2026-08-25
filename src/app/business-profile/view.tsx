@@ -10,6 +10,7 @@ import { KnowledgeManager } from "@/features/business-profile/KnowledgeManager";
 import { SetupCompleteness } from "@/features/business-profile/SetupCompleteness";
 import { ConfigurationPreview } from "@/features/business-profile/ConfigurationPreview";
 import { UnsavedChangesDialog } from "@/components/shared/SaveBar";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { getSetupCompleteness } from "@/services/business";
@@ -50,10 +51,7 @@ export default function BusinessProfileView({ initialTab }: { initialTab: Profil
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-base font-semibold text-text-primary">Business profile</h2>
-        <p className="mt-0.5 text-xs text-text-muted">This is the information your AI receptionist uses when helping customers.</p>
-      </div>
+      <PageHeader description="This is the information your AI receptionist uses when helping customers." />
 
       <SetupCompleteness completeness={completeness} onJump={setTab} />
 

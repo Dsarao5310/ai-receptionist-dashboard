@@ -7,6 +7,7 @@ import { useSession } from "@/lib/session-context";
 import { useHydrated } from "@/lib/store/hydration";
 import { toast } from "@/lib/store/toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { AdminGate } from "@/features/integrations/AdminGate";
 import { IntegrationCard } from "@/features/integrations/IntegrationCard";
@@ -77,14 +78,7 @@ function IntegrationsView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-text-primary">Integrations</h1>
-          <p className="text-sm text-text-secondary">
-            Provider connections behind this workspace. Business users see these as capabilities, not vendors.
-          </p>
-        </div>
-      </div>
+      <PageHeader description="Provider connections behind this workspace. Business users see these as capabilities, not vendors." />
 
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-3">

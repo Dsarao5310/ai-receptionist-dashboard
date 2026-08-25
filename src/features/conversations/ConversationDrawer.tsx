@@ -1,12 +1,12 @@
 "use client";
 
-import { Bot, User, CheckCircle2, Circle } from "lucide-react";
+import { Bot, User, CheckCircle2, Circle, Mic } from "lucide-react";
 import type { Conversation } from "@/types";
 import { Drawer, DrawerBody, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/Drawer";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { CHANNEL_LABELS, INTENT_LABELS, OUTCOME_LABELS } from "@/data/constants";
-import { formatDuration } from "@/lib/utils";
+import { cn, formatDuration } from "@/lib/utils";
 import { CHANNEL_ICONS, OUTCOME_TONE } from "./shared";
 import { useBusinessFormat } from "@/lib/business-format";
 
@@ -29,12 +29,11 @@ export function ConversationDrawer({
       <DrawerContent>
         <DrawerHeader>
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar name={conversation.customerName} />
+            <Avatar name={conversation.customerName} size="lg" />
             <div className="min-w-0">
               <DrawerTitle className="truncate">{conversation.customerName}</DrawerTitle>
-              <DrawerDescription className="flex items-center gap-1.5">
-                <ChannelIcon className="h-3.5 w-3.5" />
-                {CHANNEL_LABELS[conversation.channel]} · {fmt.dateTime(conversation.timestamp)}
+              <DrawerDescription>
+                {fmt.dateTime(conversation.timestamp)}
                 {conversation.durationSec ? ` · ${formatDuration(conversation.durationSec)}` : ""}
               </DrawerDescription>
             </div>
@@ -43,23 +42,22 @@ export function ConversationDrawer({
         </DrawerHeader>
         <DrawerBody className="space-y-6">
           <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="neutral">
+              <ChannelIcon className="h-3 w-3" />
+              {CHANNEL_LABELS[conversation.channel]}
+            </Badge>
             <Badge tone="accent">{INTENT_LABELS[conversation.intent]}</Badge>
-            <Badge tone={OUTCOME_TONE[conversation.outcome]}>{OUTCOME_LABELS[conversation.outcome]}</Badge>
+            <Badge tone={OUTCOME_TONE[conversation.outcome]} dot>
+              {OUTCOME_LABELS[conversation.outcome]}
+            </Badge>
           </div>
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-1.5">Summary</p>
-            <p className="text-sm text-text-primary">{conversation.summary}</p>
+            <p className="text-sm text-text-primary leading-relaxed">{conversation.summary}</p>
           </div>
 
-          {conversation.bookingAction && (
-            <div className="rounded-lg border border-border bg-surface-sunken px-3.5 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-1">Booking action</p>
-              <p className="text-sm text-text-primary">{conversation.bookingAction}</p>
-            </div>
-          )}
-
-          <div>
+          <div className="border-t border-border pt-6">
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">What the AI did</p>
             <ul className="space-y-1.5">
               {conversation.actions.map((step) => (
@@ -76,16 +74,19 @@ export function ConversationDrawer({
           </div>
 
           {conversation.channel === "voice" && (
-            <div>
+            <div className="border-t border-border pt-6">
               <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">Recording</p>
-              <div className="flex items-center gap-3 rounded-lg border border-dashed border-border-strong px-3.5 py-3 text-xs text-text-muted">
-                Recording playback will appear here once Voice is connected to a live provider.
+              <div className="flex items-center gap-3 rounded-lg border border-dashed border-border-strong px-3.5 py-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-text-muted">
+                  <Mic className="h-4 w-4" />
+                </span>
+                <p className="text-xs text-text-muted">Recording playback will appear here once Voice is connected to a live provider.</p>
               </div>
             </div>
           )}
 
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">Transcript</p>
+          <div className="border-t border-border pt-6">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-3">Transcript</p>
             {conversation.outcome === "missed" ? (
               <p className="text-sm text-text-muted italic">No transcript — the call wasn&apos;t answered.</p>
             ) : (
@@ -93,16 +94,23 @@ export function ConversationDrawer({
                 {conversation.transcript.map((line, i) => (
                   <div key={i} className="flex items-start gap-2.5">
                     <span
-                      className={
-                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full " +
-                        (line.speaker === "ai" ? "bg-accent-subtle text-accent-text" : "bg-surface-sunken text-text-secondary")
-                      }
+                      className={cn(
+                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+                        line.speaker === "ai" ? "bg-accent-subtle text-accent-text" : "bg-surface-sunken text-text-secondary"
+                      )}
                     >
                       {line.speaker === "ai" ? <Bot className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
                     </span>
-                    <div className="min-w-0">
-                      <p className="text-sm text-text-primary">{line.text}</p>
-                      <p className="text-[11px] text-text-muted mt-0.5">{line.time}</p>
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className={cn(
+                          "rounded-lg px-3 py-2 text-sm text-text-primary",
+                          line.speaker === "ai" ? "bg-accent-subtle" : "bg-surface-sunken"
+                        )}
+                      >
+                        {line.text}
+                      </div>
+                      <p className="text-[11px] text-text-muted mt-1">{line.time}</p>
                     </div>
                   </div>
                 ))}

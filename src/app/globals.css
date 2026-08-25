@@ -32,8 +32,23 @@
 
   --color-border: #e8e5e0;
   --color-border-strong: #d9d5cf;
+  /* A border that reads as "about to interact" — hover on a row or card that
+     is not yet selected. Mixed from the live accent rather than a fixed hex,
+     so it tracks whichever of the six accent palettes is active without a
+     per-accent override block. */
+  --color-border-interactive: color-mix(in srgb, var(--color-accent) 45%, transparent);
 
   --color-focus-ring: var(--color-accent);
+
+  /* Deliberately lower contrast than --color-text-muted: this is for a
+     control's own disabled label, which WCAG does not hold to body-text
+     contrast, not for text someone is meant to read normally. */
+  --color-text-disabled: #a39c92;
+
+  /* A dialog/drawer scrim. Tinted with the same warm ink as the shadow ramp
+     rather than flat black, so it belongs to this palette instead of reading
+     like a default browser overlay. */
+  --color-overlay: rgba(23, 19, 13, 0.4);
 
   --color-success: #16794f;
   --color-success-bg: #e7f5ee;
@@ -138,6 +153,12 @@
 
     --color-border: #38322a;
     --color-border-strong: #453e33;
+    --color-border-interactive: color-mix(in srgb, var(--color-accent) 45%, transparent);
+
+    --color-text-disabled: #6b6459;
+    /* A darker, stronger scrim than light mode — a 40%-black overlay reads as
+       barely-there against a canvas that is already near-black. */
+    --color-overlay: rgba(8, 6, 4, 0.6);
 
     --color-success: #4ade9c;
     --color-success-bg: #163527;
@@ -178,6 +199,10 @@
 
   --color-border: #38322a;
   --color-border-strong: #453e33;
+  --color-border-interactive: color-mix(in srgb, var(--color-accent) 45%, transparent);
+
+  --color-text-disabled: #6b6459;
+  --color-overlay: rgba(8, 6, 4, 0.6);
 
   --color-success: #4ade9c;
   --color-success-bg: #163527;
@@ -274,10 +299,14 @@
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
+  --color-text-disabled: var(--color-text-disabled);
   --color-text-on-accent: var(--color-text-on-accent);
 
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
+  --color-border-interactive: var(--color-border-interactive);
+
+  --color-overlay: var(--color-overlay);
 
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);

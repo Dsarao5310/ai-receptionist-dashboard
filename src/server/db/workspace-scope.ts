@@ -5,6 +5,8 @@ import { getDb, type Sql } from "./client";
 import { AppointmentRepository } from "./repositories/appointments";
 import { ActivityRepository } from "./repositories/activity";
 import { CallRepository } from "./repositories/calls";
+import { CallPrivacyRepository } from "./repositories/call-privacy";
+import { PrivacyErasureRequestRepository } from "./repositories/privacy-erasure-requests";
 import { ConfigurationRepository } from "./repositories/configuration";
 import { ConversationRepository } from "./repositories/conversations";
 import { CustomerRepository } from "./repositories/customers";
@@ -14,6 +16,9 @@ import { NotificationRepository } from "./repositories/notifications";
 import { OrchestrationRepository } from "./repositories/orchestration";
 import { SettingsRepository } from "./repositories/settings";
 import { WorkspaceRepository } from "./repositories/workspaces";
+import { VapiCallRepository } from "./repositories/vapi-calls";
+import { EmailRepository } from "./repositories/email";
+import { can } from "@/lib/permissions";
 
 /**
  * Tenant data, reachable only through an authorized workspace.
@@ -52,6 +57,8 @@ export interface WorkspaceScope {
   readonly customers: CustomerRepository;
   readonly conversations: ConversationRepository;
   readonly calls: CallRepository;
+  readonly privacy: CallPrivacyRepository;
+  readonly privacyErasureRequests: PrivacyErasureRequestRepository;
   readonly appointments: AppointmentRepository;
   readonly activity: ActivityRepository;
   readonly notifications: NotificationRepository;
@@ -59,10 +66,16 @@ export interface WorkspaceScope {
   readonly messaging: MessagingRepository;
   readonly orchestration: OrchestrationRepository;
   readonly settings: SettingsRepository;
+  readonly vapi: VapiCallRepository;
+  readonly email: EmailRepository;
 }
 
 export function workspaceScope(context: AuthContext, sql: Sql = getDb()): WorkspaceScope {
   const workspaceId = context.workspaceId;
+  const sensitiveCallAccess = can(
+    { platformRole: context.user.platformRole, workspaceRole: context.workspaceRole },
+    "calls.view_sensitive"
+  );
 
   return {
     workspaceId,
@@ -70,8 +83,10 @@ export function workspaceScope(context: AuthContext, sql: Sql = getDb()): Worksp
     workspace: new WorkspaceRepository(sql, workspaceId),
     configuration: new ConfigurationRepository(sql, workspaceId),
     customers: new CustomerRepository(sql, workspaceId),
-    conversations: new ConversationRepository(sql, workspaceId),
-    calls: new CallRepository(sql, workspaceId),
+    conversations: new ConversationRepository(sql, workspaceId, sensitiveCallAccess),
+    calls: new CallRepository(sql, workspaceId, sensitiveCallAccess),
+    privacy: new CallPrivacyRepository(sql, workspaceId),
+    privacyErasureRequests: new PrivacyErasureRequestRepository(sql, workspaceId),
     appointments: new AppointmentRepository(sql, workspaceId),
     activity: new ActivityRepository(sql, workspaceId),
     notifications: new NotificationRepository(sql, workspaceId),
@@ -79,5 +94,7 @@ export function workspaceScope(context: AuthContext, sql: Sql = getDb()): Worksp
     messaging: new MessagingRepository(sql, workspaceId),
     orchestration: new OrchestrationRepository(sql, workspaceId),
     settings: new SettingsRepository(sql, workspaceId),
+    vapi: new VapiCallRepository(sql, workspaceId),
+    email: new EmailRepository(sql, workspaceId),
   };
 }

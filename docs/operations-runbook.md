@@ -73,6 +73,57 @@ release decision. Database migrations are forward-only.
 4. For `sync_required`, stop automatic retries and reconcile the external and
    local records manually before re-enabling the provider.
 
+## Privacy purge schedule
+
+1. Apply and verify all three privacy migrations in isolated staging before
+   enabling execution. With only the confirmed staging runtime credential in
+   scope, run:
+
+   ```text
+   npm run privacy:preflight -- --expected-mode disabled --expected-project-ref jhkbsfsbnynysplvnwca
+   ```
+
+   The command must report all migrations and grants healthy while making no
+   data mutation. Confirm `app_runtime` can update the lease/run ledger but
+   cannot delete run history, consent events, or erasure requests.
+2. Deploy first with `PRIVACY_PURGE_MODE=disabled`; the daily cron request must
+   return 204 and must not create a run row.
+3. Generate a dedicated random `CRON_SECRET` with at least 32 characters. Keep
+   it separate from Auth.js and provider secrets, configure it only in the
+   target environment, then set `PRIVACY_PURGE_MODE=scheduled` and redeploy.
+4. Vercel invokes `/api/internal/cron/privacy-purge` daily at 03:17 UTC. A
+   successful run returns aggregate counts only. An overlapping run returns a
+   safe skipped result while the database lease is active.
+5. Platform operators may review the server-rendered `/admin/privacy` page for
+   sanitized disabled, never-run, healthy, missed, failed, running, or stale
+   state. This in-app view is not an alert and performs no retry or schedule
+   mutation. Until an approved external monitor exists, review the underlying
+   run ledger through an operator-only, read-only query. Alert on failed status,
+   missing daily completion, or a lease that remains active past its ten-minute
+   expiry. Never put tenant ids or sensitive content into monitoring annotations.
+6. To contain a purge incident, set mode back to `disabled` and redeploy. Do not
+   delete run history, extend retention ad hoc, or restore erased content into
+   the live schema. Investigate using sanitized run ids and an isolated backup.
+
+## Sensitive-content erasure requests
+
+1. Record the request with the target call id and a constrained internal case
+   reference. Never put requester contact details, notes, transcript text,
+   recording locators, or provider payloads into the request or audit trail.
+2. Verify requester identity outside the dashboard using an approved method and
+   trusted information already on file. The dashboard checkbox records the
+   operator's attestation; it does not perform or prove the check.
+3. Record the completed method. A request still in `pending_identity`, or one
+   that was rejected, must never reach content deletion.
+4. Before execution, re-check the call target and type the exact request-bound
+   phrase. This is destructive confirmation, not reauthentication. Do not copy
+   a phrase from another request or automate this step in browser QA.
+5. After completion, confirm the request and audit chain show one transition
+   and only aggregate transcript/recording outcomes. Preserve the operational
+   call record, consent evidence, request row, and audit history.
+6. On uncertainty, reject with a constrained reason or leave identity pending.
+   Never delete request history or bypass the workflow with a direct erase.
+
 ## Backup and restore verification plan
 
 Do not test a restore against staging or production application data. Create an

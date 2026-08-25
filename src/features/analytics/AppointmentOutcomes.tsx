@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { AppointmentStatus } from "@/types";
 import type { OutcomeEntry } from "@/services/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CalendarDays } from "lucide-react";
 
@@ -22,9 +22,9 @@ export function AppointmentOutcomes({ entries, total }: { entries: OutcomeEntry[
     <Card>
       <CardHeader className="flex-col items-start gap-1">
         <CardTitle>Appointment outcomes</CardTitle>
-        <p className="text-xs text-text-muted">
+        <CardDescription>
           Current status of the {total.toLocaleString()} appointment{total === 1 ? "" : "s"} booked in this period
-        </p>
+        </CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
         {total === 0 ? (

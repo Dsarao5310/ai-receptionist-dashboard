@@ -5,7 +5,6 @@ import { Switch } from "@/components/ui/Switch";
 import { useIntegrations } from "@/lib/store/integrations";
 import { NOTIFICATION_EVENTS, useSettings, type NotificationChannels } from "@/lib/store/settings";
 
-
 /**
  * Notification preferences.
  *
@@ -16,6 +15,12 @@ import { NOTIFICATION_EVENTS, useSettings, type NotificationChannels } from "@/l
  * quietly receive nothing, the control stays usable but says plainly that
  * delivery is not available yet, driven by the same derived capability status
  * the rest of the app uses.
+ *
+ * This used to be a raw `<table>` with a fixed `min-w-[26rem]` (416px), which
+ * forced horizontal scroll on a 375px viewport for what is really a 3-channel
+ * preference grid. A row-per-event list carries the same information — event,
+ * description, one switch per channel with its own visible label — without
+ * ever needing a wider viewport than it's given.
  */
 
 const CHANNELS: { key: keyof NotificationChannels; label: string }[] = [
@@ -49,46 +54,28 @@ export function NotificationSettings() {
           </p>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[26rem] text-sm">
-            <caption className="sr-only">Notification preferences by event and channel</caption>
-            <thead>
-              <tr>
-                <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-text-muted">
-                  Event
-                </th>
-                {CHANNELS.map((c) => (
-                  <th
-                    key={c.key}
-                    scope="col"
-                    className="pb-2 text-center text-xs font-semibold uppercase tracking-wide text-text-muted"
-                  >
-                    {c.label}
-                  </th>
+        <ul className="divide-y divide-border">
+          {NOTIFICATION_EVENTS.map((event) => (
+            <li key={event.key} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm text-text-primary">{event.label}</p>
+                <p className="text-xs text-text-muted">{event.description}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:shrink-0">
+                {CHANNELS.map((channel) => (
+                  <label key={channel.key} className="flex items-center gap-2 text-xs text-text-secondary">
+                    <Switch
+                      checked={notifications[event.key][channel.key]}
+                      onCheckedChange={(v) => setNotification(event.key, channel.key, v)}
+                      aria-label={`${event.label} via ${channel.label}${ready[channel.key] ? "" : " (not available yet)"}`}
+                    />
+                    {channel.label}
+                  </label>
                 ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {NOTIFICATION_EVENTS.map((event) => (
-                <tr key={event.key}>
-                  <th scope="row" className="py-3 pr-3 text-left font-normal">
-                    <span className="block text-text-primary">{event.label}</span>
-                    <span className="block text-xs text-text-muted">{event.description}</span>
-                  </th>
-                  {CHANNELS.map((channel) => (
-                    <td key={channel.key} className="py-3 text-center">
-                      <Switch
-                        checked={notifications[event.key][channel.key]}
-                        onCheckedChange={(v) => setNotification(event.key, channel.key, v)}
-                        aria-label={`${event.label} via ${channel.label}${ready[channel.key] ? "" : " (not available yet)"}`}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );

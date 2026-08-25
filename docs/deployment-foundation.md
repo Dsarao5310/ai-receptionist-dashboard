@@ -59,6 +59,7 @@ Configure these only in the hosting provider's encrypted server environment:
 | `N8N_MODE` | `disabled` for this phase. |
 | `GOOGLE_CALENDAR_MODE` | `disabled` until its production redirect is registered and re-certified. |
 | `TWILIO_MODE` | `disabled` for this phase. |
+| `MODEL_PROVIDER_MODE` | `disabled` until an isolated environment has gateway auth, approved distinct models, budget controls, and live certification. |
 
 Do not configure `EMAIL_SERVER` or `EMAIL_FROM`. Auth.js requires an adapter to
 persist and atomically consume verification tokens; this repository has no such
@@ -82,12 +83,15 @@ Replace `{origin}` with the exact `AUTH_URL` origin:
 | n8n inbound events | `{origin}/api/internal/n8n/events` | Implemented and signed; n8n remains disabled. |
 | Twilio inbound SMS | `{origin}/api/internal/twilio/sms` | Implemented and signed; Twilio remains disabled. |
 | Twilio status | `{origin}/api/internal/twilio/status` | Implemented and signed; Twilio remains disabled. |
-| Vapi events | No route exists | Not implemented; do not register a callback yet. |
+| Vapi events | `{origin}/api/internal/vapi/events` | Implemented with bearer authentication; simulator verified, not registered or live-certified. |
 | Email OAuth/magic link | No production route contract | Blocked on an Auth.js adapter and mail-provider selection. |
 
-Production validation pins Google Calendar and both Twilio callbacks to these
-exact paths and the same origin as `AUTH_URL`. n8n is a separate outbound
-service, so `N8N_BASE_URL` may use its own public HTTPS origin.
+Production validation pins Google Calendar, both Twilio callbacks, and the Vapi
+callback to these exact paths and the same origin as `AUTH_URL`. n8n is a
+separate outbound service, so `N8N_BASE_URL` may use its own public HTTPS origin.
+The model provider has no public callback. Live mode instead requires server-only
+AI Gateway authentication, explicit approved primary/fallback ids, and bounded
+timeout, token, and cost policy.
 
 ## Auth.js and session contract
 

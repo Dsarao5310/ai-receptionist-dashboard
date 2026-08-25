@@ -39,6 +39,16 @@ so the roles can be exercised:
 | `N8N_REQUEST_SIGNING_SECRET` | when live | Signs requests the dashboard sends n8n. |
 | `N8N_WEBHOOK_SIGNING_SECRET` | for ingestion | Verifies requests n8n sends the dashboard. Without it, every inbound event is refused. |
 | `N8N_TIMEOUT_MS` | no | Outbound call deadline. Defaults to 10000. |
+| `VAPI_MODE` | yes in production | `disabled`, `simulated` or `live`. Production refuses `simulated`. |
+| `VAPI_API_KEY` | when live | Private server API credential; never exposed to the browser. |
+| `VAPI_WEBHOOK_BEARER_TOKEN` | when live | Independent 32+ character token authenticating Vapi server events. |
+| `VAPI_PUBLIC_WEBHOOK_URL` | when live | Exact HTTPS callback ending in `/api/internal/vapi/events`. |
+| `MODEL_PROVIDER_MODE` | yes in production | `disabled`, `simulated` or `live`. Production refuses `simulated`. |
+| `AI_GATEWAY_API_KEY` | when live outside managed OIDC | Server-only AI Gateway credential. Vercel deployments may use `VERCEL_OIDC_TOKEN` instead. |
+| `MODEL_PRIMARY_ID` / `MODEL_FALLBACK_ID` | when live | Distinct approved model ids; currently GPT-5.4 Mini with Claude Haiku 4.5 fallback. |
+| `MODEL_TIMEOUT_MS` | no | Total generation deadline; defaults to 8000 and is bounded to 1–30 seconds. |
+| `MODEL_MAX_INPUT_TOKENS` / `MODEL_MAX_OUTPUT_TOKENS` | no | Server-enforced request ceilings; defaults to 6000 / 350. |
+| `MODEL_MAX_COST_MICRO_USD` | no | Conservative per-request preflight ceiling including the one allowed retry; defaults to 10000 ($0.01). |
 
 Runtime validation lives in `src/server/env.ts`; the same pure rules are exposed
 through `npm run deploy:check` and `npm run deploy:build`. Nothing is prefixed
@@ -208,7 +218,27 @@ webhooks, tenant-owned number mapping, idempotent sending, and simulator test
 coverage. It is **not live-certified** because the configured trial account owns
 no SMS-capable number; see [`docs/twilio-live-certification.md`](docs/twilio-live-certification.md).
 
-Vapi, Gmail, Pinecone, and the model provider have no real server implementation.
-They fail closed as unavailable; the operator UI cannot persist a false
-connected/healthy state for them. Development mocks remain client-side fixtures,
-not production provider connections.
+Vapi has an application-side inbound lifecycle implementation: authenticated
+`status-update` and `end-of-call-report` events, trusted assistant/phone tenant
+mapping, durable idempotency, monotonic terminal state, and safe transcript
+persistence. It is **simulator verified, not live-certified**; there is no Vapi
+account, registered webhook, live call, tool-call execution, model-provider
+certification, or recording persistence.
+
+The model provider has a server-only AI Gateway implementation with an explicit
+disabled/simulated/live mode, approved primary/fallback policy, deterministic
+reply and call-analysis evaluations, structured output validation, prompt-
+injection boundaries, and time/token/cost ceilings. It is **application-ready
+and simulator verified, not live-certified**; no gateway credential or live
+request was used. See [`docs/model-provider-readiness.md`](docs/model-provider-readiness.md).
+
+The customer email channel now has a private-schema mailbox/thread/message
+foundation, trusted mailbox tenant mapping, shared inbound receipts, outbound
+operation idempotency, and deterministic simulation. It is **application-ready
+and simulator/database verified, not Gmail-ready**: there is no Gmail OAuth,
+watch/Pub/Sub lifecycle, public provider callback, live send/read, credential,
+remote migration, deployment, or live certification. Live mode fails closed;
+see [`docs/email-provider-readiness.md`](docs/email-provider-readiness.md).
+
+Pinecone still has no real server implementation and fails closed as unavailable;
+development mocks are not production provider connections.

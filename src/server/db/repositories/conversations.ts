@@ -22,6 +22,14 @@ import { iso, num, str, WorkspaceScopedRepository, type Row } from "./base";
  * a fast database feel slow.
  */
 export class ConversationRepository extends WorkspaceScopedRepository {
+  constructor(
+    sql: ConstructorParameters<typeof WorkspaceScopedRepository>[0],
+    ws: string,
+    private readonly includeSensitive = false
+  ) {
+    super(sql, ws);
+  }
+
   async list(): Promise<Conversation[]> {
     const [rows, transcripts, actions] = await Promise.all([
       this.sql`
@@ -31,11 +39,11 @@ export class ConversationRepository extends WorkspaceScopedRepository {
         left join calls ca     on ca.conversation_id = c.id
         where c.workspace_id = ${this.ws}
         order by c.started_at desc`,
-      this.transcriptsByConversation(),
+      this.includeSensitive ? this.transcriptsByConversation() : Promise.resolve(new Map()),
       this.actionsByConversation(),
     ]);
 
-    return rows.map((row) => toConversation(row, transcripts, actions));
+    return rows.map((row) => toConversation(row, transcripts, actions, this.includeSensitive));
   }
 
   async findById(id: string): Promise<Conversation | null> {
@@ -48,10 +56,10 @@ export class ConversationRepository extends WorkspaceScopedRepository {
     if (!row) return null;
 
     const [transcripts, actions] = await Promise.all([
-      this.transcriptsByConversation(id),
+      this.includeSensitive ? this.transcriptsByConversation(id) : Promise.resolve(new Map()),
       this.actionsByConversation(id),
     ]);
-    return toConversation(row, transcripts, actions);
+    return toConversation(row, transcripts, actions, this.includeSensitive);
   }
 
   private async transcriptsByConversation(onlyId?: string): Promise<Map<string, Conversation["transcript"]>> {
@@ -100,7 +108,8 @@ export class ConversationRepository extends WorkspaceScopedRepository {
 function toConversation(
   row: Row,
   transcripts: Map<string, Conversation["transcript"]>,
-  actions: Map<string, ActionStep[]>
+  actions: Map<string, ActionStep[]>,
+  includeSensitive: boolean
 ): Conversation {
   const id = str(row.id);
   return {
@@ -111,8 +120,8 @@ function toConversation(
     timestamp: iso(row.started_at),
     intent: str(row.intent) as Conversation["intent"],
     outcome: str(row.outcome) as Conversation["outcome"],
-    summary: str(row.summary),
-    transcriptPreview: str(row.transcript_preview),
+    summary: includeSensitive ? str(row.summary) : "",
+    transcriptPreview: includeSensitive ? str(row.transcript_preview) : "",
     transcript: transcripts.get(id) ?? [],
     appointmentId: row.appointment_id ? str(row.appointment_id) : undefined,
     actions: actions.get(id) ?? [],

@@ -23,8 +23,10 @@ export function AppointmentsCalendar({
   const { view, setView, anchor, setAnchor, go, goToday, label, startOfWeek } = useCalendarNav(today);
 
   return (
-    <section className="space-y-3">
-      <CalendarToolbar view={view} onView={setView} label={label} onPrev={() => go(-1)} onNext={() => go(1)} onToday={goToday} />
+    <section className="space-y-4">
+      <div className="border-b border-border pb-4">
+        <CalendarToolbar view={view} onView={setView} label={label} onPrev={() => go(-1)} onNext={() => go(1)} onToday={goToday} />
+      </div>
       <div>
         {view === "month" && (
           <MonthView

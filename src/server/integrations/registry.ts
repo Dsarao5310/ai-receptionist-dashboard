@@ -5,6 +5,9 @@ import type { IntegrationAdapter } from "@/services/adapters";
 import { n8nServerAdapter } from "./n8n/adapter";
 import { googleCalendarServerAdapter } from "./google-calendar/adapter";
 import { twilioServerAdapter } from "./twilio/adapter";
+import { vapiServerAdapter } from "./vapi/adapter";
+import { modelProviderServerAdapter } from "./model-provider/adapter";
+import { emailServerAdapter } from "./email/adapter";
 import { unavailableServerAdapter } from "./unavailable-adapter";
 
 /**
@@ -29,13 +32,16 @@ const SERVER_ADAPTERS: Partial<Record<ProviderId, IntegrationAdapter>> = {
   n8n: n8nServerAdapter,
   google_calendar: googleCalendarServerAdapter,
   twilio: twilioServerAdapter,
+  vapi: vapiServerAdapter,
+  model_provider: modelProviderServerAdapter,
+  gmail: emailServerAdapter,
 };
 
 export function getServerAdapter(provider: ProviderId): IntegrationAdapter {
   return SERVER_ADAPTERS[provider] ?? unavailableServerAdapter(provider);
 }
 
-/** Which providers are backed by a real implementation. Admin diagnostics only. */
+/** Which providers have a server implementation. Its configured mode still decides live/simulated/disabled. */
 export function isLiveProvider(provider: ProviderId): boolean {
   return provider in SERVER_ADAPTERS;
 }

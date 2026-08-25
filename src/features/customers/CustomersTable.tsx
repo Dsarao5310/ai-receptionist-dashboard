@@ -100,7 +100,7 @@ export function CustomersTable({
                       {fmt.relative(c.lastInteraction)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-text-secondary whitespace-nowrap">
+                  <TableCell className="text-right text-text-secondary tabular-nums whitespace-nowrap">
                     {c.totalAppointments} total
                     {c.upcomingAppointment && (
                       <span className="block text-xs text-accent-text">

@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import type { CalendarView } from "./useCalendarNav";
 
 const VIEWS: { key: CalendarView; label: string }[] = [
@@ -11,6 +11,13 @@ const VIEWS: { key: CalendarView; label: string }[] = [
   { key: "month", label: "Month" },
 ];
 
+/**
+ * The calendar's own navigation, not a Card — it sits directly above the grid
+ * inside the same Card the page already wraps both in, so a second nested
+ * border here would read as a card inside a card. The Day/Week/Month switch
+ * reuses the app's one segmented-tab component rather than a bespoke button
+ * row, which is what every other view-switch in the product already uses.
+ */
 export function CalendarToolbar({
   view,
   onView,
@@ -27,37 +34,39 @@ export function CalendarToolbar({
   onToday: () => void;
 }) {
   return (
-    <header className="flex flex-col gap-3 rounded-xl border border-border bg-surface px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-center gap-2">
         <Button variant="outline" size="sm" onClick={onToday}>
           Today
         </Button>
         <div className="flex items-center">
-          <button onClick={onPrev} className="flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary" aria-label="Previous period">
+          <button
+            onClick={onPrev}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary"
+            aria-label="Previous period"
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button onClick={onNext} className="flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary" aria-label="Next period">
+          <button
+            onClick={onNext}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary"
+            aria-label="Next period"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        <h2 className="truncate text-sm font-semibold text-text-primary">{label}</h2>
+        <h2 className="truncate text-section font-semibold text-text-primary">{label}</h2>
       </div>
 
-      <div className="flex items-center gap-1 self-start rounded-lg bg-surface-sunken p-1 sm:self-auto">
+      <Tabs value={view} onValueChange={(v) => onView(v as CalendarView)} className="self-start sm:self-auto">
+        <TabsList>
           {VIEWS.map((v) => (
-            <button
-              key={v.key}
-              onClick={() => onView(v.key)}
-              aria-pressed={view === v.key}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                view === v.key ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"
-              )}
-            >
+            <TabsTrigger key={v.key} value={v.key}>
               {v.label}
-            </button>
+            </TabsTrigger>
           ))}
-      </div>
-    </header>
+        </TabsList>
+      </Tabs>
+    </div>
   );
 }

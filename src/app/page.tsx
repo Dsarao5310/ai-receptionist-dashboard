@@ -15,9 +15,11 @@ import { Gauge } from "@/components/shared/Gauge";
 import { getReadiness } from "@/features/overview/readiness";
 import { ConversationDrawer } from "@/features/conversations/ConversationDrawer";
 import { AppointmentDrawer } from "@/features/appointments/AppointmentDrawer";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { CONNECTION_STATE_STYLES } from "@/data/constants";
+import { cn } from "@/lib/utils";
 
 export default function OverviewPage() {
   const { dataset, loading, error, retry, rangeKey, customBounds, setRange, stats, activity, conversations, appointments, status } =
@@ -25,12 +27,6 @@ export default function OverviewPage() {
 
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
-
-  // The chart carries this number directly in its own header, so it is not
-  // repeated as a separate tile in the grid below.
-  const HERO_KEY = "appointments_booked";
-  const heroKpi = stats?.kpis.find((k) => k.key === HERO_KEY);
-  const secondaryKpis = stats?.kpis.filter((k) => k.key !== HERO_KEY) ?? [];
 
   const readiness = getReadiness(status);
 
@@ -50,7 +46,7 @@ export default function OverviewPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageHeader
         description="A snapshot of what your AI receptionist has handled."
         actions={
@@ -76,30 +72,55 @@ export default function OverviewPage() {
         <StatusStrip status={status} />
       )}
 
-      {/* The chart carries the headline number itself, so this row is one real
-          analytical surface next to one compact score, rather than a decorative
-          panel next to an unrelated dial. */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        {loading || !stats ? <TrendChartSkeleton /> : <TrendChart trend={stats.trend} headline={heroKpi} />}
+      {/* The stat row carries the headline number now, not the chart below it —
+          one solid-filled tile among six equal siblings, the way a DocTime-style
+          stat row puts its loudest number in the same row as its context rather
+          than in an oversized panel of its own. The chart's job shrinks to what
+          only it can show: the shape of the trend, not the total again. */}
+      {loading || !stats ? <KPIGridSkeleton /> : <KPIGrid kpis={stats.kpis} />}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {loading || !stats ? <TrendChartSkeleton /> : <TrendChart trend={stats.trend} />}
 
         <Card className="flex flex-col rounded-2xl card-raised">
-          <CardHeader className="flex-col items-start gap-1 p-5 pb-0">
+          <CardHeader className="p-5 pb-0">
             <CardTitle className="text-section">Receptionist readiness</CardTitle>
-            <CardDescription>How ready your channels are to do the job right now.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-1 items-center justify-center p-5">
+          <CardContent className="flex flex-1 flex-col p-5">
             {loading ? (
-              <Skeleton className="h-[130px] w-[130px] rounded-full" />
+              <div className="flex flex-1 items-center justify-center">
+                <Skeleton className="h-[130px] w-[130px] rounded-full" />
+              </div>
             ) : (
-              <Gauge value={readiness.score} label="Receptionist readiness" caption={readiness.caption} showLabel={false} />
+              <>
+                <div className="flex justify-center">
+                  <Gauge value={readiness.score} label="Receptionist readiness" caption={readiness.caption} showLabel={false} />
+                </div>
+                {/* Skipped while offline: the score is zeroed by the master
+                    switch there, not by these weights, so listing individual
+                    channels as "connected" next to a 0 would read as a
+                    contradiction rather than an explanation. */}
+                {status.overall !== "offline" && (
+                  <ul className="mt-4 space-y-2 border-t border-border pt-4">
+                    {readiness.breakdown.map((ch) => {
+                      const style = CONNECTION_STATE_STYLES[ch.state];
+                      return (
+                        <li key={ch.key} className="flex items-center gap-2 text-sm">
+                          <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", style.dot)} />
+                          <span className="text-text-secondary">{ch.label}</span>
+                          <span className="ml-auto tabular-nums text-text-muted">{ch.weight}%</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {loading || !stats ? <KPIGridSkeleton /> : <KPIGrid kpis={secondaryKpis} />}
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {loading ? (
           <UpcomingAppointmentsSkeleton />
         ) : (

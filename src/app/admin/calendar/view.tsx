@@ -8,6 +8,7 @@ import { toast } from "@/lib/store/toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { PageHeader } from "@/components/shared/PageHeader";
 import {
   Dialog,
   DialogContent,
@@ -129,13 +130,14 @@ export function CalendarAdminView(props: CalendarAdminProps) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-text-primary">Calendar</h1>
-        <p className="text-sm text-text-secondary">
-          The external calendar this workspace synchronises bookings with. Business users see this as
-          &ldquo;Calendar&rdquo; and never as a vendor.
-        </p>
-      </div>
+      <PageHeader
+        description={
+          <>
+            The external calendar this workspace synchronises bookings with. Business users see this as
+            &ldquo;Calendar&rdquo; and never as a vendor.
+          </>
+        }
+      />
 
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-3">
@@ -270,62 +272,60 @@ export function CalendarAdminView(props: CalendarAdminProps) {
               />
             </div>
           ) : (
-            <div>
-              <Table minWidth="min-w-[880px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Our record</TableHead>
-                    <TableHead>State</TableHead>
-                    <TableHead>Detail</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+            <Table minWidth="min-w-[880px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Our record</TableHead>
+                  <TableHead>State</TableHead>
+                  <TableHead>Detail</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {props.needingSync.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="text-text-primary">{row.customerName}</TableCell>
+                    <TableCell className="text-text-secondary">{row.serviceName}</TableCell>
+                    <TableCell className="text-text-secondary">
+                      {row.date} · {row.time}
+                    </TableCell>
+                    <TableCell>
+                      <Badge tone={row.syncState === "synced" ? "success" : "warning"}>
+                        {SYNC_LABELS[row.syncState ?? ""] ?? "Unknown"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs text-text-secondary">{row.syncDetail ?? "—"}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy !== null}
+                          onClick={() =>
+                            run(`accept-${row.id}`, () => reconcileAppointmentAction(row.id), "Calendar re-checked")
+                          }
+                        >
+                          <RefreshCw className="mr-1 h-3 w-3" />
+                          Accept calendar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy !== null}
+                          onClick={() =>
+                            run(`push-${row.id}`, () => pushAppointmentToCalendarAction(row.id), "Pushed to calendar")
+                          }
+                        >
+                          Push ours
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {props.needingSync.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="text-text-primary">{row.customerName}</TableCell>
-                      <TableCell className="text-text-secondary">{row.serviceName}</TableCell>
-                      <TableCell className="text-text-secondary">
-                        {row.date} · {row.time}
-                      </TableCell>
-                      <TableCell>
-                        <Badge tone={row.syncState === "synced" ? "success" : "warning"}>
-                          {SYNC_LABELS[row.syncState ?? ""] ?? "Unknown"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs text-text-secondary">{row.syncDetail ?? "—"}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={busy !== null}
-                            onClick={() =>
-                              run(`accept-${row.id}`, () => reconcileAppointmentAction(row.id), "Calendar re-checked")
-                            }
-                          >
-                            <RefreshCw className="mr-1 h-3 w-3" />
-                            Accept calendar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={busy !== null}
-                            onClick={() =>
-                              run(`push-${row.id}`, () => pushAppointmentToCalendarAction(row.id), "Pushed to calendar")
-                            }
-                          >
-                            Push ours
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

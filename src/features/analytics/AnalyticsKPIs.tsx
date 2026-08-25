@@ -3,7 +3,7 @@ import { KPICard } from "@/components/shared/KPICard";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 
 /** Booking conversion is the headline answer to "is the receptionist working?" — give it the visual weight. */
-const EMPHASIZED_KEY = "booking_conversion";
+const HERO_KEY = "booking_conversion";
 
 /**
  * Matches the Overview grid so the two dashboards read as one system.
@@ -18,7 +18,7 @@ export function AnalyticsKPIs({ kpis, basis }: { kpis: KPI[]; basis: string }) {
     <div className="space-y-2">
       <div className={GRID}>
         {kpis.map((kpi) => (
-          <KPICard key={kpi.key} kpi={kpi} emphasize={kpi.key === EMPHASIZED_KEY} />
+          <KPICard key={kpi.key} kpi={kpi} hero={kpi.key === HERO_KEY} />
         ))}
       </div>
       <p className="text-xs text-text-muted">{basis} Comparisons are against the immediately preceding period of the same length.</p>

@@ -1,42 +1,84 @@
-# Vapi readiness analysis
+# Vapi readiness
 
-Status: **NOT STARTED**. This is architecture guidance only; no Vapi account,
-assistant, phone number, credential, webhook, or live call is connected.
+Status: **APPLICATION-READY + SIMULATOR VERIFIED** for the inbound call
+lifecycle foundation. No Vapi account, assistant, phone number, credential,
+registered webhook, live-certified model provider, or live call is connected.
+The separate model-provider application foundation is simulator verified but is
+deliberately not wired into Vapi in this phase.
 
-## Reuse without modification
+## Implemented contract
 
-Vapi must use the existing server-side provider framework:
+- `VAPI_MODE=disabled|simulated|live`; production rejects `simulated`.
+- Live configuration requires a private API key, a 32+ character webhook bearer
+  token, and the exact HTTPS callback `/api/internal/vapi/events` on `AUTH_URL`.
+- Vapi server messages use the current `{ message: { type, call, ... } }`
+  envelope and bearer custom-credential authentication documented by Vapi.
+- `status-update` and `end-of-call-report` are versioned as inbound schema 1.
+- All bodies are bounded to 1 MiB before JSON parsing.
+- Provider timestamps must carry a UTC offset; server-local time is never guessed.
 
-- `IntegrationAdapter` for connection, health, and safe capability projection;
-- `credentialStore` / `SecretStore` for server-only credentials;
-- the shared inbound pipeline for authentication, schema validation, trusted
-  tenant resolution, database-arbitrated idempotency, transaction, events, and
-  audit;
-- `runWorkflowOperation` and `commitWithSyncGuard` for booking side effects and
-  `sync_required` handling;
-- provider-time normalization and normalized errors;
-- server authorization plus platform/business UI separation.
+Current Vapi references:
 
-## Vapi-specific domain work
+- [Server authentication](https://docs.vapi.ai/server-url/server-authentication)
+- [Server events](https://docs.vapi.ai/server-url/events)
 
-- A globally unique trusted mapping from Vapi assistant/phone identifiers to a
-  workspace. Payload `workspaceId` must never authorize a call.
-- Versioned schemas for call started, call ended, transcript updates, recording
-  metadata, tool calls, and provider delivery/status events.
-- A durable call lifecycle that tolerates events arriving late, duplicated, or
-  out of order without regressing terminal state.
-- Provider semantic success from Vapi callbacks, not HTTP acceptance alone.
-- Tool-call correlation to stable operation IDs for booking, rescheduling,
-  cancellation, and customer messaging.
-- Explicit recording/transcript consent, retention, deletion, and access rules.
-- Client-safe call DTOs that omit assistant IDs, phone mappings, webhook data,
-  credentials, execution references, raw prompts, and provider errors.
+## Tenant and persistence boundary
 
-## Required future certification
+- `vapi_assistants.assistant_id` is globally unique.
+- Vapi phone resources reuse `provider_phone_numbers`; provider resource ids are
+  globally unique per provider and voice mappings must be enabled.
+- Assistant and phone mappings must agree when both are present. Unknown or
+  conflicting mappings are permanently rejected.
+- Payload `workspaceId`, metadata, provider organization data, or customer speech
+  never authorizes tenancy.
+- The shared inbound pipeline performs authentication, schema validation,
+  trusted tenant resolution, Postgres idempotency, one transaction, integration
+  event, and append-only audit.
+- Call state records provider event time. Older or late `in-progress` messages
+  cannot regress `completed`, `missed`, or `failed` terminal state.
+- Final reports may update normalized summary and transcript lines. Raw payloads,
+  assistant ids, phone resource ids, private diagnostics, and recording URLs do
+  not enter client DTOs.
+- Each new call now receives tenant-bound privacy state and a bounded transcript
+  expiry. Recording storage remains unused and requires explicit granted consent
+  if a future provider adapter invokes it.
+- A disabled-by-default daily purge scheduler now exists locally with dedicated
+  bearer authentication, an expiring database lease, bounded work, and
+  sanitized execution history. It is not remotely migrated, deployed, enabled,
+  or live certified.
 
-Certify signature failure, stale/replayed delivery, unknown assistant/phone,
-cross-tenant tool calls, duplicate/out-of-order lifecycle events, partial
-transcripts, recording availability/failure, tool timeout, provider-declared
-failure, `sync_required`, client leakage, operator diagnostics, and cleanup.
-Select and certify the model provider separately; Vapi transport readiness does
-not certify model quality, latency, cost, or safety.
+## Verified evidence
+
+On 2026-08-24, production code was exercised with deterministic signed Vapi
+fixtures against the isolated Postgres test schema:
+
+- invalid bearer rejection before database access;
+- payload-workspace tampering ignored;
+- cross-tenant assistant/phone mapping conflict rejected;
+- duplicate delivery applied once through database uniqueness;
+- final summary/transcript/duration persistence;
+- older lifecycle event refused from regressing terminal state;
+- recording URL omitted and provider identifiers absent from client call DTOs.
+
+The latest full repository result is 477/477 tests across 29 files, plus
+typecheck, lint, a successful 24-route production build, and a 48-artifact
+client-secret audit. The privacy/Vapi/client focused gate passed 51/51 tests.
+
+## Not implemented or certified
+
+- Live API requests, webhook registration, or real calls.
+- Assistant or phone provisioning UI/workflow.
+- Outbound calling, `assistant-request`, tool calls, transfers, or appointment
+  side effects.
+- Model selection, latency/cost policy, evaluation, or safety certification.
+- Partial/live transcript streaming.
+- Recording ingestion, approved consent wording/retention, a purge scheduler,
+  privacy administration UI, remote migration, or live privacy certification.
+- Live retry behavior, provider outage semantics, operator diagnostics, or
+  cleanup certification.
+
+Live readiness requires staging-only Vapi resources, environment-isolated
+credentials, an independently certified model provider, approved privacy
+policy, monitored purge execution, and the full hostile live matrix. The local
+privacy foundation is database-test verified only; neither it nor Vapi is LIVE
+VERIFIED.

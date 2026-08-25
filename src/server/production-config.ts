@@ -149,6 +149,14 @@ export function productionConfigurationProblems(env: EnvironmentSource): string[
     problems.push("email magic-link sign-in is disabled until a durable Auth.js adapter is implemented");
   }
 
+  const emailProviderMode = validateMode(problems, env, "EMAIL_PROVIDER_MODE");
+  if (emailProviderMode === "simulated") {
+    problems.push("EMAIL_PROVIDER_MODE is simulated, which is development-only");
+  }
+  if (emailProviderMode === "live") {
+    problems.push("live email is unavailable until Gmail OAuth and mailbox watches are implemented");
+  }
+
   const n8nMode = validateMode(problems, env, "N8N_MODE");
   if (n8nMode === "simulated") problems.push("N8N_MODE is simulated, which is development-only");
   if (n8nMode === "live") {
@@ -207,9 +215,70 @@ export function productionConfigurationProblems(env: EnvironmentSource): string[
     );
   }
 
+  const vapiMode = validateMode(problems, env, "VAPI_MODE");
+  if (vapiMode === "simulated") problems.push("VAPI_MODE is simulated, which is development-only");
+  if (vapiMode === "live") {
+    if (!read(env, "VAPI_API_KEY")) problems.push("live Vapi requires VAPI_API_KEY");
+    const webhookToken = read(env, "VAPI_WEBHOOK_BEARER_TOKEN");
+    if (!webhookToken) problems.push("live Vapi requires VAPI_WEBHOOK_BEARER_TOKEN");
+    else if (webhookToken.length < 32) {
+      problems.push("VAPI_WEBHOOK_BEARER_TOKEN must contain at least 32 characters");
+    }
+    validateExactCallback(
+      problems,
+      "VAPI_PUBLIC_WEBHOOK_URL",
+      read(env, "VAPI_PUBLIC_WEBHOOK_URL"),
+      authOrigin,
+      "/api/internal/vapi/events"
+    );
+  }
+
+  const modelProviderMode = validateMode(problems, env, "MODEL_PROVIDER_MODE");
+  if (modelProviderMode === "simulated") {
+    problems.push("MODEL_PROVIDER_MODE is simulated, which is development-only");
+  }
+  if (modelProviderMode === "live") {
+    if (!read(env, "AI_GATEWAY_API_KEY") && !read(env, "VERCEL_OIDC_TOKEN")) {
+      problems.push("live model provider requires AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN");
+    }
+    const primary = read(env, "MODEL_PRIMARY_ID");
+    const fallback = read(env, "MODEL_FALLBACK_ID");
+    const allowedModels = new Set(["openai/gpt-5.4-mini", "anthropic/claude-haiku-4.5"]);
+    if (!primary) problems.push("live model provider requires MODEL_PRIMARY_ID");
+    else if (!allowedModels.has(primary)) problems.push("MODEL_PRIMARY_ID is not in the approved receptionist model allowlist");
+    if (!fallback) problems.push("live model provider requires MODEL_FALLBACK_ID");
+    else if (!allowedModels.has(fallback)) problems.push("MODEL_FALLBACK_ID is not in the approved receptionist model allowlist");
+    if (primary && fallback && primary === fallback) {
+      problems.push("MODEL_PRIMARY_ID and MODEL_FALLBACK_ID must be different");
+    }
+
+    const integerPolicy: Array<[string, number, number]> = [
+      ["MODEL_TIMEOUT_MS", 1_000, 30_000],
+      ["MODEL_MAX_INPUT_TOKENS", 256, 12_000],
+      ["MODEL_MAX_OUTPUT_TOKENS", 64, 1_000],
+      ["MODEL_MAX_COST_MICRO_USD", 1_000, 100_000],
+    ];
+    for (const [name, min, max] of integerPolicy) {
+      const value = read(env, name);
+      if (value && (!/^\d+$/.test(value) || Number(value) < min || Number(value) > max)) {
+        problems.push(`${name} must be an integer between ${min} and ${max}`);
+      }
+    }
+  }
+
+  const privacyPurgeMode = read(env, "PRIVACY_PURGE_MODE") ?? "disabled";
+  if (privacyPurgeMode !== "disabled" && privacyPurgeMode !== "scheduled") {
+    problems.push("PRIVACY_PURGE_MODE must be disabled or scheduled");
+  }
+  if (privacyPurgeMode === "scheduled") {
+    const cronSecret = read(env, "CRON_SECRET");
+    if (!cronSecret) problems.push("scheduled privacy purge requires CRON_SECRET");
+    else if (cronSecret.length < 32) problems.push("CRON_SECRET must contain at least 32 characters");
+  }
+
   if (
     vercelEnvironment === "preview" &&
-    [n8nMode, calendarMode, twilioMode].includes("live") &&
+    [n8nMode, calendarMode, twilioMode, vapiMode, modelProviderMode, emailProviderMode].includes("live") &&
     read(env, "VERCEL_GIT_COMMIT_REF") !== "staging"
   ) {
     problems.push("live providers in Preview are restricted to the staging branch");

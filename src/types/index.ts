@@ -66,7 +66,6 @@ export interface Conversation {
   summary: string;
   transcriptPreview: string;
   transcript: { speaker: "ai" | "customer"; text: string; time: string }[];
-  bookingAction?: string;
   appointmentId?: string;
   actions: ActionStep[];
   durationSec?: number; // voice only

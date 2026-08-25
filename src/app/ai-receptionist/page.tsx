@@ -13,6 +13,7 @@ import { TestReceptionist } from "@/features/ai-receptionist/TestReceptionist";
 import { ConfigurationPreview } from "@/features/business-profile/ConfigurationPreview";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getReceptionistActivity, getReceptionistStatus } from "@/services/ai-receptionist";
 import { useIntegrations } from "@/lib/store/integrations";
@@ -35,16 +36,15 @@ export default function AIReceptionistPage() {
   const completeness = useMemo(() => getSetupCompleteness(config), [config]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-text-primary">AI Receptionist</h2>
-          <p className="mt-0.5 text-xs text-text-muted">Control how your receptionist behaves with customers.</p>
-        </div>
-        <Button size="sm" onClick={() => setTestOpen(true)}>
-          <MessageSquareText className="h-3.5 w-3.5" /> Test receptionist
-        </Button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        description="Control how your receptionist behaves with customers."
+        actions={
+          <Button size="sm" onClick={() => setTestOpen(true)}>
+            <MessageSquareText className="h-3.5 w-3.5" /> Test receptionist
+          </Button>
+        }
+      />
 
       {loading ? (
         <Card className="p-5">
@@ -68,6 +68,8 @@ export default function AIReceptionistPage() {
 
       <GreetingEditor config={config} onSave={(greeting) => updateAI({ greeting })} />
 
+      {/* Communication style is one logical unit — personality and voice both
+          describe how the receptionist comes across, so they read as a row. */}
       <div className="grid gap-4 lg:grid-cols-2">
         <PersonalitySettings personality={config.ai.personality} onChange={(personality) => updateAI({ personality })} />
         <VoiceSettingsCard
@@ -79,13 +81,15 @@ export default function AIReceptionistPage() {
 
       <BookingRulesCard booking={config.ai.booking} onChange={(patch) => updateAI({ booking: { ...config.ai.booking, ...patch } })} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <AfterHoursCard value={config.ai.afterHours} onChange={(afterHours) => updateAI({ afterHours })} />
-        <EscalationCard
-          escalation={config.ai.escalation}
-          onChange={(patch) => updateAI({ escalation: { ...config.ai.escalation, ...patch } })}
-        />
-      </div>
+      {/* After-hours and escalation each stand on their own row: a five-option
+          list next to three compact selects stretched to match its height
+          produced a lopsided card with dead space at the bottom, so each gets
+          its natural height instead of being forced into a shared row. */}
+      <AfterHoursCard value={config.ai.afterHours} onChange={(afterHours) => updateAI({ afterHours })} />
+      <EscalationCard
+        escalation={config.ai.escalation}
+        onChange={(patch) => updateAI({ escalation: { ...config.ai.escalation, ...patch } })}
+      />
 
       <KnowledgeSummary completeness={completeness} />
 

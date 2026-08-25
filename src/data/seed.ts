@@ -16,7 +16,6 @@ import { addMinutes, mulberry32, pick, pickWeighted, randomInt, type Rand } from
 import { snapshotOfService } from "@/services/business";
 import {
   addZonedDays,
-  formatDayKey,
   startOfZonedDay,
   wallClockToInstant,
   zonedDayKey,
@@ -250,20 +249,16 @@ export function buildDataset(now: Date, seed = 42, timeZone: string = DEFAULT_CO
     const topic = pick(rand, QUESTION_TOPICS);
 
     let appointmentId: string | undefined;
-    let bookingAction: string | undefined;
 
     if (outcome === "booked") {
       const appt = pushAppointmentFromConversation({ customerId: customer.id, customerName: customer.name, timestamp }, "auto", channel as AppointmentSource, service);
       appointmentId = appt.id;
-      bookingAction = `Booked ${appt.service.name} for ${formatDayKey(appt.date, zone, { month: "short", day: "numeric" })} at ${appt.time}`;
     } else if (outcome === "rescheduled") {
       const appt = pushAppointmentFromConversation({ customerId: customer.id, customerName: customer.name, timestamp }, "rescheduled", channel as AppointmentSource, service);
       appointmentId = appt.id;
-      bookingAction = `Rescheduled to ${formatDayKey(appt.date, zone, { month: "short", day: "numeric" })} at ${appt.time}`;
     } else if (outcome === "cancelled") {
       const appt = pushAppointmentFromConversation({ customerId: customer.id, customerName: customer.name, timestamp }, "cancelled", channel as AppointmentSource, service);
       appointmentId = appt.id;
-      bookingAction = `Cancelled ${appt.service.name}`;
     }
 
     const conv: Conversation = {
@@ -277,7 +272,6 @@ export function buildDataset(now: Date, seed = 42, timeZone: string = DEFAULT_CO
       summary: summaryFor(intent, outcome, customer.name, service.name, topic),
       transcriptPreview: outcome === "missed" ? "No transcript — call was not answered." : `${customer.name}: ${transcriptFor(intent, outcome, service.name, topic)[1]?.text ?? ""}`,
       transcript: transcriptFor(intent, outcome, service.name, topic),
-      bookingAction,
       appointmentId,
       actions: actionsFor(intent, outcome, channel),
       durationSec: channel === "voice" ? randomInt(rand, 35, 420) : undefined,
@@ -390,7 +384,7 @@ export function buildDataset(now: Date, seed = 42, timeZone: string = DEFAULT_CO
       customerName: c.customerName,
       channel: c.channel,
       summary: c.summary,
-      detail: c.bookingAction ?? c.summary,
+      detail: c.summary,
       conversationId: c.id,
       callId: calls.find((call) => call.conversationId === c.id)?.id,
       appointmentId: c.appointmentId,

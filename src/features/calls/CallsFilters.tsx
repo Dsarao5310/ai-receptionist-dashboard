@@ -37,7 +37,13 @@ export function CallsFilters({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1 sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-          <Input placeholder="Search caller or phone..." className="pl-9" value={search} onChange={(e) => onSearch(e.target.value)} />
+          <Input
+            placeholder="Search caller or phone..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => onSearch(e.target.value)}
+            aria-label="Search calls by caller or phone number"
+          />
         </div>
         <div className="sm:ml-auto">
           <DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={onRange} />
@@ -46,7 +52,7 @@ export function CallsFilters({
 
       <div className="flex flex-wrap gap-2">
         <Select value={intent} onValueChange={(v) => onIntent(v as Intent | "all")}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px]" aria-label="Filter by intent">
             <SelectValue placeholder="Intent" />
           </SelectTrigger>
           <SelectContent>
@@ -59,7 +65,7 @@ export function CallsFilters({
         </Select>
 
         <Select value={outcome} onValueChange={(v) => onOutcome(v as ConversationOutcome | "all")}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px]" aria-label="Filter by outcome">
             <SelectValue placeholder="Outcome" />
           </SelectTrigger>
           <SelectContent>

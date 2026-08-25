@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { ImpactMetric } from "@/services/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 
 export function ReceptionistImpact({ metrics }: { metrics: ImpactMetric[] }) {
   return (
     <Card>
       <CardHeader className="flex-col items-start gap-1">
         <CardTitle>What your AI receptionist handled</CardTitle>
-        <p className="text-xs text-text-muted">Work the assistant took on during this period</p>
+        <CardDescription>Work the assistant took on during this period</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-3 pt-4 lg:grid-cols-3">
         {metrics.map((metric) => {

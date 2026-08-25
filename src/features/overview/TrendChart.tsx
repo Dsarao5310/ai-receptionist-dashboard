@@ -1,23 +1,23 @@
 "use client";
 
 import { useMemo } from "react";
-import { ChartNoAxesCombined, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { ChartNoAxesCombined } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { KPI, TrendPoint } from "@/types";
+import type { TrendPoint } from "@/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { formatKpiDelta, formatKpiValue } from "@/lib/kpi-format";
 import { cn } from "@/lib/utils";
 
 /**
- * The dashboard's real analytical centrepiece.
+ * The shape of the trend — not the total again.
  *
- * An earlier version of this page carried a separate filled-color "hero" panel
- * showing the same appointments number above a barely-visible decorative
- * chart, with the actual readable two-series chart living in a second card
- * further down. That was two weak representations of the same data instead of
- * one strong one. This component is the merge: the headline number lives
- * directly on the chart that explains it.
+ * The headline number used to live here too, first as a decorative panel,
+ * then folded into this card's own header. Both were the same mistake at
+ * different sizes: the KPI row above already states the appointments total
+ * with more visual weight than a chart header ever gave it. Repeating it here
+ * added nothing a plain section title doesn't say more honestly. What only
+ * this card can show — the shape of the trend across the period, and how a
+ * specific point compares to where it started — is what it shows now.
  *
  * The shaded band marks the most recent stretch of the period without
  * claiming to be precise — it carries no numbers of its own. Hovering a point
@@ -75,7 +75,7 @@ function HoverCard({
   );
 }
 
-export function TrendChart({ trend, headline }: { trend: TrendPoint[]; headline?: KPI }) {
+export function TrendChart({ trend }: { trend: TrendPoint[] }) {
   const conversationTotal = trend.reduce((sum, point) => sum + point.conversations, 0);
   const appointmentTotal = trend.reduce((sum, point) => sum + point.appointments, 0);
   const hasActivity = conversationTotal > 0 || appointmentTotal > 0;
@@ -94,41 +94,12 @@ export function TrendChart({ trend, headline }: { trend: TrendPoint[]; headline?
     trend.length >= 4 ? trend[Math.max(trend.length - Math.ceil(trend.length / 4) - 1, 0)]?.label : null;
   const bandEnd = trend[trend.length - 1]?.label ?? null;
 
-  const delta = headline ? formatKpiDelta(headline) : null;
-  const DeltaIcon = delta ? (delta.flat ? Minus : delta.positive ? TrendingUp : TrendingDown) : null;
-
   return (
     <Card className="overflow-hidden rounded-2xl card-raised">
-      <CardHeader className="flex-col items-start gap-4 p-5 sm:flex-row sm:items-end sm:justify-between">
+      <CardHeader className="flex-col items-start gap-3 p-5 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
-            {headline?.label ?? "Receptionist activity"}
-          </p>
-          <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            {/* Fixed, not hover-reactive: the header states the period total,
-                and the tooltip below is where the moment-to-moment comparison
-                lives. A number that jumps around under the cursor reads as
-                unsteady rather than informative. */}
-            <span className="text-metric text-text-primary">
-              {headline ? formatKpiValue(headline) : appointmentTotal}
-            </span>
-            {delta && DeltaIcon && (
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
-                  delta.flat
-                    ? "bg-surface-sunken text-text-muted"
-                    : delta.positive
-                      ? "bg-success-bg text-success"
-                      : "bg-danger-bg text-danger"
-                )}
-              >
-                <DeltaIcon className="h-3 w-3 shrink-0" aria-hidden />
-                {delta.text}
-              </span>
-            )}
-          </div>
-          <p className="mt-1.5 text-xs text-text-muted">Conversations handled vs. appointments booked</p>
+          <h3 className="text-section font-semibold text-text-primary">Receptionist activity</h3>
+          <p className="mt-1 text-xs text-text-muted">Conversations handled vs. appointments booked</p>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
@@ -157,12 +128,16 @@ export function TrendChart({ trend, headline }: { trend: TrendPoint[]; headline?
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <defs>
+                  {/* Quieter fill than the first pass — thin, confident lines
+                      carrying the shape, with the gradient underneath as a
+                      hint of volume rather than the loudest thing in the
+                      card. */}
                   <linearGradient id="conversationsFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.25} />
+                    <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.16} />
                     <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="appointmentsFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-success)" stopOpacity={0.22} />
+                    <stop offset="0%" stopColor="var(--color-success)" stopOpacity={0.14} />
                     <stop offset="100%" stopColor="var(--color-success)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
@@ -200,7 +175,7 @@ export function TrendChart({ trend, headline }: { trend: TrendPoint[]; headline?
                   dataKey="conversations"
                   name="Conversations"
                   stroke="var(--color-accent)"
-                  strokeWidth={2.5}
+                  strokeWidth={2}
                   fill="url(#conversationsFill)"
                   activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-surface)" }}
                 />
@@ -209,7 +184,7 @@ export function TrendChart({ trend, headline }: { trend: TrendPoint[]; headline?
                   dataKey="appointments"
                   name="Appointments"
                   stroke="var(--color-success)"
-                  strokeWidth={2.5}
+                  strokeWidth={2}
                   fill="url(#appointmentsFill)"
                   activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-surface)" }}
                 />
@@ -225,9 +200,8 @@ export function TrendChart({ trend, headline }: { trend: TrendPoint[]; headline?
 export function TrendChartSkeleton() {
   return (
     <Card className="rounded-2xl">
-      <CardHeader className="flex-col items-start gap-3 p-5">
-        <Skeleton className="h-3 w-40" />
-        <Skeleton className="h-9 w-32" />
+      <CardHeader className="flex-col items-start gap-2 p-5 pb-4">
+        <Skeleton className="h-5 w-40" />
         <Skeleton className="h-3 w-56" />
       </CardHeader>
       <CardContent className="border-t border-border p-4">

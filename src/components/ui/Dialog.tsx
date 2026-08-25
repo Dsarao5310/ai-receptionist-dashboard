@@ -17,7 +17,7 @@ export function DialogContent({
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
-        className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-[overlay-in_180ms_ease-out] data-[state=closed]:animate-[fade-out_150ms_ease-in]"
+        className="fixed inset-0 z-50 bg-overlay data-[state=open]:animate-[overlay-in_180ms_ease-out] data-[state=closed]:animate-[fade-out_150ms_ease-in]"
       />
       <DialogPrimitive.Content
         className={cn(

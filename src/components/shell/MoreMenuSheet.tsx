@@ -22,7 +22,7 @@ export function MoreMenuSheet({ open, onOpenChange }: { open: boolean; onOpenCha
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 md:hidden data-[state=open]:animate-[overlay-in_200ms_ease-out] data-[state=closed]:animate-[fade-out_180ms_ease-in]" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay md:hidden data-[state=open]:animate-[overlay-in_200ms_ease-out] data-[state=closed]:animate-[fade-out_180ms_ease-in]" />
         <DialogPrimitive.Content
           className={cn(
             "fixed bottom-0 left-0 right-0 z-50 md:hidden rounded-t-xl border-t border-border bg-surface shadow-xl pb-[calc(env(safe-area-inset-bottom)+12px)]",

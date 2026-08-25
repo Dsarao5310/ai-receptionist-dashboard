@@ -27,6 +27,8 @@ Load additional scoped files only when relevant:
 - Google Calendar: `.claude/providers/google-calendar.md`
 - Twilio: `.claude/providers/twilio.md`
 - Vapi: `.claude/providers/vapi.md`
+- Call recording, transcripts, consent, retention, or erasure:
+  `.claude/rules/privacy.md`
 - Gmail or email: `.claude/providers/gmail.md`
 - Knowledge or Pinecone: `.claude/providers/knowledge.md`
 - Production or release readiness: `docs/production-readiness.md`
@@ -62,8 +64,16 @@ Do not read every scoped file by default.
 
 ## Completion behavior
 
-At the end of substantial work:
+At the end of every successfully completed task:
 
-- Update `.claude/PROJECT_STATE.md` only when current state materially changed.
-- Replace `.claude/handoffs/latest.md` with a concise current checkpoint.
-- Do not turn `CLAUDE.md` into project history.
+- Update the relevant Claude Markdown files so they match the verified repository
+  and runtime state; never leave known-stale task or status claims behind.
+- Update `.claude/CURRENT_TASK.md` when the phase, completed work, blockers, or
+  next action changed.
+- Update `.claude/PROJECT_STATE.md` when implementation status or verification
+  evidence changed.
+- Replace `.claude/handoffs/latest.md` with a concise current checkpoint covering
+  changes, verification, remaining work, and the next safe action.
+- Update any related scoped rules, provider notes, runbooks, or other Markdown
+  documentation affected by the task.
+- Do not record unverified claims or turn `CLAUDE.md` into project history.

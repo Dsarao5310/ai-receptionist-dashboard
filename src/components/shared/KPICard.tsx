@@ -17,14 +17,23 @@ import { cn } from "@/lib/utils";
  * The delta is a filled chip rather than bare text: at a glance the direction
  * should be readable from the shape, and the arrow icon carries the meaning for
  * anyone who cannot rely on the color.
+ *
+ * ── `hero` is a fill, not a size bump ───────────────────────────────────────
+ * A first attempt at emphasis made this card physically bigger — spanning two
+ * grid columns — which made every sibling narrower and produced a ragged row.
+ * The reference this now follows (a DocTime-style stat row) does it the other
+ * way: the loud tile is the *same size* as its neighbours, standing out purely
+ * through a solid fill instead of taking more space. Hierarchy through
+ * contrast, not through size, so the row stays regular at every breakpoint.
  */
 export function KPICard({
   kpi,
-  emphasize = false,
+  hero = false,
   raised = false,
 }: {
   kpi: KPI;
-  emphasize?: boolean;
+  /** Solid-fill treatment for the one tile in a row that should read first. */
+  hero?: boolean;
   /** Dashboard surfaces opt into the display layer; other pages keep the flat card. */
   raised?: boolean;
 }) {
@@ -33,36 +42,37 @@ export function KPICard({
   const goodDirection = inverted ? !delta.positive : delta.positive;
   const Icon = delta.flat ? Minus : goodDirection ? TrendingUp : TrendingDown;
 
-  const deltaChip = delta.flat
-    ? "bg-surface-sunken text-text-muted"
-    : goodDirection
-      ? "bg-success-bg text-success"
-      : "bg-danger-bg text-danger";
+  // On the hero fill, red/green would fight the saturated background rather
+  // than read against it — DocTime's own filled tile drops colour from its
+  // delta pill too. Direction still survives without colour: the arrow shape
+  // and the literal +/- in the formatted text both carry it independently.
+  const deltaChip = hero
+    ? "bg-white/20 text-hero-text"
+    : delta.flat
+      ? "bg-surface-sunken text-text-muted"
+      : goodDirection
+        ? "bg-success-bg text-success"
+        : "bg-danger-bg text-danger";
 
   return (
     <Card
       className={cn(
         "flex min-w-0 flex-col gap-3 overflow-hidden p-4",
-        emphasize && "border-accent/40 bg-accent-subtle/40 shadow-md",
-        raised && "rounded-2xl p-5 card-raised card-raised-interactive"
+        raised && "rounded-2xl p-5 card-raised card-raised-interactive",
+        hero && "border-transparent bg-hero"
       )}
     >
       <span
         className={cn(
           "min-w-0 text-xs font-medium leading-snug hyphens-none",
-          emphasize ? "text-accent-text" : "text-text-muted"
+          hero ? "text-hero-muted" : "text-text-muted"
         )}
       >
         {kpi.label}
       </span>
 
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span
-          className={cn(
-            "text-text-primary",
-            raised ? "text-metric" : cn("font-semibold tracking-tight tabular-nums", emphasize ? "text-3xl" : "text-2xl")
-          )}
-        >
+        <span className={cn("text-metric", hero ? "text-hero-text" : "text-text-primary")}>
           {formatKpiValue(kpi)}
         </span>
         <span
@@ -76,7 +86,12 @@ export function KPICard({
         </span>
       </div>
 
-      <Sparkline values={kpi.sparkline} tone={emphasize ? "accent" : goodDirection ? "success" : "muted"} variant="bars" className="mt-auto" />
+      <Sparkline
+        values={kpi.sparkline}
+        tone={hero ? "hero" : goodDirection ? "success" : "muted"}
+        variant="bars"
+        className="mt-auto"
+      />
     </Card>
   );
 }

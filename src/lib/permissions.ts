@@ -38,6 +38,7 @@ export type Permission =
   | "overview.view"
   | "conversations.view"
   | "calls.view"
+  | "calls.view_sensitive"
   | "appointments.view"
   | "customers.view"
   | "analytics.view"
@@ -48,6 +49,8 @@ export type Permission =
   | "business.edit"
   | "settings.business"
   | "team.manage"
+  | "privacy.manage"
+  | "privacy.erase"
   // Platform only — never granted by a workspace role
   | "integrations.view"
   | "integrations.manage"
@@ -91,10 +94,23 @@ const STAFF: Permission[] = [
 ];
 
 /** Everything staff can do, plus the analytical and configuration work of running a shift. */
-const MANAGER: Permission[] = [...STAFF, "analytics.view", "connections.view", "ai.configure"];
+const MANAGER: Permission[] = [
+  ...STAFF,
+  "calls.view_sensitive",
+  "analytics.view",
+  "connections.view",
+  "ai.configure",
+];
 
 /** Full authority over the business — and nothing beyond it. */
-const OWNER: Permission[] = [...MANAGER, "business.edit", "settings.business", "team.manage"];
+const OWNER: Permission[] = [
+  ...MANAGER,
+  "business.edit",
+  "settings.business",
+  "team.manage",
+  "privacy.manage",
+  "privacy.erase",
+];
 
 const WORKSPACE_ROLE_PERMISSIONS: Record<WorkspaceRole, readonly Permission[]> = {
   staff: STAFF,

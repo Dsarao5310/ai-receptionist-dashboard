@@ -164,7 +164,10 @@ export function AppointmentDrawer({
             {/* Everything below shows the booked snapshot; this says so when the catalogue has since changed. */}
             <ServiceDriftNotice appointment={appointment} />
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            {/* Stacks below sm: the drawer is full-width on a 375px viewport,
+                and "Last modified" renders a full date+time string that wraps
+                badly in a ~155px column at that width. */}
+            <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
               <div className="flex items-start gap-2">
                 <Calendar className="h-4 w-4 text-text-muted mt-0.5" />
                 <div>

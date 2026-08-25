@@ -85,6 +85,19 @@ export const serverEnv = {
     return false;
   },
 
+  // ── Customer email channel ───────────────────────────────────────────────
+  // This is separate from Auth.js email sign-in. The current foundation has a
+  // deterministic simulator only; live Gmail OAuth and mailbox watches remain
+  // intentionally unavailable.
+  get emailProviderMode(): ProviderMode {
+    const raw = read("EMAIL_PROVIDER_MODE");
+    if (raw === "disabled" || raw === "simulated" || raw === "live") return raw;
+    if (raw) {
+      throw new Error(`EMAIL_PROVIDER_MODE must be one of disabled, simulated, live — received "${raw}".`);
+    }
+    return IS_PRODUCTION ? "disabled" : "simulated";
+  },
+
   // ── Workflow orchestration ────────────────────────────────────────────────
   //
   // `N8N_MODE` is explicit rather than inferred from whether a URL happens to
@@ -254,10 +267,98 @@ export const serverEnv = {
     const parsed = raw ? Number(raw) : NaN;
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 10_000;
   },
+
+  // ── Vapi voice calls ─────────────────────────────────────────────────────
+  //
+  // The application foundation can be exercised with signed simulated events.
+  // Live mode additionally requires the private API key, an independently
+  // generated inbound bearer token, and the exact registered callback URL.
+  get vapiMode(): ProviderMode {
+    const raw = read("VAPI_MODE");
+    if (raw === "disabled" || raw === "simulated" || raw === "live") return raw;
+    if (raw) {
+      throw new Error(`VAPI_MODE must be one of disabled, simulated, live — received "${raw}".`);
+    }
+    return IS_PRODUCTION ? "disabled" : "simulated";
+  },
+
+  get vapiApiKey(): string | undefined {
+    return read("VAPI_API_KEY");
+  },
+
+  get vapiPublicWebhookUrl(): string | undefined {
+    return read("VAPI_PUBLIC_WEBHOOK_URL");
+  },
+
+  // ── Receptionist model provider ──────────────────────────────────────────
+  //
+  // Live generation is routed through Vercel AI Gateway so model choice,
+  // cross-provider fallback, usage attribution, and data-handling policy stay
+  // behind one server-only boundary. The simulator exercises the same bounded
+  // application contract without network access or credentials.
+  get modelProviderMode(): ProviderMode {
+    const raw = read("MODEL_PROVIDER_MODE");
+    if (raw === "disabled" || raw === "simulated" || raw === "live") return raw;
+    if (raw) {
+      throw new Error(`MODEL_PROVIDER_MODE must be one of disabled, simulated, live — received "${raw}".`);
+    }
+    return IS_PRODUCTION ? "disabled" : "simulated";
+  },
+
+  get modelPrimaryId(): string | undefined {
+    return read("MODEL_PRIMARY_ID");
+  },
+
+  get modelFallbackId(): string | undefined {
+    return read("MODEL_FALLBACK_ID");
+  },
+
+  get modelTimeoutMs(): number {
+    const raw = read("MODEL_TIMEOUT_MS");
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isInteger(parsed) && parsed >= 1_000 && parsed <= 30_000 ? parsed : 8_000;
+  },
+
+  get modelMaxInputTokens(): number {
+    const raw = read("MODEL_MAX_INPUT_TOKENS");
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isInteger(parsed) && parsed >= 256 && parsed <= 12_000 ? parsed : 6_000;
+  },
+
+  get modelMaxOutputTokens(): number {
+    const raw = read("MODEL_MAX_OUTPUT_TOKENS");
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isInteger(parsed) && parsed >= 64 && parsed <= 1_000 ? parsed : 350;
+  },
+
+  get modelMaxCostMicroUsd(): number {
+    const raw = read("MODEL_MAX_COST_MICRO_USD");
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isInteger(parsed) && parsed >= 1_000 && parsed <= 100_000 ? parsed : 10_000;
+  },
+
+  get modelGatewayAuthConfigured(): boolean {
+    return Boolean(read("AI_GATEWAY_API_KEY") || read("VERCEL_OIDC_TOKEN"));
+  },
+
+  // ── Privacy retention maintenance ───────────────────────────────────────
+  // Disabled by default even in production. Enabling scheduled execution also
+  // requires a dedicated bearer secret; it is never inferred from deployment.
+  get privacyPurgeMode(): PrivacyPurgeMode {
+    const raw = read("PRIVACY_PURGE_MODE");
+    if (raw === "disabled" || raw === "scheduled") return raw;
+    if (raw) throw new Error(`PRIVACY_PURGE_MODE must be disabled or scheduled — received "${raw}".`);
+    return "disabled";
+  },
+
+  get cronSecret(): string | undefined {
+    return read("CRON_SECRET");
+  },
 } as const;
 
 export type N8nMode = "disabled" | "simulated" | "live";
 export type ProviderMode = "disabled" | "simulated" | "live";
+export type PrivacyPurgeMode = "disabled" | "scheduled";
 
 /**
  * Refuse to run a production build with development configuration.

@@ -28,16 +28,49 @@ function credit(state: ConnectionState): number {
   return 0;
 }
 
+const CHANNEL_LABELS: Record<keyof typeof WEIGHTS, string> = {
+  calendar: "Calendar",
+  voice: "Voice",
+  sms: "SMS",
+  email: "Email",
+};
+
+export interface ReadinessChannel {
+  key: keyof typeof WEIGHTS;
+  label: string;
+  /** Share of the composite score this channel accounts for, e.g. 34 for 34%. */
+  weight: number;
+  state: ConnectionState;
+}
+
 export interface Readiness {
   score: number;
   caption: string;
+  /** What the score is made of — the thing StatusStrip's connection badges
+   *  don't show: how much each channel actually counts. */
+  breakdown: ReadinessChannel[];
+}
+
+function buildBreakdown(status: ReceptionistStatus): ReadinessChannel[] {
+  return (Object.keys(WEIGHTS) as (keyof typeof WEIGHTS)[]).map((key) => ({
+    key,
+    label: CHANNEL_LABELS[key],
+    weight: WEIGHTS[key],
+    state: status[key],
+  }));
 }
 
 export function getReadiness(status: ReceptionistStatus): Readiness {
+  const breakdown = buildBreakdown(status);
+
   // Offline is a a hard zero rather than a weighted sum: if the receptionist is
   // switched off, no amount of healthy plumbing means it is doing anything.
   if (status.overall === "offline") {
-    return { score: 0, caption: "The receptionist is switched off, so nothing is being handled right now." };
+    return {
+      score: 0,
+      caption: "The receptionist is switched off, so nothing is being handled right now.",
+      breakdown,
+    };
   }
 
   const score = (Object.keys(WEIGHTS) as (keyof typeof WEIGHTS)[]).reduce(
@@ -45,26 +78,18 @@ export function getReadiness(status: ReceptionistStatus): Readiness {
     0
   );
 
-  const missing = (Object.keys(WEIGHTS) as (keyof typeof WEIGHTS)[]).filter(
+  const missingCount = (Object.keys(WEIGHTS) as (keyof typeof WEIGHTS)[]).filter(
     (key) => status[key] === "disconnected"
-  );
+  ).length;
 
-  if (missing.length === 0) {
-    return { score, caption: "Every channel is connected and working normally." };
+  if (missingCount === 0) {
+    return { score, caption: "Every channel is connected and working normally.", breakdown };
   }
 
-  const names: Record<keyof typeof WEIGHTS, string> = {
-    calendar: "Calendar",
-    voice: "Voice",
-    sms: "SMS",
-    email: "Email",
-  };
-  const list = missing.map((k) => names[k]);
-  const readable =
-    list.length === 1 ? list[0] : `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
-
-  return {
-    score,
-    caption: `${readable} ${list.length === 1 ? "is" : "are"} not set up yet.`,
-  };
+  // No caption sentence here: the breakdown list below states exactly which
+  // channels are costing points and by how much — a hollow dot next to a
+  // weight number already answers "what, and how much", which used to take a
+  // full sentence to say and still repeated names StatusStrip had already
+  // shown above it.
+  return { score, caption: "", breakdown };
 }
