@@ -26,6 +26,13 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # `tsc --noEmit` alone cannot see route-typed props like LayoutProps<'/'>
+      # (src/app/layout.tsx and friends) - Next only writes those ambient
+      # declarations into .next/types, and a fresh checkout has no .next
+      # directory yet. `next typegen` generates just that, without a full
+      # build or any of the production env vars build/audit need below.
+      - run: npx next typegen
       - run: npm run typecheck
       - run: npm run lint
 
