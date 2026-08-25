@@ -13,9 +13,13 @@ import { ConversationRepository } from "./conversations";
  * different stories.
  */
 export class CallRepository extends WorkspaceScopedRepository {
-  constructor(sql: ConstructorParameters<typeof WorkspaceScopedRepository>[0], ws: string) {
+  constructor(
+    sql: ConstructorParameters<typeof WorkspaceScopedRepository>[0],
+    ws: string,
+    private readonly includeSensitive = false
+  ) {
     super(sql, ws);
-    this.conversations = new ConversationRepository(sql, ws);
+    this.conversations = new ConversationRepository(sql, ws, includeSensitive);
   }
 
   private readonly conversations: ConversationRepository;
@@ -50,7 +54,7 @@ function toCall(row: Row, conversation: Conversation | undefined): Call {
     intent: str(row.intent) as Call["intent"],
     outcome: str(row.outcome) as Call["outcome"],
     appointmentId: row.appointment_id ? str(row.appointment_id) : undefined,
-    summary: str(row.summary),
+    summary: conversation?.summary ?? "",
     transcript: conversation?.transcript ?? [],
     actions: conversation?.actions ?? [],
   };

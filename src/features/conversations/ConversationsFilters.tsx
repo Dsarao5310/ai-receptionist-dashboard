@@ -61,7 +61,13 @@ export function ConversationsFilters({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1 sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-          <Input placeholder="Search customers..." className="pl-9" value={search} onChange={(e) => onSearch(e.target.value)} />
+          <Input
+            placeholder="Search customers..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => onSearch(e.target.value)}
+            aria-label="Search conversations by customer"
+          />
         </div>
         <div className="sm:ml-auto">
           <DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={onRange} />
@@ -70,7 +76,7 @@ export function ConversationsFilters({
 
       <div className="flex flex-wrap gap-2">
         <Select value={channel} onValueChange={(v) => onChannel(v as Channel | "all")}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-[130px]" aria-label="Filter by channel">
             <SelectValue placeholder="Channel" />
           </SelectTrigger>
           <SelectContent>
@@ -83,7 +89,7 @@ export function ConversationsFilters({
         </Select>
 
         <Select value={intent} onValueChange={(v) => onIntent(v as Intent | "all")}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px]" aria-label="Filter by intent">
             <SelectValue placeholder="Intent" />
           </SelectTrigger>
           <SelectContent>
@@ -96,7 +102,7 @@ export function ConversationsFilters({
         </Select>
 
         <Select value={outcome} onValueChange={(v) => onOutcome(v as ConversationOutcome | "all")}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px]" aria-label="Filter by outcome">
             <SelectValue placeholder="Outcome" />
           </SelectTrigger>
           <SelectContent>
@@ -109,7 +115,7 @@ export function ConversationsFilters({
         </Select>
 
         <Select value={bookingStatus} onValueChange={(v) => onBookingStatus(v as BookingStatusFilter)}>
-          <SelectTrigger className="w-[170px]">
+          <SelectTrigger className="w-[170px]" aria-label="Filter by booking status">
             <SelectValue placeholder="Booking status" />
           </SelectTrigger>
           <SelectContent>

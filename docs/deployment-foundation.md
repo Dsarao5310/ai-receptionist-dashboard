@@ -4,17 +4,21 @@ Status date: 2026-08-21 (America/Vancouver)
 
 ## Current decision
 
-The repository is prepared for a production-shaped HTTPS deployment, but no
-hosting target, domain, production Auth.js credentials, or live deployment has
-been selected or created. The current machine therefore cannot certify secure
-cookies, OAuth callbacks, sign-out, or tenant flows over real HTTPS.
+Production is live on Vercel at
+`https://ai-receptionist-dashboard-jade.vercel.app`, and the real Google Auth.js
+owner flow has been verified there. Production credentials are scoped to the
+Vercel Production environment only.
 
-For the first hosted environment, **Vercel is the smallest recommended path**:
-Next.js lists it as a verified adapter, the application uses App Router route
-handlers and server actions without a custom server, and Vercel supplies managed
-HTTPS plus separate Preview and Production environment variables. This is a
-recommendation, not an external change; the repository remains a standard
-Node.js Next application and can run on another full-featured Node host.
+The selected staging model is the same Vercel project with a dedicated
+`staging` Git branch, its stable Vercel branch alias, and Preview variables
+scoped specifically to that branch. Custom Vercel environments would require a
+Pro upgrade and add no necessary isolation for this phase. A second Vercel
+project is therefore not justified.
+
+The database remains a separate security boundary: staging uses a completely
+separate Supabase project, not the production `app` schema and not a copy of
+production data. See `docs/staging-foundation.md` for the provisioning order and
+stop conditions.
 
 Static hosting is not supported. The app requires server rendering, Auth.js
 route handlers, server actions, Proxy, and direct Postgres connectivity.
@@ -55,6 +59,7 @@ Configure these only in the hosting provider's encrypted server environment:
 | `N8N_MODE` | `disabled` for this phase. |
 | `GOOGLE_CALENDAR_MODE` | `disabled` until its production redirect is registered and re-certified. |
 | `TWILIO_MODE` | `disabled` for this phase. |
+| `MODEL_PROVIDER_MODE` | `disabled` until an isolated environment has gateway auth, approved distinct models, budget controls, and live certification. |
 
 Do not configure `EMAIL_SERVER` or `EMAIL_FROM`. Auth.js requires an adapter to
 persist and atomically consume verification tokens; this repository has no such
@@ -78,12 +83,15 @@ Replace `{origin}` with the exact `AUTH_URL` origin:
 | n8n inbound events | `{origin}/api/internal/n8n/events` | Implemented and signed; n8n remains disabled. |
 | Twilio inbound SMS | `{origin}/api/internal/twilio/sms` | Implemented and signed; Twilio remains disabled. |
 | Twilio status | `{origin}/api/internal/twilio/status` | Implemented and signed; Twilio remains disabled. |
-| Vapi events | No route exists | Not implemented; do not register a callback yet. |
+| Vapi events | `{origin}/api/internal/vapi/events` | Implemented with bearer authentication; simulator verified, not registered or live-certified. |
 | Email OAuth/magic link | No production route contract | Blocked on an Auth.js adapter and mail-provider selection. |
 
-Production validation pins Google Calendar and both Twilio callbacks to these
-exact paths and the same origin as `AUTH_URL`. n8n is a separate outbound
-service, so `N8N_BASE_URL` may use its own public HTTPS origin.
+Production validation pins Google Calendar, both Twilio callbacks, and the Vapi
+callback to these exact paths and the same origin as `AUTH_URL`. n8n is a
+separate outbound service, so `N8N_BASE_URL` may use its own public HTTPS origin.
+The model provider has no public callback. Live mode instead requires server-only
+AI Gateway authentication, explicit approved primary/fallback ids, and bounded
+timeout, token, and cost policy.
 
 ## Auth.js and session contract
 
@@ -105,14 +113,19 @@ service, so `N8N_BASE_URL` may use its own public HTTPS origin.
 
 ## Human-owned setup required
 
-1. Choose the production and staging hostnames and create the hosting projects.
-2. Add the encrypted variables above separately for Preview/staging and
-   Production; set the build command to `npm run deploy:build`.
-3. In Google Cloud, create separate OAuth web clients and register each exact
-   Auth.js callback URL. Put the matching id and secret in that environment.
-4. Deploy, then verify the assigned HTTPS URL before attaching a custom domain.
-5. Run the browser matrix below against the real HTTPS origin. Only after it
-   passes may Auth.js be called production-verified.
+Production hosting and its Google Auth.js callback are complete. Remaining
+staging setup is deliberately sequenced:
+
+1. Approve and create the isolated Supabase staging project.
+2. Provision `app_migrator` and `app_runtime`, apply migrations, and run the
+   guarded staging seed.
+3. Create and push the `staging` Git branch, then record the stable Vercel branch
+   alias assigned by the first Preview deployment.
+4. Create a separate Google OAuth Web client and register the exact staging
+   Auth.js callback URL.
+5. Add only branch-scoped staging variables to Vercel Preview and redeploy.
+6. Run the HTTPS browser matrix against every real identity that has actually
+   been supplied.
 
 ## Required HTTPS browser matrix
 

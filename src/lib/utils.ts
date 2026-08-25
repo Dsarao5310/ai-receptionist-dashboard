@@ -1,5 +1,26 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/**
+ * Plain `twMerge` does not know about the dashboard display layer's custom
+ * type-scale classes (`globals.css`'s `.text-metric`/`.text-display`/
+ * `.text-section`). Without this, `twMerge` falls back to treating any
+ * unrecognised `text-*` class as a generic "last one wins" conflict with
+ * *any other* `text-*` class in the same call — including a genuinely
+ * unrelated text-colour class. `cn("text-metric", "text-hero-text")` silently
+ * dropped `text-metric` entirely rather than keeping both: confirmed live,
+ * every KPI tile's number was rendering at the browser default 16px instead
+ * of the intended 30px, with no error and no visual cue something was wrong.
+ * Registering them into the real `font-size` group fixes that while still
+ * correctly conflicting with each other or with `text-2xl` if ever combined.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": ["text-metric", "text-display", "text-section"],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

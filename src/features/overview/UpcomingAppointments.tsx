@@ -29,9 +29,9 @@ export function UpcomingAppointments({ appointments, onSelect }: { appointments:
   // Timestamps are rendered on the business's clock, not the viewer's.
   const fmt = useBusinessFormat();
   return (
-    <Card>
+    <Card className="rounded-2xl card-raised">
       <CardHeader>
-        <CardTitle>Upcoming appointments</CardTitle>
+        <CardTitle className="text-section">Upcoming appointments</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         {appointments.length === 0 ? (
@@ -73,9 +73,9 @@ export function UpcomingAppointments({ appointments, onSelect }: { appointments:
 
 export function UpcomingAppointmentsSkeleton() {
   return (
-    <Card>
+    <Card className="rounded-2xl card-raised">
       <CardHeader>
-        <CardTitle>Upcoming appointments</CardTitle>
+        <CardTitle className="text-section">Upcoming appointments</CardTitle>
       </CardHeader>
       <CardContent className="pt-4 -mx-5 -my-1">
         {Array.from({ length: 5 }).map((_, i) => (

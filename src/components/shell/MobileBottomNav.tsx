@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
-import { getMobileNavItems } from "@/lib/nav-config";
+import { getMobileNavItems, isNavItemActive } from "@/lib/nav-config";
 import { useOptionalSession } from "@/lib/session-context";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -21,9 +21,12 @@ export function MobileBottomNav() {
   return (
     <>
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5 h-14">
+        {/* Columns are derived, not fixed at five: the item list is
+            permission-filtered, so a role without one of the four tabs would
+            otherwise leave a dead cell at the end of the bar. */}
+        <div className="grid h-14" style={{ gridTemplateColumns: `repeat(${items.length + 1}, minmax(0, 1fr))` }}>
           {items.map((item) => {
-            const active = pathname === item.href;
+            const active = isNavItemActive(item.href, pathname);
             return (
               <Link
                 key={item.href}

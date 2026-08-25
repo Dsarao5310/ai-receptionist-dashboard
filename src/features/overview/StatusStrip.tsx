@@ -1,13 +1,8 @@
 import { Bot, Phone, MessageSquare, Mail, Calendar } from "lucide-react";
-import type { ConnectionState, ReceptionistStatus } from "@/types";
+import type { ReceptionistStatus } from "@/types";
 import { Card } from "@/components/ui/Card";
+import { CONNECTION_STATE_STYLES as STATE_STYLES } from "@/data/constants";
 import { cn } from "@/lib/utils";
-
-const STATE_STYLES: Record<ConnectionState, { dot: string; label: string; text: string }> = {
-  connected: { dot: "bg-success", label: "Connected", text: "text-success" },
-  needs_attention: { dot: "bg-warning", label: "Needs attention", text: "text-warning" },
-  disconnected: { dot: "bg-danger", label: "Disconnected", text: "text-danger" },
-};
 
 const ROWS: { key: keyof Omit<ReceptionistStatus, "overall">; label: string; icon: typeof Bot }[] = [
   { key: "voice", label: "Voice", icon: Phone },

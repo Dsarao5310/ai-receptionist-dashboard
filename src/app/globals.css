@@ -12,6 +12,9 @@
   --radius-md: 8px;
   --radius-lg: 10px;
   --radius-xl: 14px;
+  /* Dashboard surfaces only. Every radius above is load-bearing for the ten
+     areas this rebuild does not touch, so this is added rather than raised. */
+  --radius-2xl: 20px;
 
   /* --- Light theme (default) --- */
   --color-page: #faf9f7;
@@ -29,8 +32,23 @@
 
   --color-border: #e8e5e0;
   --color-border-strong: #d9d5cf;
+  /* A border that reads as "about to interact" — hover on a row or card that
+     is not yet selected. Mixed from the live accent rather than a fixed hex,
+     so it tracks whichever of the six accent palettes is active without a
+     per-accent override block. */
+  --color-border-interactive: color-mix(in srgb, var(--color-accent) 45%, transparent);
 
   --color-focus-ring: var(--color-accent);
+
+  /* Deliberately lower contrast than --color-text-muted: this is for a
+     control's own disabled label, which WCAG does not hold to body-text
+     contrast, not for text someone is meant to read normally. */
+  --color-text-disabled: #a39c92;
+
+  /* A dialog/drawer scrim. Tinted with the same warm ink as the shadow ramp
+     rather than flat black, so it belongs to this palette instead of reading
+     like a default browser overlay. */
+  --color-overlay: rgba(23, 19, 13, 0.4);
 
   --color-success: #16794f;
   --color-success-bg: #e7f5ee;
@@ -135,6 +153,12 @@
 
     --color-border: #38322a;
     --color-border-strong: #453e33;
+    --color-border-interactive: color-mix(in srgb, var(--color-accent) 45%, transparent);
+
+    --color-text-disabled: #6b6459;
+    /* A darker, stronger scrim than light mode — a 40%-black overlay reads as
+       barely-there against a canvas that is already near-black. */
+    --color-overlay: rgba(8, 6, 4, 0.6);
 
     --color-success: #4ade9c;
     --color-success-bg: #163527;
@@ -175,6 +199,10 @@
 
   --color-border: #38322a;
   --color-border-strong: #453e33;
+  --color-border-interactive: color-mix(in srgb, var(--color-accent) 45%, transparent);
+
+  --color-text-disabled: #6b6459;
+  --color-overlay: rgba(8, 6, 4, 0.6);
 
   --color-success: #4ade9c;
   --color-success-bg: #163527;
@@ -197,8 +225,71 @@
 :root[data-theme="dark"][data-accent="rose"] { --color-accent-subtle: #391822; --color-accent-text: #ef94ab; }
 :root[data-theme="dark"][data-accent="neutral"] { --color-accent-subtle: #2c261d; --color-accent-text: #d3ccc0; }
 
+/* ============================================================
+   DASHBOARD DISPLAY LAYER
+
+   Additive only. The Overview and Analytics surfaces need a type ladder
+   the rest of the application does not have: measured across src/, 94% of
+   all sized text sits at 14px or below, with nothing at all between 14px
+   and 24px. That missing middle is why the interface cannot express
+   hierarchy — it is not a palette problem.
+
+   None of these override an existing token. The ten feature areas outside
+   the two dashboards must render identically before and after this block.
+   ============================================================ */
+:root {
+  /* Type ladder. Line heights are set here because display sizes need
+     tighter leading than the body scale to read as one object. */
+  --text-display: 2.5rem;      /* 40px — hero numerals */
+  --text-display-lh: 1.05;
+  --text-metric: 1.875rem;     /* 30px — card values */
+  --text-metric-lh: 1.15;
+  --text-section: 1.125rem;    /* 18px — the missing rung */
+  --text-section-lh: 1.4;
+
+  /* Elevation for dashboard cards: a resting step above shadow-sm, and a
+     lift for hover. Derived from the same ink as the existing ramp. */
+  --shadow-card: 0 1px 2px rgba(30, 25, 15, 0.04), 0 4px 12px rgba(30, 25, 15, 0.06);
+  --shadow-card-hover: 0 2px 4px rgba(30, 25, 15, 0.06), 0 12px 28px rgba(30, 25, 15, 0.10);
+
+  /* The single filled focal surface per dashboard.
+
+     This deliberately uses the *active* (darkest) accent step rather than
+     --color-accent. The accent is user-selectable across six palettes, and
+     white on the base orange measures only 4.44:1 — below AA for small text,
+     with a 72%-white label down at 3.51:1. The active step is dark enough that
+     the worst palette still measures 7.73:1 for white and 6.07:1 for the muted
+     label, so every accent is safe rather than just the default indigo.
+
+     None of the accent steps are redefined per theme, so one definition serves
+     light and dark alike. */
+  --color-hero: var(--color-accent-active);
+  --color-hero-text: var(--color-text-on-accent);
+  --color-hero-muted: rgba(255, 255, 255, 0.85);
+  --color-hero-line: rgba(255, 255, 255, 0.24);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.5);
+  }
+}
+:root[data-theme="dark"] {
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
 /* ---------- Tailwind theme bridge ---------- */
 @theme inline {
+  --radius-2xl: var(--radius-2xl);
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+  --color-hero: var(--color-hero);
+  --color-hero-text: var(--color-hero-text);
+  --color-hero-muted: var(--color-hero-muted);
+  --color-hero-line: var(--color-hero-line);
+
   --color-page: var(--color-page);
   --color-surface: var(--color-surface);
   --color-surface-raised: var(--color-surface-raised);
@@ -208,10 +299,14 @@
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
+  --color-text-disabled: var(--color-text-disabled);
   --color-text-on-accent: var(--color-text-on-accent);
 
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
+  --color-border-interactive: var(--color-border-interactive);
+
+  --color-overlay: var(--color-overlay);
 
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
@@ -290,6 +385,62 @@ body {
    ANIMATION KEYFRAMES (150-350ms, referenced via Tailwind's
    arbitrary animate-[name_duration_ease] utility)
    ============================================================ */
+/* ============================================================
+   DASHBOARD UTILITIES
+
+   Scoped helpers for the display layer above. Named rather than expressed
+   as long Tailwind chains because each carries paired values (size with
+   its leading, weight with its tracking) that must not drift apart.
+   ============================================================ */
+
+.text-display {
+  font-size: var(--text-display);
+  line-height: var(--text-display-lh);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-metric {
+  font-size: var(--text-metric);
+  line-height: var(--text-metric-lh);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-section {
+  font-size: var(--text-section);
+  line-height: var(--text-section-lh);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Resting elevation for a dashboard card, with a lift on hover.
+   The transform is deliberately small: a card that jumps reads as a
+   toy, and this sits behind dense data. */
+.card-raised {
+  box-shadow: var(--shadow-card);
+  transition:
+    box-shadow 200ms ease-out,
+    transform 200ms ease-out;
+}
+.card-raised-interactive:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+/* Chart lines draw themselves in once. Guarded by the global
+   prefers-reduced-motion block further down, which zeroes the duration. */
+@keyframes draw-line {
+  from { stroke-dashoffset: var(--draw-length, 1000); }
+  to { stroke-dashoffset: 0; }
+}
+.animate-draw {
+  stroke-dasharray: var(--draw-length, 1000);
+  animation: draw-line 900ms ease-out forwards;
+}
+
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

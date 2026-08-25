@@ -72,16 +72,16 @@ export default function CustomersView({ openCustomerId }: { openCustomerId: stri
 
   if (error) {
     return (
-      <div className="p-4 md:p-6">
+      <div>
         <Card>
-          <ErrorState title="Couldn't load customers" description="Something went wrong generating your demo data." onRetry={retry} />
+          <ErrorState title="Couldn't load customers" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <CustomersFilters search={search} onSearch={setSearch} status={status} onStatus={setStatus} channel={channel} onChannel={setChannel} />
 
       <Card className="overflow-hidden">

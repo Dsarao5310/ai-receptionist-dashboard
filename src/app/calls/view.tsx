@@ -9,6 +9,7 @@ import { CallDrawer } from "@/features/calls/CallDrawer";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 
 export default function CallsView({ initial }: { initial: { intent: Intent | "all"; outcome: ConversationOutcome | "all" } }) {
@@ -40,36 +41,56 @@ export default function CallsView({ initial }: { initial: { intent: Intent | "al
 
   const [selected, setSelected] = useState<Call | null>(null);
 
+  const filtersActive = search.trim().length > 0 || intent !== "all" || outcome !== "all";
+
+  function clearFilters() {
+    setSearch("");
+    setIntent("all");
+    setOutcome("all");
+  }
+
   if (error) {
     return (
-      <div className="p-4 md:p-6">
+      <div>
         <Card>
-          <ErrorState title="Couldn't load calls" description="Something went wrong generating your demo data." onRetry={retry} />
+          <ErrorState title="Couldn't load calls" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <CallsFilters
-        search={search}
-        onSearch={setSearch}
-        intent={intent}
-        onIntent={setIntent}
-        outcome={outcome}
-        onOutcome={setOutcome}
-        rangeKey={rangeKey}
-        customBounds={customBounds}
-        onRange={setRange}
-      />
+    <div className="space-y-5">
+      <PageHeader description="Every call your AI receptionist has answered or missed." />
+
+      <Card className="p-4 sm:p-5">
+        <CallsFilters
+          search={search}
+          onSearch={setSearch}
+          intent={intent}
+          onIntent={setIntent}
+          outcome={outcome}
+          onOutcome={setOutcome}
+          rangeKey={rangeKey}
+          customBounds={customBounds}
+          onRange={setRange}
+        />
+      </Card>
 
       <Card className="overflow-hidden">
         {loading || !dataset ? (
           <CallsTableSkeleton />
         ) : (
           <>
-            <CallsTable calls={items} dataset={dataset} onSelect={setSelected} sortBy={sortBy} sortDir={sortDir} onSort={toggleSort} />
+            <CallsTable
+              calls={items}
+              onSelect={setSelected}
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSort={toggleSort}
+              filtered={filtersActive}
+              onClearFilters={clearFilters}
+            />
             {total > 0 && <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />}
           </>
         )}

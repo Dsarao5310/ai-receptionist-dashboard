@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { AnalyticsTrendPoint } from "@/services/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 
@@ -40,19 +40,24 @@ function ChartTooltip({
   const showTotal = payload.length > 1;
 
   return (
-    <div className="rounded-lg border border-border bg-surface-raised px-3 py-2 shadow-lg">
-      <p className="text-xs font-medium text-text-muted mb-1">{label}</p>
-      {payload.map((p) => (
-        <p key={p.name} className="flex items-center gap-1.5 text-sm text-text-primary">
-          <span className="h-2 w-2 rounded-full shrink-0" style={{ background: p.color }} />
-          {p.name}
-          <span className="ml-auto pl-3 font-semibold tabular-nums">{p.value}</span>
-        </p>
-      ))}
+    <div className="min-w-[160px] rounded-xl border border-border bg-surface-raised p-3 shadow-xl">
+      <p className="text-xs font-medium text-text-muted">{label}</p>
+      <div className="mt-2 space-y-1.5">
+        {payload.map((p) => (
+          <div key={p.name} className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-1.5 text-xs text-text-secondary">
+              <span className="h-2 w-2 rounded-full shrink-0" style={{ background: p.color }} />
+              {p.name}
+            </span>
+            <span className="text-sm font-semibold tabular-nums text-text-primary">{p.value}</span>
+          </div>
+        ))}
+      </div>
       {showTotal && (
-        <p className="mt-1 border-t border-border pt-1 flex items-center gap-1.5 text-xs text-text-muted">
-          Total<span className="ml-auto pl-3 font-semibold tabular-nums text-text-primary">{total}</span>
-        </p>
+        <div className="mt-2 flex items-center justify-between gap-4 border-t border-border pt-2 text-xs text-text-muted">
+          Total
+          <span className="font-semibold tabular-nums text-text-primary">{total}</span>
+        </div>
       )}
     </div>
   );
@@ -63,14 +68,14 @@ export function ConversationTrendChart({ trend }: { trend: AnalyticsTrendPoint[]
   const visible = view === "all" ? SERIES : SERIES.filter((s) => s.key === view);
 
   return (
-    <Card>
-      <CardHeader className="flex-col items-start gap-3 sm:flex-row sm:items-center">
+    <Card className="overflow-hidden">
+      <CardHeader className="flex-col items-start gap-3 p-4 sm:flex-row sm:items-center md:p-5">
         <div>
           <CardTitle>Conversation volume</CardTitle>
-          <p className="mt-1 text-xs text-text-muted">Interactions handled over time, by channel</p>
+          <CardDescription>Interactions handled over time, by channel</CardDescription>
         </div>
         <div
-          className="flex items-center gap-1 rounded-lg bg-surface-sunken p-1 sm:ml-auto overflow-x-auto"
+          className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-border bg-surface-sunken p-1 sm:ml-auto"
           role="group"
           aria-label="Filter chart by channel"
         >
@@ -89,19 +94,19 @@ export function ConversationTrendChart({ trend }: { trend: AnalyticsTrendPoint[]
           ))}
         </div>
       </CardHeader>
-      <CardContent className="pt-4">
-        <div className="h-64 w-full sm:h-72">
+      <CardContent className="border-t border-border bg-surface-sunken/15 p-4">
+        <div className="h-52 w-full sm:h-60">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={trend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+            <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
-                {SERIES.map((s) => (
-                  <linearGradient key={s.key} id={`trend-${s.key}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={s.color} stopOpacity={0.24} />
-                    <stop offset="100%" stopColor={s.color} stopOpacity={0} />
+                {SERIES.map((series) => (
+                  <linearGradient key={series.key} id={`analytics-${series.key}-fill`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={series.color} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={series.color} stopOpacity={0} />
                   </linearGradient>
                 ))}
               </defs>
-              <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 3" />
+              <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="2 4" />
               <XAxis
                 dataKey="label"
                 axisLine={false}
@@ -124,9 +129,9 @@ export function ConversationTrendChart({ trend }: { trend: AnalyticsTrendPoint[]
                   dataKey={s.key}
                   name={s.label}
                   stroke={s.color}
-                  strokeWidth={2}
-                  fill={`url(#trend-${s.key})`}
-                  activeDot={{ r: 4 }}
+                  strokeWidth={2.5}
+                  fill={`url(#analytics-${s.key}-fill)`}
+                  activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-surface)" }}
                 />
               ))}
             </AreaChart>
@@ -156,7 +161,7 @@ export function ConversationTrendChartSkeleton() {
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        <Skeleton className="h-64 w-full sm:h-72" />
+        <Skeleton className="h-52 w-full sm:h-60" />
       </CardContent>
     </Card>
   );

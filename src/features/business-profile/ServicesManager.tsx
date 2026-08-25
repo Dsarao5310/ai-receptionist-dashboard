@@ -171,7 +171,7 @@ export function ServicesManager({
                       </span>
                       {!service.active && <Badge tone="neutral">Inactive</Badge>}
                     </div>
-                    <p className="mt-0.5 text-xs text-text-muted">
+                    <p className="mt-0.5 text-xs text-text-secondary tabular-nums">
                       {formatServicePrice(service)} · {formatServiceDuration(service)}
                     </p>
                     {service.description && <p className="mt-1 text-xs text-text-secondary line-clamp-2">{service.description}</p>}
@@ -223,7 +223,7 @@ export function ServicesManager({
               <Label htmlFor="svc-desc">Description</Label>
               <Textarea id="svc-desc" rows={2} value={draft.description} placeholder="A short description customers would understand." onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="svc-pricing">Pricing</Label>
                 <Select value={draft.priceModel} onValueChange={(v) => setDraft((d) => ({ ...d, priceModel: v as PriceModel }))}>

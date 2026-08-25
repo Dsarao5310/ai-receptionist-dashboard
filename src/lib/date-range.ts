@@ -78,7 +78,8 @@ export function bucketCount(bounds: Bounds): number {
   return days > 45 ? Math.ceil(days / 7) : days;
 }
 
-export function bucketGranularity(bounds: Bounds): "day" | "week" {
-  const days = Math.round((bounds.end.getTime() - bounds.start.getTime()) / 86400000) + 1;
+export function bucketGranularity(bounds: Bounds): "hour" | "day" | "week" {
+  const days = Math.floor((bounds.end.getTime() - bounds.start.getTime()) / 86400000) + 1;
+  if (days === 1) return "hour";
   return days > 45 ? "week" : "day";
 }

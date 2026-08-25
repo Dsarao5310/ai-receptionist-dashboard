@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import type { ChannelPerformanceEntry } from "@/services/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { CHANNEL_ICONS } from "@/features/conversations/shared";
 
 /**
@@ -16,45 +17,47 @@ export function ChannelPerformance({ entries }: { entries: ChannelPerformanceEnt
     <Card>
       <CardHeader className="flex-col items-start gap-1">
         <CardTitle>Channel performance</CardTitle>
-        <p className="text-xs text-text-muted">Conversion = bookings ÷ booking requests on that channel</p>
+        <CardDescription>Conversion = bookings ÷ booking requests on that channel</CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
         {/* Desktop: full comparison table */}
-        <table className="hidden w-full text-sm sm:table">
-          <thead>
-            <tr className="border-b border-border text-left">
-              <th className="pb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Channel</th>
-              <th className="pb-2 text-right text-xs font-semibold uppercase tracking-wide text-text-muted">Conversations</th>
-              <th className="pb-2 text-right text-xs font-semibold uppercase tracking-wide text-text-muted">Requests</th>
-              <th className="pb-2 text-right text-xs font-semibold uppercase tracking-wide text-text-muted">Bookings</th>
-              <th className="pb-2 text-right text-xs font-semibold uppercase tracking-wide text-text-muted">Conversion</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => {
-              const Icon = CHANNEL_ICONS[entry.channel];
-              return (
-                <tr key={entry.channel} className="border-b border-border last:border-0">
-                  <td className="py-2.5">
-                    <Link
-                      href={entry.drillHref}
-                      className="flex items-center gap-2 text-text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
-                    >
-                      <Icon className="h-3.5 w-3.5 text-text-muted" />
-                      {entry.label}
-                    </Link>
-                  </td>
-                  <td className="py-2.5 text-right tabular-nums text-text-secondary">{entry.conversations.toLocaleString()}</td>
-                  <td className="py-2.5 text-right tabular-nums text-text-secondary">{entry.bookingRequests.toLocaleString()}</td>
-                  <td className="py-2.5 text-right tabular-nums text-text-secondary">{entry.bookings.toLocaleString()}</td>
-                  <td className="py-2.5 text-right tabular-nums font-semibold text-text-primary">
-                    {entry.bookingRequests === 0 ? "—" : `${entry.conversionRate.toFixed(0)}%`}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="hidden sm:block">
+          <Table minWidth="min-w-[520px]">
+            <TableHeader>
+              <tr>
+                <TableHead>Channel</TableHead>
+                <TableHead className="text-right">Conversations</TableHead>
+                <TableHead className="text-right">Requests</TableHead>
+                <TableHead className="text-right">Bookings</TableHead>
+                <TableHead className="text-right">Conversion</TableHead>
+              </tr>
+            </TableHeader>
+            <TableBody>
+              {entries.map((entry) => {
+                const Icon = CHANNEL_ICONS[entry.channel];
+                return (
+                  <TableRow key={entry.channel}>
+                    <TableCell>
+                      <Link
+                        href={entry.drillHref}
+                        className="flex items-center gap-2 text-text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+                      >
+                        <Icon className="h-3.5 w-3.5 text-text-muted" />
+                        {entry.label}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-text-secondary">{entry.conversations.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums text-text-secondary">{entry.bookingRequests.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums text-text-secondary">{entry.bookings.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold text-text-primary">
+                      {entry.bookingRequests === 0 ? "—" : `${entry.conversionRate.toFixed(0)}%`}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
 
         {/* Mobile: stacked cards, so nothing shrinks below readability */}
         <ul className="space-y-3 sm:hidden">

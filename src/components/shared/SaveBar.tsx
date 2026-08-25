@@ -14,6 +14,7 @@ export function SaveBar({
   onCancel,
   saveLabel = "Save changes",
   disabled,
+  loading,
   className,
 }: {
   dirty: boolean;
@@ -21,6 +22,7 @@ export function SaveBar({
   onCancel: () => void;
   saveLabel?: string;
   disabled?: boolean;
+  loading?: boolean;
   className?: string;
 }) {
   if (!dirty) return null;
@@ -40,7 +42,7 @@ export function SaveBar({
         <Button variant="ghost" size="sm" onClick={onCancel}>
           Discard
         </Button>
-        <Button size="sm" onClick={onSave} disabled={disabled}>
+        <Button size="sm" onClick={onSave} disabled={disabled} loading={loading}>
           {saveLabel}
         </Button>
       </div>

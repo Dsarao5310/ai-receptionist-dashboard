@@ -1,17 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
+import { Activity } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Switch } from "@/components/ui/Switch";
 import { Textarea, Label } from "@/components/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { SaveBar } from "@/components/shared/SaveBar";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { useIntegrations } from "@/lib/store/integrations";
 import { useHydrated } from "@/lib/store/hydration";
 import { useSession } from "@/lib/session-context";
+import { WORKSPACE_ROLE_LABELS } from "@/lib/permissions";
 import { toast } from "@/lib/store/toast";
 import { useBusinessFormat } from "@/lib/business-format";
 import { AdminGate } from "@/features/integrations/AdminGate";
@@ -59,7 +64,7 @@ function AdminSettingsView() {
 
   if (!hydrated) {
     return (
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-7 w-56" />
         <Skeleton className="h-40 w-full" />
         <Skeleton className="h-32 w-full" />
@@ -81,13 +86,15 @@ function AdminSettingsView() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-text-primary">Workspace administration</h1>
-        <p className="text-sm text-text-secondary">
-          Operator-level configuration for {workspace.name}. Not visible in the business-facing product.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        description={`Operator-level configuration for ${workspace.name}. Not visible in the business-facing product.`}
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/privacy"><Activity className="h-3.5 w-3.5" /> Privacy operations</Link>
+          </Button>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -226,7 +233,13 @@ function AdminSettingsView() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="accent">Platform operator</Badge>
+            {/* Derived, not asserted. The description above promises this comes
+                from the verified session, so it must actually read from it. */}
+            <Badge tone={session.user.platformRole === "operator" ? "accent" : "neutral"}>
+              {session.user.platformRole === "operator"
+                ? "Platform operator"
+                : (session.workspaceRole && WORKSPACE_ROLE_LABELS[session.workspaceRole]) || "Member"}
+            </Badge>
             <span className="text-text-secondary">
               {session.user.name} · {session.user.email}
             </span>

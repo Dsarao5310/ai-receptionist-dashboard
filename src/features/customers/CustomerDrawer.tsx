@@ -80,11 +80,12 @@ export function CustomerDrawer({
           <DrawerClose />
         </DrawerHeader>
 
-        <DrawerBody className="space-y-6">
+        <DrawerBody className="space-y-5">
           <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
 
           {/* Contact */}
           <div className="space-y-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">Contact</p>
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-2 text-sm text-text-primary">
                 <Phone className="h-3.5 w-3.5 text-text-muted" />
@@ -110,7 +111,7 @@ export function CustomerDrawer({
           </div>
 
           {/* Appointment summary */}
-          <div>
+          <div className="border-t border-border pt-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">Appointments</p>
             <div className="grid grid-cols-4 gap-2">
               {[
@@ -142,7 +143,7 @@ export function CustomerDrawer({
           </div>
 
           {/* Conversation summary */}
-          <div>
+          <div className="border-t border-border pt-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">Interactions</p>
             <div className="flex items-center gap-3 mb-3 text-xs text-text-secondary">
               {(["voice", "sms", "email"] as const).map((ch) => {
@@ -187,7 +188,7 @@ export function CustomerDrawer({
           </div>
 
           {/* Timeline */}
-          <div>
+          <div className="border-t border-border pt-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">Timeline</p>
             {timeline.length === 0 ? (
               <EmptyState title="No activity yet" description="Events will appear here as this customer interacts with your business." />

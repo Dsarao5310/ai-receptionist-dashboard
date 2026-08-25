@@ -1,7 +1,7 @@
 "use client";
 
 import type { PeakBucket, PeakContactTimes as PeakData } from "@/services/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
 function BarGroup({ title, buckets, peakKey }: { title: string; buckets: PeakBucket[]; peakKey?: string }) {
@@ -38,11 +38,11 @@ export function PeakContactTimes({ data }: { data: PeakData }) {
     <Card>
       <CardHeader className="flex-col items-start gap-1">
         <CardTitle>When customers get in touch</CardTitle>
-        <p className="text-xs text-text-muted">
+        <CardDescription>
           {hasActivity && data.busiestDay && data.busiestHour
             ? `Busiest on ${data.busiestDay.label}, ${data.busiestHour.label.toLowerCase()}`
             : "Contact patterns across the selected period"}
-        </p>
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6 pt-4 md:grid-cols-2">
         <BarGroup title="By day of week" buckets={data.byDay} peakKey={data.busiestDay?.key} />

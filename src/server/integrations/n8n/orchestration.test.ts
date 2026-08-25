@@ -450,6 +450,19 @@ describeDb("inbound events must be well-formed", () => {
     const outcome = await ingestEvent(signedRequest(bookingEvent({ workflowRef: "wf_made_up" })));
     expect(outcome).toEqual({ status: "rejected", reason: "unrecognised workflow reference" });
   });
+
+  it("revokes inbound authority when a workflow mapping is inactive", async () => {
+    const workflowRef = `wf_inbound_voice_v4__${DEV_WORKSPACE_A}`;
+    await sql`update workflow_mappings set status = 'inactive' where workflow_ref = ${workflowRef}`;
+    try {
+      const outcome = await ingestEvent(
+        signedRequest(bookingEvent({ eventId: "evt_inactive_mapping", workflowRef }))
+      );
+      expect(outcome).toEqual({ status: "rejected", reason: "unrecognised workflow reference" });
+    } finally {
+      await sql`update workflow_mappings set status = 'active' where workflow_ref = ${workflowRef}`;
+    }
+  });
 });
 
 describeDb("inbound tenant resolution ignores the payload", () => {

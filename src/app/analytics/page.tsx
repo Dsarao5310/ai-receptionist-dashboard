@@ -11,6 +11,7 @@ import { IntentDistribution } from "@/features/analytics/IntentDistribution";
 import { PeakContactTimes } from "@/features/analytics/PeakContactTimes";
 import { ReceptionistImpact } from "@/features/analytics/ReceptionistImpact";
 import { DateRangeControl } from "@/components/shared/DateRangeControl";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -22,23 +23,20 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="p-4 md:p-6">
+      <div>
         <Card>
-          <ErrorState title="Couldn't load analytics" description="Something went wrong generating your demo data." onRetry={retry} />
+          <ErrorState title="Couldn't load analytics" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-text-primary">Performance</h2>
-          <p className="mt-0.5 text-xs text-text-muted">How your AI receptionist is performing and what it&apos;s producing</p>
-        </div>
-        <DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={setRange} />
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        description="How your AI receptionist is performing and what it's producing."
+        actions={<DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={setRange} />}
+      />
 
       {loading || !summary || !peakTimes ? (
         <AnalyticsSkeleton />

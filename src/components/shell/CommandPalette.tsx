@@ -45,7 +45,7 @@ export function CommandPalette() {
         "rounded-xl border border-border bg-surface-raised shadow-xl overflow-hidden focus:outline-none",
         "data-[state=open]:animate-[pop-in_150ms_ease-out]"
       )}
-      overlayClassName="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-[overlay-in_180ms_ease-out]"
+      overlayClassName="fixed inset-0 z-50 bg-overlay data-[state=open]:animate-[overlay-in_180ms_ease-out]"
     >
       <div className="flex items-center gap-2.5 border-b border-border px-4">
         <Search className="h-4 w-4 text-text-muted shrink-0" />

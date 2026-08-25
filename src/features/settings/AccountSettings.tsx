@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
-import { SaveBar } from "@/components/shared/SaveBar";
+import { SaveBar, UnsavedChangesDialog } from "@/components/shared/SaveBar";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { useSettings } from "@/lib/store/settings";
 import { toast } from "@/lib/store/toast";
@@ -28,7 +28,10 @@ export function AccountSettings() {
 
   const dirty =
     draft.name !== account.name || draft.email !== account.email || draft.jobTitle !== account.jobTitle;
-  useUnsavedChanges(dirty);
+  // The hook's return value is not optional: it intercepts in-app link clicks
+  // while the form is dirty and parks the destination. Dropping it left every
+  // navigation cancelled with nothing shown — the link simply did nothing.
+  const { blocked, confirmLeave, cancelLeave } = useUnsavedChanges(dirty);
 
   function save() {
     setAccount(draft);
@@ -47,7 +50,7 @@ export function AccountSettings() {
           <div>
             <p className="text-sm text-text-primary">{draft.name || "Unnamed"}</p>
             <p className="text-xs text-text-muted">
-              Profile photos arrive with accounts. Initials are used until then.
+              Initials are shown here. Uploading a photo is not available yet.
             </p>
           </div>
         </div>
@@ -78,12 +81,13 @@ export function AccountSettings() {
               onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
             />
             <p className="mt-1 text-xs text-text-muted">
-              Used for notifications you have turned on. Sign-in email is set when accounts are enabled.
+              Used for notifications you have turned on. This is separate from the address you sign in with.
             </p>
           </div>
         </div>
 
         <SaveBar dirty={dirty} onSave={save} onCancel={() => setDraft(account)} />
+        <UnsavedChangesDialog open={blocked} onConfirm={confirmLeave} onCancel={cancelLeave} />
       </CardContent>
     </Card>
   );

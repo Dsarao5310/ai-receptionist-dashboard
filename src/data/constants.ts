@@ -1,4 +1,4 @@
-import type { BusinessService, Channel, ConversationOutcome, Intent } from "@/types";
+import type { BusinessService, Channel, ConnectionState, ConversationOutcome, Intent } from "@/types";
 
 export const FIRST_NAMES = [
   "Jordan", "Maya", "Priya", "Ethan", "Sofia", "Liam", "Ava", "Noah", "Mia",
@@ -63,6 +63,16 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
   voice: "Voice",
   sms: "SMS",
   email: "Email",
+};
+
+/** One shared mapping from connection state to colour/label — StatusStrip and
+ *  the readiness breakdown both read this so the two adjacent cards use the
+ *  same visual language for "what does amber mean here" rather than two
+ *  independently-maintained copies. */
+export const CONNECTION_STATE_STYLES: Record<ConnectionState, { dot: string; label: string; text: string }> = {
+  connected: { dot: "bg-success", label: "Connected", text: "text-success" },
+  needs_attention: { dot: "bg-warning", label: "Needs attention", text: "text-warning" },
+  disconnected: { dot: "bg-danger", label: "Disconnected", text: "text-danger" },
 };
 
 export const OUTCOME_LABELS: Record<ConversationOutcome, string> = {

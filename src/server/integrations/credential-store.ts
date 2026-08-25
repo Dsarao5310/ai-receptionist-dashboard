@@ -112,6 +112,24 @@ const CREDENTIALS: CredentialDescriptor[] = [
     // anything it receives.
     reference: "env:TWILIO_AUTH_TOKEN",
   },
+  {
+    provider: "vapi",
+    key: "api_key",
+    label: "Server API key",
+    reference: "env:VAPI_API_KEY",
+  },
+  {
+    provider: "vapi",
+    key: "webhook_bearer_token",
+    label: "Inbound webhook bearer token",
+    reference: "env:VAPI_WEBHOOK_BEARER_TOKEN",
+  },
+  {
+    provider: "model_provider",
+    key: "gateway_api_key",
+    label: "AI Gateway API key",
+    reference: "env:AI_GATEWAY_API_KEY",
+  },
 ];
 
 function resolveReference(reference: string): string | undefined {

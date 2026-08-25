@@ -73,6 +73,17 @@ describe("getAppointmentRangeBounds", () => {
 });
 
 describe("buildBuckets", () => {
+  it("uses intraday buckets for Today so charts render a trend instead of one dot", () => {
+    const now = new Date("2026-08-17T19:00:00Z");
+    const buckets = buildBuckets(getRangeBounds("today", now, VANCOUVER), VANCOUVER);
+
+    expect(buckets).toHaveLength(6);
+    expect(new Set(buckets.map((bucket) => bucket.label)).size).toBe(6);
+    for (let i = 1; i < buckets.length; i++) {
+      expect(buckets[i].start.getTime()).toBe(buckets[i - 1].end.getTime() + 1);
+    }
+  });
+
   it("creates one bucket per business day and labels it in that zone", () => {
     const now = new Date("2026-08-17T19:00:00Z");
     const bounds = getRangeBounds("7d", now, VANCOUVER);

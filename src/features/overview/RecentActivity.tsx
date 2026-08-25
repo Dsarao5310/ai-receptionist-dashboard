@@ -31,9 +31,9 @@ export function RecentActivity({ events, onSelect }: { events: ActivityEvent[]; 
   // Timestamps are rendered on the business's clock, not the viewer's.
   const fmt = useBusinessFormat();
   return (
-    <Card>
+    <Card className="rounded-2xl card-raised">
       <CardHeader>
-        <CardTitle>Recent activity</CardTitle>
+        <CardTitle className="text-section">Recent activity</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         {events.length === 0 ? (
@@ -74,9 +74,9 @@ export function RecentActivity({ events, onSelect }: { events: ActivityEvent[]; 
 
 export function RecentActivitySkeleton() {
   return (
-    <Card>
+    <Card className="rounded-2xl card-raised">
       <CardHeader>
-        <CardTitle>Recent activity</CardTitle>
+        <CardTitle className="text-section">Recent activity</CardTitle>
       </CardHeader>
       <CardContent className="pt-4 -mx-5 -my-1">
         {Array.from({ length: 5 }).map((_, i) => (

@@ -18,7 +18,10 @@
     "db:status": "node scripts/db.mjs status",
     "db:reset": "node scripts/db.mjs reset",
     "db:seed": "tsx scripts/seed.ts",
-    "calendar:preflight": "node scripts/calendar-preflight.mjs"
+    "db:seed:staging": "tsx scripts/seed-staging.ts",
+    "calendar:preflight": "node scripts/calendar-preflight.mjs",
+    "n8n:preflight": "tsx scripts/n8n-preflight.ts",
+    "privacy:preflight": "tsx scripts/privacy-preflight.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
@@ -29,6 +32,7 @@
     "@radix-ui/react-switch": "^1.3.7",
     "@radix-ui/react-tabs": "^1.1.21",
     "@radix-ui/react-tooltip": "^1.2.16",
+    "ai": "^6.0.265",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
@@ -44,6 +48,7 @@
     "recharts": "^3.10.1",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
@@ -53,6 +58,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5",

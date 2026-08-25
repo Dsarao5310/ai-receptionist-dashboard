@@ -75,7 +75,9 @@ export function IntegrationCard({
         </p>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+      {/* mt-auto, not mt-4: grid items stretch to the tallest card in the row,
+          so a fixed margin left each card's actions at a different height. */}
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-3">
         <Button size="sm" variant="outline" onClick={onOpen}>
           Manage
         </Button>

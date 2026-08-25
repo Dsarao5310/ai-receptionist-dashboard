@@ -178,6 +178,9 @@ describe("business roles", () => {
     expect(can(manager, "analytics.view")).toBe(true);
     expect(can(manager, "ai.configure")).toBe(true);
     expect(can(manager, "connections.view")).toBe(true);
+    expect(can(manager, "calls.view_sensitive")).toBe(true);
+    expect(can(manager, "privacy.manage")).toBe(false);
+    expect(can(manager, "privacy.erase")).toBe(false);
     expect(can(manager, "business.edit")).toBe(false);
     expect(can(manager, "team.manage")).toBe(false);
   });
@@ -190,6 +193,8 @@ describe("business roles", () => {
     expect(can(owner, "business.edit")).toBe(true);
     expect(can(owner, "settings.business")).toBe(true);
     expect(can(owner, "team.manage")).toBe(true);
+    expect(can(owner, "privacy.manage")).toBe(true);
+    expect(can(owner, "privacy.erase")).toBe(true);
   });
 
   it("escalates strictly: staff ⊂ manager ⊂ owner", () => {

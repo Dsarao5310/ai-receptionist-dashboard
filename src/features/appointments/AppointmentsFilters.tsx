@@ -21,6 +21,7 @@ export function AppointmentsFilters({
   rangeKey,
   customBounds,
   onRange,
+  showDateRange = true,
 }: {
   search: string;
   onSearch: (v: string) => void;
@@ -31,6 +32,12 @@ export function AppointmentsFilters({
   rangeKey: DateRangeKey;
   customBounds: Bounds | null;
   onRange: (key: DateRangeKey, custom?: Bounds) => void;
+  /**
+   * The Calendar tab navigates dates with its own toolbar and reads the
+   * unbounded set, so the range control had no effect there at all. Rather
+   * than render a control that does nothing, the caller hides it.
+   */
+  showDateRange?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -39,9 +46,11 @@ export function AppointmentsFilters({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <Input placeholder="Search customer or service..." className="pl-9" value={search} onChange={(e) => onSearch(e.target.value)} />
         </div>
-        <div className="sm:ml-auto">
-          <DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={onRange} />
-        </div>
+        {showDateRange && (
+          <div className="sm:ml-auto">
+            <DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={onRange} />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">

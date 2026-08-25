@@ -1,7 +1,6 @@
 import type { Appointment } from "@/types";
 import { addDays, isoDay } from "@/data/generator";
 import { AppointmentChip } from "./AppointmentChip";
-import { CalendarCheck2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 
@@ -24,36 +23,44 @@ export function WeekView({
     byDay.set(a.date, list);
   }
   const todayKey = isoDay(today);
-  const hasAny = appointments.length > 0;
+  // Whether *this week* has anything, not whether the filtered set does.
+  // Testing `appointments.length` meant navigating to an empty week rendered
+  // seven columns each saying "No appointments" instead of the empty state.
+  const hasAny = days.some((day) => (byDay.get(isoDay(day))?.length ?? 0) > 0);
 
   if (!hasAny) {
     return <EmptyState title="No appointments this week" description="Try a different week or clear a filter." />;
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
       {days.map((day) => {
         const key = isoDay(day);
         const dayAppointments = (byDay.get(key) ?? []).sort((a, b) => a.time.localeCompare(b.time));
         const isToday = key === todayKey;
         return (
-          <div key={key} className="grid min-w-0 grid-cols-[76px_minmax(0,1fr)] border-b border-border last:border-b-0 sm:grid-cols-[124px_minmax(0,1fr)]">
-            <div className={cn("flex flex-col items-center justify-center border-r border-border px-2 py-4 text-center sm:items-start sm:px-5 sm:text-left", isToday ? "bg-accent-subtle" : "bg-surface-sunken/60")}> 
-              <p className={cn("text-[10px] font-semibold uppercase tracking-[0.12em]", isToday ? "text-accent-text" : "text-text-muted")}> 
+          <div
+            key={key}
+            className={cn(
+              "min-w-0 overflow-hidden rounded-xl border",
+              isToday ? "border-accent/40" : "border-border"
+            )}
+          >
+            <div className={cn("px-2.5 py-2 text-center", isToday ? "bg-accent-subtle" : "bg-surface-sunken")}>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                 {day.toLocaleDateString("en-US", { weekday: "short" })}
               </p>
-              <p className={cn("mt-1 text-xl font-semibold leading-none", isToday ? "text-accent-text" : "text-text-primary")}>{day.getDate()}</p>
-              <p className="mt-1 hidden text-[11px] text-text-muted sm:block">{day.toLocaleDateString("en-US", { month: "short" })}</p>
+              <p className={cn("text-sm font-semibold tabular-nums", isToday ? "text-accent-text" : "text-text-primary")}>
+                {day.getDate()}
+              </p>
             </div>
-            <div className="min-h-[88px] p-3">
+            <div className="min-h-[96px] space-y-1 p-1.5">
               {dayAppointments.length === 0 ? (
-                <div className="flex h-full min-h-[62px] items-center gap-2 rounded-xl border border-dashed border-border px-4 text-xs text-text-muted">
-                  <CalendarCheck2 className="h-4 w-4" /> Available
+                <div className="flex h-full min-h-[72px] items-center justify-center rounded-lg border border-dashed border-border">
+                  <p className="text-[11px] text-text-muted">No appointments</p>
                 </div>
               ) : (
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  {dayAppointments.map((a) => <AppointmentChip key={a.id} appointment={a} onSelect={onSelect} size="md" />)}
-                </div>
+                dayAppointments.map((a) => <AppointmentChip key={a.id} appointment={a} onSelect={onSelect} />)
               )}
             </div>
           </div>

@@ -10,6 +10,7 @@ import { AppointmentDrawer } from "@/features/appointments/AppointmentDrawer";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 
 
@@ -47,16 +48,16 @@ export default function AppointmentsView({ initial }: { initial: { status: Appoi
 
   if (error) {
     return (
-      <div className="p-4 md:p-6">
+      <div>
         <Card>
-          <ErrorState title="Couldn't load appointments" description="Something went wrong generating your demo data." onRetry={retry} />
+          <ErrorState title="Couldn't load appointments" description="We could not load this from the server. Your data is safe — try again." onRetry={retry} />
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <Tabs value={view} onValueChange={(v) => setView(v as "list" | "calendar")}>
         <TabsList>
           <TabsTrigger value="list">List</TabsTrigger>
@@ -74,6 +75,7 @@ export default function AppointmentsView({ initial }: { initial: { status: Appoi
             rangeKey={rangeKey}
             customBounds={customBounds}
             onRange={setRange}
+            showDateRange={view === "list"}
           />
         </div>
 
@@ -91,13 +93,21 @@ export default function AppointmentsView({ initial }: { initial: { status: Appoi
         </TabsContent>
 
         <TabsContent value="calendar">
-          {loading || !now ? (
-            <Card className="p-6">
-              <AppointmentsTableSkeleton />
-            </Card>
-          ) : (
-            <AppointmentsCalendar appointments={allFiltered} now={now} onSelect={setSelectedId} />
-          )}
+          {/* Wrapped in the same Card as the List tab: switching tabs used to
+              change the page's border, background and shadow structure. The
+              placeholder is a calendar grid rather than the table skeleton
+              that was previously shown here. */}
+          <Card className="p-4">
+            {loading || !now ? (
+              <div className="grid grid-cols-7 gap-2">
+                {Array.from({ length: 28 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24" />
+                ))}
+              </div>
+            ) : (
+              <AppointmentsCalendar appointments={allFiltered} now={now} onSelect={setSelectedId} />
+            )}
+          </Card>
         </TabsContent>
       </Tabs>
 

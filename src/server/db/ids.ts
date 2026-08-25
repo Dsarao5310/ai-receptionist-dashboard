@@ -41,7 +41,14 @@ export type IdPrefix =
   | "inev"
   | "cred"
   | "pnum"
-  | "sms";
+  | "sms"
+  | "mbx"
+  | "ethr"
+  | "eml"
+  | "vasst"
+  | "cns"
+  | "pgr"
+  | "erq";
 
 export function newId(prefix: IdPrefix): string {
   return `${prefix}_${randomBytes(12).toString("base64url")}`;

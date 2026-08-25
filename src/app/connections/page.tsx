@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Radio } from "lucide-react";
+import { ArrowRight, Radio } from "lucide-react";
 import { useIntegrations } from "@/lib/store/integrations";
 import { usePermissions } from "@/lib/session-context";
 import { useHydrated } from "@/lib/store/hydration";
@@ -10,6 +10,7 @@ import { useConfiguration } from "@/lib/store/configuration";
 import { useBusinessFormat } from "@/lib/business-format";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { CapabilityBadge } from "@/features/integrations/StatusIndicators";
 
@@ -38,7 +39,7 @@ export default function ConnectionsPage() {
 
   if (!hydrated) {
     return (
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-7 w-40" />
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -50,18 +51,17 @@ export default function ConnectionsPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-text-primary">Connections</h1>
-          <p className="text-sm text-text-secondary">What your AI receptionist is currently able to do for {businessName}.</p>
-        </div>
-        {can("integrations.manage") && (
-          <Button asChild size="sm" variant="outline">
-            <Link href="/admin/integrations">Open provider settings</Link>
-          </Button>
-        )}
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        description={`What your AI receptionist is currently able to do for ${businessName}.`}
+        actions={
+          can("integrations.manage") ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href="/admin/integrations">Open provider settings</Link>
+            </Button>
+          ) : undefined
+        }
+      />
 
       {needsAttention.length > 0 && (
         <Card>
@@ -69,17 +69,23 @@ export default function ConnectionsPage() {
             <CardTitle className="text-base">
               {needsAttention.length === 1 ? "One thing needs attention" : `${needsAttention.length} things need attention`}
             </CardTitle>
-            <CardDescription>
-              Everything else is running normally. These are the parts that cannot do their job right now.
-            </CardDescription>
+            <CardDescription>Everything else is running normally. Select one to jump to its details below.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2">
+            <ul className="flex flex-wrap gap-2">
               {needsAttention.map((c) => (
-                <li key={c.key} className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-medium text-text-primary">{c.label}</span>
-                  <CapabilityBadge status={c.status} />
-                  <span className="text-text-secondary">{c.detail}</span>
+                <li key={c.key}>
+                  <a
+                    href={`#capability-${c.key}`}
+                    className="group inline-flex items-center gap-2 rounded-lg border border-border py-1.5 pl-3 pr-2.5 text-sm text-text-primary transition-colors hover:bg-surface-hover hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <span className="font-medium">{c.label}</span>
+                    <CapabilityBadge status={c.status} />
+                    <ArrowRight
+                      className="h-3.5 w-3.5 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5"
+                      aria-hidden="true"
+                    />
+                  </a>
                 </li>
               ))}
             </ul>
@@ -89,7 +95,7 @@ export default function ConnectionsPage() {
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {capabilities.map((c) => (
-          <Card key={c.key} className="p-4">
+          <Card key={c.key} id={`capability-${c.key}`} className="scroll-mt-20 p-4">
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-sm font-semibold text-text-primary">{c.label}</h2>
               <CapabilityBadge status={c.status} />

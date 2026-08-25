@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { BookingFunnel as FunnelData } from "@/services/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 
 export function BookingFunnel({ funnel }: { funnel: FunnelData }) {
   const { stages, directBookings } = funnel;
@@ -13,7 +13,7 @@ export function BookingFunnel({ funnel }: { funnel: FunnelData }) {
     <Card>
       <CardHeader className="flex-col items-start gap-1">
         <CardTitle>Booking funnel</CardTitle>
-        <p className="text-xs text-text-muted">How conversations turn into appointments</p>
+        <CardDescription>How conversations turn into appointments</CardDescription>
       </CardHeader>
       <CardContent className="pt-4 space-y-2.5">
         {stages.map((stage, i) => {

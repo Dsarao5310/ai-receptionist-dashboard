@@ -3,7 +3,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getMobileNavItems, getNavGroups } from "@/lib/nav-config";
+import { getMobileNavItems, getNavGroups, isNavItemActive } from "@/lib/nav-config";
 import { useOptionalSession } from "@/lib/session-context";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +22,7 @@ export function MoreMenuSheet({ open, onOpenChange }: { open: boolean; onOpenCha
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 md:hidden data-[state=open]:animate-[overlay-in_200ms_ease-out] data-[state=closed]:animate-[fade-out_180ms_ease-in]" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay md:hidden data-[state=open]:animate-[overlay-in_200ms_ease-out] data-[state=closed]:animate-[fade-out_180ms_ease-in]" />
         <DialogPrimitive.Content
           className={cn(
             "fixed bottom-0 left-0 right-0 z-50 md:hidden rounded-t-xl border-t border-border bg-surface shadow-xl pb-[calc(env(safe-area-inset-bottom)+12px)]",
@@ -33,7 +33,7 @@ export function MoreMenuSheet({ open, onOpenChange }: { open: boolean; onOpenCha
           <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-border-strong" />
           <div className="grid grid-cols-3 gap-1.5 p-4">
             {rest.map((item) => {
-              const active = pathname === item.href;
+              const active = isNavItemActive(item.href, pathname);
               return (
                 <DialogPrimitive.Close asChild key={item.href}>
                   <Link

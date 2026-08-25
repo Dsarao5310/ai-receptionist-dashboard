@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { MessagesSquare } from "lucide-react";
 import type { IntentEntry } from "@/services/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export function IntentDistribution({ entries }: { entries: IntentEntry[] }) {
@@ -13,7 +13,7 @@ export function IntentDistribution({ entries }: { entries: IntentEntry[] }) {
     <Card>
       <CardHeader className="flex-col items-start gap-1">
         <CardTitle>What customers ask for</CardTitle>
-        <p className="text-xs text-text-muted">Select an intent to see those conversations</p>
+        <CardDescription>Select an intent to see those conversations</CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
         {entries.length === 0 ? (

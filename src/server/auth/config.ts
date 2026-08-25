@@ -99,7 +99,16 @@ export const authConfig: NextAuthConfig = {
 
   providers: [
     ...(googleConfigured
-      ? [Google({ clientId: process.env.AUTH_GOOGLE_ID!, clientSecret: process.env.AUTH_GOOGLE_SECRET! })]
+      ? [
+          Google({
+            clientId: process.env.AUTH_GOOGLE_ID!,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+            // Do not silently reuse whichever Google account happens to be
+            // active in the browser. Tenant access is email-bound, so users
+            // must be able to choose the identity they intend to use.
+            authorization: { params: { prompt: "select_account" } },
+          }),
+        ]
       : []),
     ...(IS_PRODUCTION ? [] : [developmentProvider]),
   ],

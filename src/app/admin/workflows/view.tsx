@@ -7,6 +7,7 @@ import type { IntegrationOperation, InboundEventReceipt } from "@/server/db/repo
 import { useBusinessFormat } from "@/lib/business-format";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { CAPABILITY_LABELS } from "@/services/integrations";
@@ -57,6 +58,35 @@ const RECEIPT_TONE: Record<InboundEventReceipt["outcome"], "success" | "danger" 
   received: "neutral",
 };
 
+/**
+ * Enum values are database vocabulary, not sentences.
+ *
+ * These were previously rendered raw and passed through a `capitalize` class,
+ * which produced "Not_configured" — the underscore visible to the operator.
+ * Anything unmapped falls back to a de-underscored form rather than leaking the
+ * literal token.
+ */
+const ENGINE_STATE_LABELS: Record<string, string> = {
+  healthy: "Healthy",
+  degraded: "Degraded",
+  down: "Down",
+  unknown: "Unknown",
+  connected: "Connected",
+  disconnected: "Disconnected",
+  disabled: "Disabled",
+  error: "Error",
+  configuration_incomplete: "Configuration incomplete",
+  not_configured: "Not configured",
+};
+
+function stateLabel(value: string | null | undefined): string {
+  if (!value) return "—";
+  const mapped = ENGINE_STATE_LABELS[value];
+  if (mapped) return mapped;
+  const spaced = value.replace(/_/g, " ");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
 const MODE_LABELS = {
   disabled: "Not configured",
   simulated: "Simulated (development)",
@@ -91,13 +121,8 @@ export function WorkflowsView({
   const fmt = useBusinessFormat();
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-text-primary">Workflows</h1>
-        <p className="text-sm text-text-secondary">
-          Automation assigned to this workspace, and what has crossed the boundary in both directions.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader description="Automation assigned to this workspace, and what has crossed the boundary in both directions." />
 
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-3">
@@ -108,14 +133,14 @@ export function WorkflowsView({
             </CardDescription>
           </div>
           <Badge tone={engine?.health === "healthy" ? "success" : engine?.health === "down" ? "danger" : "warning"}>
-            {engine ? engine.health : "Unknown"}
+            {stateLabel(engine?.health)}
           </Badge>
         </CardHeader>
         <CardContent>
           <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="Mode" value={MODE_LABELS[mode]} />
-            <Field label="Environment" value={engine?.environment ?? "—"} />
-            <Field label="Connection" value={engine?.connection ?? "—"} />
+            <Field label="Environment" value={stateLabel(engine?.environment)} />
+            <Field label="Connection" value={stateLabel(engine?.connection)} />
             <Field
               label="Last checked"
               value={engine?.lastCheckedAt ? fmt.relative(engine.lastCheckedAt) : "Never"}
@@ -150,7 +175,7 @@ export function WorkflowsView({
           <CardHeader>
             <CardTitle>Needs reconciliation</CardTitle>
             <CardDescription>
-              Operations that did not settle cleanly. `Sync required` means a workflow succeeded but the change could
+              Operations that did not settle cleanly. “Sync required” means a workflow succeeded but the change could
               not be saved here — the two sides may disagree.
             </CardDescription>
           </CardHeader>
@@ -178,50 +203,48 @@ export function WorkflowsView({
               />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Workflow</TableHead>
-                    <TableHead>Operation</TableHead>
-                    <TableHead>Capability</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead>Version</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Last run</TableHead>
-                    <TableHead>Last success</TableHead>
-                    <TableHead className="text-right">Failures</TableHead>
+            <Table minWidth="min-w-[1040px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Workflow</TableHead>
+                  <TableHead>Operation</TableHead>
+                  <TableHead>Capability</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Version</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last run</TableHead>
+                  <TableHead>Last success</TableHead>
+                  <TableHead className="text-right">Failures</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {workflows.map((w) => (
+                  <TableRow key={w.id}>
+                    <TableCell className="font-medium text-text-primary">{w.name}</TableCell>
+                    <TableCell className="text-text-secondary">
+                      {w.operation ? WORKFLOW_OPERATION_LABELS[w.operation] : "—"}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">{CAPABILITY_LABELS[w.capability]}</TableCell>
+                    <TableCell className="font-mono text-xs text-text-secondary">{w.workflowRef}</TableCell>
+                    <TableCell className="text-text-secondary">{w.version}</TableCell>
+                    <TableCell>
+                      <Badge tone={STATUS_TONE[w.status]} className="capitalize">
+                        {w.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {w.lastExecutionAt ? fmt.relative(w.lastExecutionAt) : "Never"}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {w.lastSuccessAt ? fmt.relative(w.lastSuccessAt) : "Never"}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-text-secondary">
+                      {w.failedExecutions}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {workflows.map((w) => (
-                    <TableRow key={w.id}>
-                      <TableCell className="font-medium text-text-primary">{w.name}</TableCell>
-                      <TableCell className="text-text-secondary">
-                        {w.operation ? WORKFLOW_OPERATION_LABELS[w.operation] : "—"}
-                      </TableCell>
-                      <TableCell className="text-text-secondary">{CAPABILITY_LABELS[w.capability]}</TableCell>
-                      <TableCell className="font-mono text-xs text-text-secondary">{w.workflowRef}</TableCell>
-                      <TableCell className="text-text-secondary">{w.version}</TableCell>
-                      <TableCell>
-                        <Badge tone={STATUS_TONE[w.status]} className="capitalize">
-                          {w.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-text-secondary">
-                        {w.lastExecutionAt ? fmt.relative(w.lastExecutionAt) : "Never"}
-                      </TableCell>
-                      <TableCell className="text-text-secondary">
-                        {w.lastSuccessAt ? fmt.relative(w.lastSuccessAt) : "Never"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums text-text-secondary">
-                        {w.failedExecutions}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -251,34 +274,32 @@ export function WorkflowsView({
           {receipts.length === 0 ? (
             <p className="px-4 text-sm text-text-muted">Nothing received yet.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Outcome</TableHead>
-                    <TableHead>Received</TableHead>
-                    <TableHead>Detail</TableHead>
+            <Table minWidth="min-w-[820px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Outcome</TableHead>
+                  <TableHead>Received</TableHead>
+                  <TableHead>Detail</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {receipts.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-mono text-xs text-text-secondary">{r.externalEventId}</TableCell>
+                    <TableCell className="text-text-secondary">{r.eventType}</TableCell>
+                    <TableCell>
+                      <Badge tone={RECEIPT_TONE[r.outcome]} className="capitalize">
+                        {r.outcome}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-text-secondary">{fmt.relative(r.receivedAt)}</TableCell>
+                    <TableCell className="text-text-secondary">{r.detail ?? "—"}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {receipts.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-mono text-xs text-text-secondary">{r.externalEventId}</TableCell>
-                      <TableCell className="text-text-secondary">{r.eventType}</TableCell>
-                      <TableCell>
-                        <Badge tone={RECEIPT_TONE[r.outcome]} className="capitalize">
-                          {r.outcome}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-text-secondary">{fmt.relative(r.receivedAt)}</TableCell>
-                      <TableCell className="text-text-secondary">{r.detail ?? "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -290,7 +311,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs text-text-muted">{label}</dt>
-      <dd className="text-sm capitalize text-text-primary">{value}</dd>
+      <dd className="text-sm text-text-primary">{value}</dd>
     </div>
   );
 }
@@ -305,40 +326,38 @@ function OperationTable({
   showError?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Operation</TableHead>
-            <TableHead>Target</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Attempts</TableHead>
-            <TableHead>Execution</TableHead>
-            <TableHead>Started</TableHead>
-            {showError ? <TableHead>Detail</TableHead> : null}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {operations.map((op) => (
-            <TableRow key={op.id}>
-              <TableCell className="text-text-primary">{WORKFLOW_OPERATION_LABELS[op.operation]}</TableCell>
-              <TableCell className="font-mono text-xs text-text-secondary">{op.targetId ?? "—"}</TableCell>
-              <TableCell>
-                <Badge tone={OPERATION_TONE[op.status]}>{OPERATION_LABELS[op.status]}</Badge>
+    <Table minWidth="min-w-[820px]">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Operation</TableHead>
+          <TableHead>Target</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Attempts</TableHead>
+          <TableHead>Execution</TableHead>
+          <TableHead>Started</TableHead>
+          {showError ? <TableHead>Detail</TableHead> : null}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {operations.map((op) => (
+          <TableRow key={op.id}>
+            <TableCell className="text-text-primary">{WORKFLOW_OPERATION_LABELS[op.operation]}</TableCell>
+            <TableCell className="font-mono text-xs text-text-secondary">{op.targetId ?? "—"}</TableCell>
+            <TableCell>
+              <Badge tone={OPERATION_TONE[op.status]}>{OPERATION_LABELS[op.status]}</Badge>
+            </TableCell>
+            <TableCell className="text-right tabular-nums text-text-secondary">{op.attempts}</TableCell>
+            <TableCell className="font-mono text-xs text-text-secondary">{op.executionRef ?? "—"}</TableCell>
+            <TableCell className="text-text-secondary">{fmt.relative(op.createdAt)}</TableCell>
+            {showError ? (
+              <TableCell className="text-text-secondary">
+                {op.error.message ?? "—"}
+                {op.error.detail ? <span className="block text-xs text-text-muted">{op.error.detail}</span> : null}
               </TableCell>
-              <TableCell className="text-right tabular-nums text-text-secondary">{op.attempts}</TableCell>
-              <TableCell className="font-mono text-xs text-text-secondary">{op.executionRef ?? "—"}</TableCell>
-              <TableCell className="text-text-secondary">{fmt.relative(op.createdAt)}</TableCell>
-              {showError ? (
-                <TableCell className="text-text-secondary">
-                  {op.error.message ?? "—"}
-                  {op.error.detail ? <span className="block text-xs text-text-muted">{op.error.detail}</span> : null}
-                </TableCell>
-              ) : null}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+            ) : null}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
