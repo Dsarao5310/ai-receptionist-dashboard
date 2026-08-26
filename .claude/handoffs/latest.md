@@ -1,5 +1,23 @@
 # Latest Handoff
 
+## Claude — committed and opened PR #2 for the uncommitted working tree (2026-08-26)
+
+User approved committing/pushing the large uncommitted tree Codex preflighted
+(see "Codex addendum" below). Branched off `master` as
+`knowledge/pinecone-provider-foundation` (not pushed directly to `master` or
+`staging` — both auto-deploy on push), committed all 107 files as one commit,
+pushed the branch, opened **PR #2**:
+https://github.com/Dsarao5310/ai-receptionist-dashboard/pull/2
+
+No secrets in the diff (checked: only `.env.example` and
+`credential-store.ts` touch env-var *names*, no values; `.env.local` and
+`.mcp.local` stayed untracked/ignored). Not merged — merging to `master`
+triggers an automatic production deploy, so that's a separate explicit
+approval, same as PR #1's pattern. Once merged, staging needs a
+corresponding deploy (push/promote to the `staging` branch, currently
+identical to `master` at `ccf6272`) before the live Knowledge/Pinecone UI
+test can be re-run.
+
 ## Claude — real bug: Undo on cancel/reschedule never touches the calendar (2026-08-26)
 
 Found during independent code review (not the Knowledge/Pinecone work).
