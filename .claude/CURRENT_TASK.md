@@ -1,6 +1,54 @@
 # Current Task
 
-Phase: **Booking-engine correctness fix — Undo/calendar desync**
+Phase: **Migration file 19 (knowledge_namespace_immutability) — BLOCKED, mid-apply**
+
+Status: **DO NOT RETRY BLINDLY — permission path is broken in a way that gave a false "success" — 2026-08-26**
+
+User approved (via explicit AskUserQuestion) applying migration 19 to staging
+then production. **Staging attempt failed and was stopped; production was
+never touched.** Directly re-verified staging afterward — still genuinely
+18/19, `app_runtime` still holds `UPDATE` on `knowledge_provider_namespaces`,
+no ledger row exists for file 19. Nothing is half-applied or misdocumented.
+
+What went wrong, for whoever picks this up:
+1. The `execute_sql` MCP tool's Postgres session connects as `postgres`, which
+   IS a member of `app_migrator` but **without INHERIT**
+   (`pg_has_role('postgres','app_migrator','USAGE')` = false, `MEMBER` = true).
+   So `SET ROLE app_migrator` — the exact pattern `scripts/db.mjs` and the
+   earlier file-18 application both used — fails with "permission denied to
+   set role". This is a different credential/session than whatever the
+   file-18 application used.
+2. Fallback: ran the DDL directly as `postgres` without `SET ROLE`, wrapped in
+   an explicit transaction with the ledger insert. The ledger insert failed
+   (`permission denied for table schema_migrations`, since `postgres` lacks
+   direct/inherited privilege on that `app_migrator`-owned table), which
+   correctly rolled back the whole transaction, including the `REVOKE`.
+   Confirmed via `pg_class.relacl` — nothing changed. Safe.
+3. Tried the dedicated `apply_migration` MCP tool instead. **It returned
+   `{"success":true}`, but the ACL was verified unchanged afterward**
+   (`has_table_privilege('app_runtime', ..., 'UPDATE')` still `true`). Do
+   **not** trust that tool's success response for this project without
+   independently re-checking the actual database state — it is not reliable
+   evidence here, for reasons not yet understood.
+
+**Next action for whoever resumes this**: do not retry `apply_migration`
+and assume it worked. Either get a session with a working `app_migrator`
+`SET ROLE` path (or the real `MIGRATION_DATABASE_URL` credential
+`scripts/db.mjs` uses), or investigate why `postgres`'s membership in
+`app_migrator` lost its inherit option. Re-verify with the direct ACL query
+below before trusting any tool's "success," then finish staging, verify,
+then repeat for production (`rkzwubwogtezqbuhieuo`) as its own explicit step —
+the user only approved staging-then-production for this exact migration, not
+a general standing approval.
+
+Verification query used throughout (safe, read-only):
+```sql
+select has_table_privilege('app_runtime', 'app.knowledge_provider_namespaces', 'UPDATE');
+-- true  = file 19 NOT yet in effect
+-- false = file 19 is in effect
+```
+
+## Prior phase — booking-engine correctness fix (Undo/calendar desync)
 
 Status: **FIXED, PUSHED, NOT YET DB/LIVE VERIFIED — 2026-08-26**
 

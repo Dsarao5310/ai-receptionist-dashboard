@@ -1,5 +1,49 @@
 # Latest Handoff
 
+## Claude — migration file 19 attempt BLOCKED, staging unchanged, do not blind-retry (2026-08-26)
+
+With the user's explicit approval (staging then production), attempted to
+apply `20260826033517_knowledge_namespace_immutability.sql` — a narrow,
+already-verified `REVOKE UPDATE ON knowledge_provider_namespaces FROM
+app_runtime` — to staging (`jhkbsfsbnynysplvnwca`).
+
+**Result: stopped before completing staging, production untouched.** Full
+mechanism is in `CURRENT_TASK.md`'s top section; the short version:
+
+- The direct route (`SET ROLE app_migrator`, matching `scripts/db.mjs` and
+  the earlier file-18 application exactly) failed outright: this session's
+  `postgres` connection is a member of `app_migrator` but without INHERIT,
+  so it can't assume that role. Confirmed via `pg_has_role(...,'USAGE')` =
+  false vs `'MEMBER'` = true.
+- Running the DDL directly as `postgres` (no role switch) inside an explicit
+  transaction got further, but the ledger-row insert into
+  `app.schema_migrations` hit `permission denied for table
+  schema_migrations`, which correctly rolled back the entire transaction —
+  verified via `pg_class.relacl` that `knowledge_provider_namespaces` was
+  untouched (`app_runtime=arw` unchanged).
+- The `apply_migration` MCP tool (a different, more-privileged execution
+  path) reported `{"success":true}` for the same DDL. **That report was
+  false.** A direct follow-up check —
+  `has_table_privilege('app_runtime','app.knowledge_provider_namespaces','UPDATE')`
+  — still returned `true` afterward. The tool's own success signal cannot be
+  trusted here without independent verification; why it misreported is
+  unresolved.
+
+**Verified current real state** (not from any tool's status message —
+queried directly): staging is still genuinely 18/19. No ledger row exists
+for file 19 (correctly — nothing was actually applied, so nothing false was
+recorded). Production (`rkzwubwogtezqbuhieuo`) was never touched by any of
+this. Nothing is broken, corrupted, or misleadingly documented as done.
+
+**What the next session needs to do**: find a database credential/session
+that actually has working `app_migrator` privileges (the real
+`MIGRATION_DATABASE_URL` `scripts/db.mjs` uses would sidestep this entirely),
+apply the DDL, then use the verification query in `CURRENT_TASK.md` to
+*confirm* — not assume — it took effect before inserting the ledger row and
+before touching production. The user's approval was staging-then-production
+for this one migration; it doesn't carry forward as standing approval for a
+different session's attempt.
+
 ## Claude — fixed the calendar-desync Undo bug flagged earlier (2026-08-26)
 
 Picked up the real bug found during independent code review (documented
