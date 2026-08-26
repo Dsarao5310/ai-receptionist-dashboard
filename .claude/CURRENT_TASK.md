@@ -2,7 +2,14 @@
 
 Phase: **Business Knowledge provider foundation**
 
-Status: **STAGING PINECONE CONFIG DEPLOYED — READY — AUTHENTICATED CERTIFICATION PENDING — 2026-08-26**
+Status: **LIVE KNOWLEDGE/PINECONE FLOW CERTIFIED END-TO-END — 2026-08-26**
+
+PR #2 merged; production and staging both redeployed and READY at commit
+`0b444ac`. Authenticated UI test re-run against redeployed staging: add →
+persists past reload → DB row correct (`provider_document_id` set,
+`provider_sync_state = synced`) → real vector found in Pinecone via semantic
+search → delete → confirmed gone from both DB and Pinecone. Full detail in
+`handoffs/latest.md`. Test entry cleaned up; no stray data left.
 
 ## Result
 

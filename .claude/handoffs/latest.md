@@ -1,5 +1,49 @@
 # Latest Handoff
 
+## Claude — live Knowledge/Pinecone flow CERTIFIED end-to-end through the real UI (2026-08-26)
+
+Re-ran the authenticated staging test that originally surfaced the
+deployment mismatch, now against the redeployed staging (`0b444ac`). Signed
+in as the real Coastal Bloom owner (existing Google session), added a
+clearly-labeled test entry via Business Profile → Knowledge.
+
+**Full round trip verified independently at every layer, not just the UI toast:**
+- UI: entry appeared, survived a hard page reload (not just optimistic state).
+- Database (`execute_sql` against staging): row persisted with
+  `provider_document_id = kn_k5WvV4i3BbnU4cPO` (the exact column that was
+  `NULL`-violating before) and `provider_sync_state = synced`.
+- Pinecone (`search-records` against `ai-receptionist-knowledge-staging`,
+  namespace `kns_qIpzAe_R0bMVne69` resolved from
+  `knowledge_provider_namespaces`): semantic search found the real vector,
+  correct id, title, content, category, active fields.
+- Cleanup: deleted via the UI trash icon. DB shows `deleted_at` set;
+  Pinecone search now returns zero hits — delete path also verified live.
+
+**The live Knowledge/Pinecone integration is certified end-to-end**: UI →
+server action → DB (correct provider_document_id) → Pinecone upsert →
+synced → searchable → delete → removed from Pinecone. This closes out the
+deployment-mismatch gap from earlier today. No stray test data left behind.
+
+## Claude — PR #2 merged, production redeployed and READY (2026-08-26)
+
+User approved merging. Verified before merging: both Vercel Preview builds
+for the `knowledge/pinecone-provider-foundation` branch showed `Error`
+(missing/invalid secrets) — checked this against deployment history for the
+real project (`prj_Rw7kj3tAD3aJn2fmS3YuoupSRsRM`) and confirmed every
+non-`master`/`staging` branch fails the same way (env vars are branch-scoped
+to `master`/`staging` only); PR #1's own branch failed identically before its
+merge succeeded. Not a regression — merged.
+
+- Merge commit `f365cea` → production deployment `dpl_8fRbX5znDPXbVfoyM68HYcovmfSk`, **READY**, target `production`.
+- Follow-up docs-only commit `0b444ac` (this handoff log) → `dpl_Bk16VV1VwRN2ALkVG3HUziCrvbfW`, also **READY**.
+- Local `master` fast-forwarded to match; feature branch deleted on GitHub.
+
+**Production now has the Business Knowledge/Pinecone code** (still `KNOWLEDGE_PROVIDER_MODE` unset/disabled there — no live Pinecone traffic from production).
+
+**Staging updated too**: user ran `git push origin master:staging` directly (the auto-mode classifier blocked me from running that push myself twice, since it triggers a deploy — handed it to the user instead). Staging redeployed at commit `0b444ac`, deployment `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, **READY**. Staging now runs the same code as production, including the Business Knowledge/Pinecone feature and the correctly-set `provider_document_id` write path.
+
+**Next**: re-run the authenticated staging UI Knowledge-save test (same steps as the earlier failed attempt) to certify the live Pinecone flow end-to-end through the real UI.
+
 ## Claude — committed and opened PR #2 for the uncommitted working tree (2026-08-26)
 
 User approved committing/pushing the large uncommitted tree Codex preflighted
