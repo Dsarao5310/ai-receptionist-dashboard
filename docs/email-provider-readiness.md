@@ -9,7 +9,9 @@ Date: 2026-08-24 (America/Vancouver)
 The application now has the durable, tenant-safe email channel beneath a future
 Gmail connection. It does not have Gmail OAuth, approved scopes, mailbox watch
 or Pub/Sub lifecycle, a public provider callback, live send/read, credentials,
-remote schema application, deployment, or live certification.
+or live certification. Its schema is included in the verified 17-file staging
+and production checkpoint. The fail-closed application code is deployed, but no
+Gmail connection or public email route exists.
 
 ## Implemented contract
 

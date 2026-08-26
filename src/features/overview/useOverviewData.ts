@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useWorkspaceData } from "@/lib/workspace-data";
 import { useConfiguration } from "@/lib/store/configuration";
 import { getRangeBounds, type Bounds } from "@/lib/date-range";
-import { getDashboardStats, getRecentActivity, getRecentConversations, getUpcomingAppointments } from "@/services/dashboard";
+import { getDashboardStats, getRecentActivity, getRecentConversations, getTopServicesByDay, getUpcomingAppointments } from "@/services/dashboard";
 import { getReceptionistStatus } from "@/services/ai-receptionist";
 import { useIntegrations } from "@/lib/store/integrations";
 import type { DateRangeKey } from "@/types";
@@ -31,6 +31,10 @@ export function useOverviewData() {
   const activity = useMemo(() => (liveDataset ? getRecentActivity(liveDataset, 8) : []), [liveDataset]);
   const conversations = useMemo(() => (liveDataset ? getRecentConversations(liveDataset, 6) : []), [liveDataset]);
   const appointments = useMemo(() => (liveDataset && now ? getUpcomingAppointments(liveDataset, config, now, 6) : []), [liveDataset, config, now]);
+  const topServices = useMemo(
+    () => (liveDataset && bounds ? getTopServicesByDay(liveDataset, bounds, zone) : null),
+    [liveDataset, bounds, zone]
+  );
   const status = useMemo(
     () => getReceptionistStatus(config, capabilities),
     [config, capabilities]
@@ -53,6 +57,7 @@ export function useOverviewData() {
     activity,
     conversations,
     appointments,
+    topServices,
     status,
   };
 }

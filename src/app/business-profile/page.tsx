@@ -1,6 +1,7 @@
 import type { SearchParams } from "@/lib/filter-params";
 import { readParam } from "@/lib/filter-params";
-import BusinessProfileView, { type ProfileTab, PROFILE_TABS } from "./view";
+import BusinessProfileView from "./view";
+import { type ProfileTab, PROFILE_TABS } from "./tabs";
 
 /** The AI Receptionist page links straight to a section, e.g. "?tab=knowledge". */
 export default async function BusinessProfilePage({ searchParams }: { searchParams: SearchParams }) {

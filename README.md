@@ -237,8 +237,18 @@ foundation, trusted mailbox tenant mapping, shared inbound receipts, outbound
 operation idempotency, and deterministic simulation. It is **application-ready
 and simulator/database verified, not Gmail-ready**: there is no Gmail OAuth,
 watch/Pub/Sub lifecycle, public provider callback, live send/read, credential,
-remote migration, deployment, or live certification. Live mode fails closed;
+or live certification. Its schema is part of the verified 17-file staging and
+production checkpoint and its fail-closed code is deployed. Live mode fails closed;
 see [`docs/email-provider-readiness.md`](docs/email-provider-readiness.md).
 
-Pinecone still has no real server implementation and fails closed as unavailable;
-development mocks are not production provider connections.
+Business Knowledge now has a server-only provider boundary with server-issued
+tenant namespaces, durable reconciliation/tombstone state, monotonic write
+ordering, and a deterministic simulator. It is **application-ready and schema-
+verified in staging and production, not Pinecone-ready**: migration file 18 is
+applied and verified in both environments. Local migration file 19 removes
+unused runtime update authority from the immutable namespace mapping and is
+verified against disposable `app_test`, but remains pending application in both
+staging and production `app`. There is no Pinecone account, credential, index,
+embedding model, live call, or certification. Production live mode remains
+fail-closed; see
+[`docs/knowledge-provider-readiness.md`](docs/knowledge-provider-readiness.md).

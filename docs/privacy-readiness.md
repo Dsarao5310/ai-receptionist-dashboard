@@ -103,12 +103,13 @@ the scheduled executor.
   notifications, true reauthentication, or live operator certification. The
   current identity step records an authorized operator's out-of-band check; it
   does not perform or independently prove that check.
-- No deployed/enabled schedule, configured cron secret, external monitoring,
-  alert owner, retry escalation, or recovery certification. The operator page
-  is local visibility, not an external alert.
-- No remote migration, staging data exercise, deployment, provider recording
+- The cron definition and route are deployed, but purge mode remains disabled;
+  no configured cron secret, external monitoring, alert owner, retry escalation,
+  or recovery certification exists. The operator page is not an external alert.
+- Remote schema parity and privacy backfills are verified through the 17-file
+  staging and production checkpoint. No live purge exercise, provider recording
   ingestion, live call, export workflow, customer identity-verification flow,
-  or live certification.
+  or live certification exists.
 
 Before enabling recording, approve the policy, apply and verify the migration in
 isolated staging, verify disabled mode first, configure the dedicated secret,

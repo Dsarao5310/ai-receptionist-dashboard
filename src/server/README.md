@@ -364,13 +364,16 @@ Two ways to reach a provider; one place to look when something goes wrong.
 
 
 
-## Backend authority (still to come)
+## Remaining backend authority
 
-Still ahead: real availability and capacity (atomic slot reservation), provider
-credential storage in a managed vault rather than environment variables, and the
-remaining providers behind the adapter interface. Everything else on the list -
-authentication, role, workspace access, integration management, trusted clock,
-scheduling validation, audit logging, durable persistence and workflow
-orchestration - is now server-side and durable.
+Still ahead: real availability and capacity with atomic slot reservation,
+provider credential storage in a managed vault rather than environment
+variables, and live implementations/certification for the remaining provider
+boundaries. Calendar is historically live-verified; Twilio, Vapi, model, email,
+privacy, and Business Knowledge have application foundations but retain the
+explicit live gates documented under `docs/`. Authentication, role, workspace
+access, integration management, trusted clock, scheduling validation, audit
+logging, durable persistence, and workflow orchestration are server-side and
+durable.
 
 Frontend validation stays as it is: immediate feedback, never the last word.

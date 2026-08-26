@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { APICallError } from "ai";
+import { APICallError, NoObjectGeneratedError } from "ai";
 import type { IntegrationRecord } from "@/types";
 import { MODEL_EVAL_FIXTURES } from "./eval-fixtures";
 import { ModelProviderError } from "./errors";
@@ -143,6 +143,22 @@ describe("model-provider foundation", () => {
   });
 
   it("normalizes provider failures without leaking raw bodies or credentials", () => {
+    const invalidOutput = normalizedGatewayError(new NoObjectGeneratedError({
+      text: "malformed output containing sk-secret",
+      response: { id: "response_1", timestamp: new Date("2026-08-26T00:00:00.000Z"), modelId: "private-model" },
+      usage: {
+        inputTokens: 10,
+        inputTokenDetails: { noCacheTokens: 10, cacheReadTokens: 0, cacheWriteTokens: 0 },
+        outputTokens: 2,
+        outputTokenDetails: { textTokens: 2, reasoningTokens: 0 },
+        totalTokens: 12,
+      },
+      finishReason: "stop",
+    }));
+    expect(invalidOutput).toMatchObject({ code: "model_invalid_response", retryable: true });
+    expect(JSON.stringify(invalidOutput)).not.toContain("sk-secret");
+    expect(JSON.stringify(invalidOutput)).not.toContain("private-model");
+
     const auth = normalizedGatewayError(new APICallError({
       message: "credential sk-secret rejected",
       url: "https://gateway.example/private",

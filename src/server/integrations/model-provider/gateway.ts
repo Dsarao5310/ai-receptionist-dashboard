@@ -1,6 +1,14 @@
 import "server-only";
 
-import { APICallError, generateText, gateway, NoOutputGeneratedError, Output, type GatewayModelId } from "ai";
+import {
+  APICallError,
+  generateText,
+  gateway,
+  NoObjectGeneratedError,
+  NoOutputGeneratedError,
+  Output,
+  type GatewayModelId,
+} from "ai";
 import type { ZodType } from "zod";
 import type {
   CallAnalysis,
@@ -17,7 +25,7 @@ import { analysisPrompt, RECEPTIONIST_PROMPT_VERSION, replyPrompt } from "./prom
 
 export function normalizedGatewayError(error: unknown): ModelProviderError {
   if (error instanceof ModelProviderError) return error;
-  if (NoOutputGeneratedError.isInstance(error)) {
+  if (NoObjectGeneratedError.isInstance(error) || NoOutputGeneratedError.isInstance(error)) {
     return new ModelProviderError("model_invalid_response", true, "The model returned an invalid response.");
   }
   if (APICallError.isInstance(error)) {

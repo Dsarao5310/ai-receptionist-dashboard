@@ -28,9 +28,9 @@ export function SpecialHoursEditor({
   onRemove,
 }: {
   entries: SpecialHours[];
-  onAdd: (entry: Omit<SpecialHours, "id">) => void;
-  onUpdate: (id: string, patch: Partial<Omit<SpecialHours, "id">>) => void;
-  onRemove: (id: string) => void;
+  onAdd: (entry: Omit<SpecialHours, "id">) => Promise<boolean>;
+  onUpdate: (id: string, patch: Partial<Omit<SpecialHours, "id">>) => Promise<boolean>;
+  onRemove: (id: string) => Promise<boolean>;
 }) {
   const fmt = useBusinessFormat();
   const [addOpen, setAddOpen] = useState(false);
@@ -43,19 +43,20 @@ export function SpecialHoursEditor({
     setError(null);
   }
 
-  function submit() {
+  async function submit() {
     if (!draft.date) return setError("Pick a date.");
     if (!draft.label.trim()) return setError("Give this a name, like “Christmas Day”.");
     if (!draft.isClosed) {
       const timeError = timeOrder(draft.open, draft.close);
       if (timeError) return setError(timeError);
     }
-    onAdd({
+    const ok = await onAdd({
       date: draft.date,
       label: draft.label.trim(),
       isClosed: draft.isClosed,
       intervals: draft.isClosed ? [] : [{ open: draft.open, close: draft.close }],
     });
+    if (!ok) return;
     setAddOpen(false);
     resetDraft();
     toast.success("Special hours added");
@@ -80,6 +81,11 @@ export function SpecialHoursEditor({
               title="No special hours yet"
               description="Add holidays or one-off closures so your receptionist doesn't quote your normal hours on those days."
               className="py-10"
+              action={
+                <Button size="sm" variant="outline" onClick={() => { resetDraft(); setAddOpen(true); }}>
+                  <Plus className="h-3.5 w-3.5" /> Add date
+                </Button>
+              }
             />
           ) : (
             <ul className="divide-y divide-border">
@@ -209,10 +215,11 @@ export function SpecialHoursEditor({
             <Button
               variant="danger"
               size="sm"
-              onClick={() => {
-                if (pendingDelete) onRemove(pendingDelete.id);
+              onClick={async () => {
+                const entry = pendingDelete;
+                if (!entry) return;
                 setPendingDelete(null);
-                toast("Special hours removed");
+                if (await onRemove(entry.id)) toast("Special hours removed");
               }}
             >
               Remove

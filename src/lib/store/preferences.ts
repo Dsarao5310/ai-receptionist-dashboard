@@ -12,11 +12,14 @@ interface PreferencesState {
   accent: AccentColor;
   density: Density;
   sidebarCollapsed: boolean;
+  /** When the sidebar is collapsed, hovering it temporarily expands it without changing the saved state. */
+  sidebarHoverExpand: boolean;
   setTheme: (theme: ThemeMode) => void;
   setAccent: (accent: AccentColor) => void;
   setDensity: (density: Density) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebar: () => void;
+  setSidebarHoverExpand: (enabled: boolean) => void;
 }
 
 export const usePreferences = create<PreferencesState>()(
@@ -26,11 +29,13 @@ export const usePreferences = create<PreferencesState>()(
       accent: "indigo",
       density: "comfortable",
       sidebarCollapsed: false,
+      sidebarHoverExpand: true,
       setTheme: (theme) => set({ theme }),
       setAccent: (accent) => set({ accent }),
       setDensity: (density) => set({ density }),
       setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      setSidebarHoverExpand: (sidebarHoverExpand) => set({ sidebarHoverExpand }),
     }),
     { name: "ai-receptionist-preferences" }
   )

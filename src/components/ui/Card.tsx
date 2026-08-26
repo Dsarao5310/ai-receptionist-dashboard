@@ -5,7 +5,11 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cn(
-        "bg-surface border border-border rounded-xl shadow-sm",
+        // min-w-0 overrides the grid/flex item default of min-width: auto,
+        // which otherwise sizes the item to its widest descendant (e.g. a
+        // Table's minWidth) and blows out the track instead of letting that
+        // descendant's own overflow-x-auto scroll internally.
+        "min-w-0 bg-surface border border-border rounded-xl shadow-sm",
         className
       )}
       {...props}
@@ -14,7 +18,11 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex items-center justify-between gap-3 p-5 pb-0", className)} {...props} />;
+  // Stacked by default: a bare title+description pair reads as one column,
+  // not spread to opposite ends of a row. A header that genuinely pairs a
+  // title with an action (a button, a badge) opts into the row explicitly
+  // with its own `flex-row items-center justify-between` override.
+  return <div className={cn("flex flex-col items-start gap-1 p-5 pb-0", className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {

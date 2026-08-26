@@ -35,3 +35,26 @@ export function formatKpiDelta(kpi: Pick<KPI, "value" | "previousValue" | "forma
 
 /** Metrics where a decrease is the good direction — invert the color semantics. */
 export const INVERTED_KPI_KEYS = new Set(["missed_escalated", "cancellations", "reschedules"]);
+
+/**
+ * Where each KPI tile drills down to, reusing the exact query-param
+ * vocabulary the rest of Analytics already established — see
+ * `AppointmentOutcomes`/`ChannelPerformance`/`IntentDistribution`
+ * (`/appointments?status=`, `/conversations?intent=`) and
+ * `ReceptionistImpact` (`/calls?outcome=missed`). One shared map for
+ * Overview and Analytics, which both surface the same KPI keys, so the two
+ * pages can't quietly drift onto different destinations for the same metric.
+ *
+ * A key not listed here has no sensible single-page destination and the
+ * tile stays a plain, honestly non-interactive card.
+ */
+export const KPI_DRILL_HREF: Record<string, string> = {
+  conversations_handled: "/conversations",
+  appointments_booked: "/appointments",
+  calls_answered: "/calls?outcome=answered",
+  answer_rate: "/calls",
+  booking_conversion: "/conversations?intent=booking",
+  missed_escalated: "/calls?outcome=missed",
+  reschedules: "/appointments?status=rescheduled",
+  cancellations: "/appointments?status=cancelled",
+};

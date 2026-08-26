@@ -31,6 +31,9 @@ Status: **APPLICATION-READY + SIMULATOR VERIFIED**
   the fixed prompt version, and attributes usage to the trusted workspace.
 - Raw SDK errors, response bodies, URLs, prompts, credentials, and model ids do
   not enter client DTOs or normalized provider errors.
+- Both missing structured output and parse/schema-invalid structured output are
+  normalized to the same safe `model_invalid_response` contract; generated text,
+  provider model metadata, and validation details remain inside the boundary.
 
 ## Evidence boundary
 
@@ -39,6 +42,11 @@ human escalation, prompt injection, and post-call booking analysis. Focused
 tests also cover invalid/oversized input, cost refusal, disabled/live fail-
 closed behavior, approved model policy, safe error normalization, adapter state,
 and client import boundaries.
+
+On 2026-08-26, the public Gateway catalog still listed both approved model ids
+at the configured base token prices. The focused provider suite passes 13/13
+after adding explicit `NoObjectGeneratedError` normalization; TypeScript and
+targeted ESLint also pass.
 
 No gateway account, key, OIDC session, deployment variable, live request,
 latency measurement, provider failover observation, or billed usage was used.

@@ -130,6 +130,12 @@ const CREDENTIALS: CredentialDescriptor[] = [
     label: "AI Gateway API key",
     reference: "env:AI_GATEWAY_API_KEY",
   },
+  {
+    provider: "pinecone",
+    key: "api_key",
+    label: "API key",
+    reference: "env:PINECONE_API_KEY",
+  },
 ];
 
 function resolveReference(reference: string): string | undefined {

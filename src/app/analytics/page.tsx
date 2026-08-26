@@ -1,6 +1,8 @@
 "use client";
 
 import { BarChart3 } from "lucide-react";
+import { motion } from "framer-motion";
+import { useSectionMotion } from "@/lib/motion";
 import { useAnalyticsData } from "@/features/analytics/useAnalyticsData";
 import { AnalyticsKPIs, AnalyticsKPIsSkeleton } from "@/features/analytics/AnalyticsKPIs";
 import { ConversationTrendChart, ConversationTrendChartSkeleton } from "@/features/analytics/ConversationTrendChart";
@@ -20,6 +22,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 export default function AnalyticsPage() {
   const { loading, error, retry, rangeKey, customBounds, setRange, hasActivity, summary, trend, funnel, outcomes, channels, intents, peakTimes, impact } =
     useAnalyticsData();
+  const { container, item } = useSectionMotion();
 
   if (error) {
     return (
@@ -32,44 +35,56 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        description="How your AI receptionist is performing and what it's producing."
-        actions={<DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={setRange} />}
-      />
+    <motion.div className="space-y-4" {...container}>
+      <motion.div {...item}>
+        <PageHeader
+          description="How your AI receptionist is performing and what it's producing."
+          actions={<DateRangeControl rangeKey={rangeKey} customBounds={customBounds} onChange={setRange} />}
+        />
+      </motion.div>
 
       {loading || !summary || !peakTimes ? (
         <AnalyticsSkeleton />
       ) : !hasActivity ? (
-        <Card>
-          <EmptyState
-            icon={BarChart3}
-            title="Not enough activity yet"
-            description="Analytics will appear as your AI receptionist handles customer conversations. Try selecting a longer date range."
-          />
-        </Card>
+        <motion.div {...item}>
+          <Card>
+            <EmptyState
+              icon={BarChart3}
+              title="Not enough activity yet"
+              description="Analytics will appear as your AI receptionist handles customer conversations. Try selecting a longer date range."
+            />
+          </Card>
+        </motion.div>
       ) : (
         <>
-          <AnalyticsKPIs kpis={summary.kpis} basis={summary.conversionBasis} />
+          <motion.div {...item}>
+            <AnalyticsKPIs kpis={summary.kpis} basis={summary.conversionBasis} />
+          </motion.div>
 
-          <ConversationTrendChart trend={trend} />
+          <motion.div {...item}>
+            <ConversationTrendChart trend={trend} />
+          </motion.div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <motion.div {...item} className="grid gap-4 lg:grid-cols-2">
             <BookingFunnel funnel={funnel} />
             <AppointmentOutcomes entries={outcomes.entries} total={outcomes.total} />
-          </div>
+          </motion.div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <motion.div {...item} className="grid gap-4 lg:grid-cols-2">
             <ChannelPerformance entries={channels} />
             <IntentDistribution entries={intents} />
-          </div>
+          </motion.div>
 
-          <PeakContactTimes data={peakTimes} />
+          <motion.div {...item}>
+            <PeakContactTimes data={peakTimes} />
+          </motion.div>
 
-          <ReceptionistImpact metrics={impact} />
+          <motion.div {...item}>
+            <ReceptionistImpact metrics={impact} />
+          </motion.div>
         </>
       )}
-    </div>
+    </motion.div>
   );
 }
 

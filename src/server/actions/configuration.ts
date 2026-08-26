@@ -13,6 +13,9 @@ import { AuthenticationError, AuthorizationError, requirePermission } from "@/se
 import { recordAuditEvent } from "@/server/audit";
 import { scopeFor } from "@/server/workspace-data";
 import { isValidTimeZone } from "@/lib/timezone";
+import { createKnowledgeSyncService } from "@/server/integrations/knowledge/operations";
+import { KnowledgeProviderError } from "@/server/integrations/knowledge/errors";
+import { projectKnowledgeWriteResult } from "./knowledge-result";
 
 /**
  * Business profile and receptionist configuration, written on the server.
@@ -31,9 +34,12 @@ import { isValidTimeZone } from "@/lib/timezone";
  * Narrow actions mean narrow writes and a legible history.
  */
 
-export type ConfigResult = { ok: true } | { ok: false; error: string };
+export type ConfigResult = { ok: true; warning?: string } | { ok: false; error: string };
 
 function toFailure(error: unknown): { ok: false; error: string } {
+  if (error instanceof KnowledgeProviderError) {
+    return { ok: false, error: error.message };
+  }
   if (error instanceof AuthorizationError || error instanceof AuthenticationError) {
     return { ok: false, error: error.publicMessage };
   }
@@ -256,12 +262,12 @@ export async function moveServiceAction(id: string, direction: -1 | 1): Promise<
 
 export async function addKnowledgeAction(
   entry: Omit<KnowledgeEntry, "id">
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; id: string; warning?: string } | { ok: false; error: string }> {
   try {
     const context = await requirePermission("business.edit");
-    const id = await scopeFor(context).configuration.addKnowledge(entry);
+    const result = await createKnowledgeSyncService(context).create(entry);
     revalidateWorkspaceViews();
-    return { ok: true, id };
+    return { ...projectKnowledgeWriteResult(result), id: result.id };
   } catch (error) {
     return toFailure(error);
   }
@@ -273,9 +279,9 @@ export async function updateKnowledgeAction(
 ): Promise<ConfigResult> {
   try {
     const context = await requirePermission("business.edit");
-    await scopeFor(context).configuration.updateKnowledge(id, patch);
+    const result = await createKnowledgeSyncService(context).update(id, patch);
     revalidateWorkspaceViews();
-    return { ok: true };
+    return projectKnowledgeWriteResult(result);
   } catch (error) {
     return toFailure(error);
   }
@@ -284,9 +290,9 @@ export async function updateKnowledgeAction(
 export async function removeKnowledgeAction(id: string): Promise<ConfigResult> {
   try {
     const context = await requirePermission("business.edit");
-    await scopeFor(context).configuration.removeKnowledge(id);
+    const result = await createKnowledgeSyncService(context).remove(id);
     revalidateWorkspaceViews();
-    return { ok: true };
+    return projectKnowledgeWriteResult(result);
   } catch (error) {
     return toFailure(error);
   }

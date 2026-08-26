@@ -33,9 +33,8 @@ export function AccountSettings() {
   // navigation cancelled with nothing shown — the link simply did nothing.
   const { blocked, confirmLeave, cancelLeave } = useUnsavedChanges(dirty);
 
-  function save() {
-    setAccount(draft);
-    toast.success("Account details saved");
+  async function save() {
+    if (await setAccount(draft)) toast.success("Account details saved");
   }
 
   return (

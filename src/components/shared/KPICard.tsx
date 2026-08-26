@@ -1,4 +1,5 @@
-import { TrendingDown, TrendingUp, Minus } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import type { KPI } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Sparkline } from "@/components/shared/Sparkline";
@@ -25,17 +26,30 @@ import { cn } from "@/lib/utils";
  * way: the loud tile is the *same size* as its neighbours, standing out purely
  * through a solid fill instead of taking more space. Hierarchy through
  * contrast, not through size, so the row stays regular at every breakpoint.
+ *
+ * ── Drill-down is opt-in per tile ────────────────────────────────────────────
+ * `href` reuses the same query-param drill-down vocabulary the rest of
+ * Analytics already established (`/appointments?status=`, `/calls?outcome=`,
+ * `/conversations?intent=` — see `AppointmentOutcomes`/`ReceptionistImpact`),
+ * so a KPI card behaves like every other clickable metric in this app rather
+ * than introducing a second convention. When a caller has no sensible
+ * destination for a metric, it omits `href` and the tile stays a plain,
+ * honestly non-interactive card — never a fake affordance on something that
+ * does nothing.
  */
 export function KPICard({
   kpi,
   hero = false,
   raised = false,
+  href,
 }: {
   kpi: KPI;
   /** Solid-fill treatment for the one tile in a row that should read first. */
   hero?: boolean;
   /** Dashboard surfaces opt into the display layer; other pages keep the flat card. */
   raised?: boolean;
+  /** Where this metric drills down to. Omit if there's no meaningful destination. */
+  href?: string;
 }) {
   const delta = formatKpiDelta(kpi);
   const inverted = INVERTED_KPI_KEYS.has(kpi.key);
@@ -54,22 +68,30 @@ export function KPICard({
         ? "bg-success-bg text-success"
         : "bg-danger-bg text-danger";
 
-  return (
-    <Card
-      className={cn(
-        "flex min-w-0 flex-col gap-3 overflow-hidden p-4",
-        raised && "rounded-2xl p-5 card-raised card-raised-interactive",
-        hero && "border-transparent bg-hero"
-      )}
-    >
-      <span
-        className={cn(
-          "min-w-0 text-xs font-medium leading-snug hyphens-none",
-          hero ? "text-hero-muted" : "text-text-muted"
+  const body = (
+    <>
+      <div className="flex min-w-0 items-start justify-between gap-2">
+        <span
+          className={cn(
+            "min-w-0 text-xs font-medium leading-snug hyphens-none",
+            hero ? "text-hero-muted" : "text-text-muted"
+          )}
+        >
+          {kpi.label}
+        </span>
+        {/* Hidden until hover/focus rather than always-on: a static arrow on
+            every tile reads as decoration, but one that appears only on the
+            tiles that respond to interaction is what actually signals it. */}
+        {href && (
+          <ArrowUpRight
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100",
+              hero ? "text-hero-muted" : "text-text-muted"
+            )}
+            aria-hidden
+          />
         )}
-      >
-        {kpi.label}
-      </span>
+      </div>
 
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className={cn("text-metric", hero ? "text-hero-text" : "text-text-primary")}>
@@ -88,10 +110,43 @@ export function KPICard({
 
       <Sparkline
         values={kpi.sparkline}
-        tone={hero ? "hero" : goodDirection ? "success" : "muted"}
-        variant="bars"
+        tone={hero ? "hero" : goodDirection ? "success" : delta.flat ? "muted" : "danger"}
+        variant="line"
         className="mt-auto"
       />
-    </Card>
+    </>
   );
+
+  const sharedClassName = cn(
+    "flex min-w-0 flex-col gap-3 overflow-hidden p-4",
+    raised && "rounded-2xl p-5 card-raised card-raised-interactive",
+    hero && "border-transparent bg-hero"
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={cn(
+          sharedClassName,
+          "group shadow-sm transition-[transform,border-color] duration-150 active:scale-[0.98]",
+          // `raised`/`hero` already picked rounding and fill/border in
+          // `sharedClassName` above — repeating the un-hero, un-raised
+          // defaults here unconditionally (the previous shape of this class
+          // list) let tailwind-merge's same-conflict-group "last one wins"
+          // rule silently override them, which is how a hero+raised+href
+          // tile (the Overview KPI grid's one hero card) rendered as a plain
+          // `bg-surface` card with invisible white-on-white text in light
+          // mode. Only add a default when the corresponding flag is off.
+          !raised && "rounded-xl",
+          hero ? "hover:border-white/30" : "border border-border bg-surface hover:border-border-interactive",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        )}
+      >
+        {body}
+      </Link>
+    );
+  }
+
+  return <Card className={sharedClassName}>{body}</Card>;
 }

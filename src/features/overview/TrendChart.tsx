@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { ChartNoAxesCombined } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { TrendPoint } from "@/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -19,10 +20,9 @@ import { cn } from "@/lib/utils";
  * this card can show — the shape of the trend across the period, and how a
  * specific point compares to where it started — is what it shows now.
  *
- * The shaded band marks the most recent stretch of the period without
- * claiming to be precise — it carries no numbers of its own. Hovering a point
- * answers "what changed": the tooltip states the value at the start of the
- * period next to the value under the cursor, with the swing between them.
+ * Hovering a point answers "what changed": the tooltip states the value at
+ * the start of the period next to the value under the cursor, with the swing
+ * between them.
  */
 
 interface TooltipPayloadEntry {
@@ -88,12 +88,6 @@ export function TrendChart({ trend }: { trend: TrendPoint[] }) {
     [trend]
   );
 
-  // The shaded band marks roughly the final quarter of the period — the
-  // "recent window" — without claiming to be a precise boundary.
-  const bandStart =
-    trend.length >= 4 ? trend[Math.max(trend.length - Math.ceil(trend.length / 4) - 1, 0)]?.label : null;
-  const bandEnd = trend[trend.length - 1]?.label ?? null;
-
   return (
     <Card className="overflow-hidden rounded-2xl card-raised">
       <CardHeader className="flex-col items-start gap-3 p-5 pb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -103,14 +97,20 @@ export function TrendChart({ trend }: { trend: TrendPoint[] }) {
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="flex items-center gap-2 rounded-lg border border-border bg-surface-sunken/60 px-2.5 py-1.5 text-text-secondary">
+          <Link
+            href="/conversations"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface-sunken/60 px-2.5 py-1.5 text-text-secondary transition-colors hover:border-border-interactive hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
             <span className="h-2 w-2 rounded-full bg-accent" /> Conversations
             <strong className="font-semibold tabular-nums text-text-primary">{conversationTotal}</strong>
-          </span>
-          <span className="flex items-center gap-2 rounded-lg border border-border bg-surface-sunken/60 px-2.5 py-1.5 text-text-secondary">
+          </Link>
+          <Link
+            href="/appointments"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface-sunken/60 px-2.5 py-1.5 text-text-secondary transition-colors hover:border-border-interactive hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
             <span className="h-2 w-2 rounded-full bg-success" /> Appointments
             <strong className="font-semibold tabular-nums text-text-primary">{appointmentTotal}</strong>
-          </span>
+          </Link>
         </div>
       </CardHeader>
 
@@ -126,7 +126,7 @@ export function TrendChart({ trend }: { trend: TrendPoint[] }) {
         ) : (
           <div className="h-64 w-full sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <AreaChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   {/* Quieter fill than the first pass — thin, confident lines
                       carrying the shape, with the gradient underneath as a
@@ -142,9 +142,6 @@ export function TrendChart({ trend }: { trend: TrendPoint[] }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="2 4" />
-                {bandStart && bandEnd && bandStart !== bandEnd && (
-                  <ReferenceArea x1={bandStart} x2={bandEnd} fill="var(--color-accent)" fillOpacity={0.05} ifOverflow="visible" />
-                )}
                 <XAxis
                   dataKey="label"
                   axisLine={false}

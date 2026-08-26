@@ -9,6 +9,7 @@ import { CustomerDrawer } from "@/features/customers/CustomerDrawer";
 import { AppointmentDrawer } from "@/features/appointments/AppointmentDrawer";
 import { ConversationDrawer } from "@/features/conversations/ConversationDrawer";
 import { CallDrawer } from "@/features/calls/CallDrawer";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -82,6 +83,8 @@ export default function CustomersView({ openCustomerId }: { openCustomerId: stri
 
   return (
     <div className="space-y-4">
+      <PageHeader description="Everyone who has called, texted, or emailed your business, and what's next for them." />
+
       <CustomersFilters search={search} onSearch={setSearch} status={status} onStatus={setStatus} channel={channel} onChannel={setChannel} />
 
       <Card className="overflow-hidden">

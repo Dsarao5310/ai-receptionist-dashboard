@@ -59,10 +59,10 @@ export function ServicesManager({
   onMove,
 }: {
   services: BusinessService[];
-  onAdd: (service: Omit<BusinessService, "id">) => void;
-  onUpdate: (id: string, patch: Partial<Omit<BusinessService, "id">>) => void;
-  onRemove: (id: string) => void;
-  onMove: (id: string, direction: -1 | 1) => void;
+  onAdd: (service: Omit<BusinessService, "id">) => Promise<boolean>;
+  onUpdate: (id: string, patch: Partial<Omit<BusinessService, "id">>) => Promise<boolean>;
+  onRemove: (id: string) => Promise<boolean>;
+  onMove: (id: string, direction: -1 | 1) => Promise<boolean>;
 }) {
   const [editing, setEditing] = useState<BusinessService | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -92,7 +92,7 @@ export function ServicesManager({
     setError(null);
   }
 
-  function submit() {
+  async function submit() {
     const message = validate(draft);
     if (message) return setError(message);
 
@@ -105,13 +105,9 @@ export function ServicesManager({
       active: draft.active,
     };
 
-    if (editing) {
-      onUpdate(editing.id, payload);
-      toast.success(`${payload.name} updated`);
-    } else {
-      onAdd(payload);
-      toast.success(`${payload.name} added`);
-    }
+    const ok = editing ? await onUpdate(editing.id, payload) : await onAdd(payload);
+    if (!ok) return;
+    toast.success(`${payload.name} ${editing ? "updated" : "added"}`);
     closeDialog();
   }
 
@@ -180,9 +176,10 @@ export function ServicesManager({
                   <div className="flex shrink-0 items-center gap-2">
                     <Switch
                       checked={service.active}
-                      onCheckedChange={(checked) => {
-                        onUpdate(service.id, { active: checked });
-                        toast.success(`${service.name} ${checked ? "activated" : "deactivated"}`);
+                      onCheckedChange={async (checked) => {
+                        if (await onUpdate(service.id, { active: checked })) {
+                          toast.success(`${service.name} ${checked ? "activated" : "deactivated"}`);
+                        }
                       }}
                       aria-label={`${service.name} active`}
                     />
@@ -289,12 +286,11 @@ export function ServicesManager({
             <Button
               variant="danger"
               size="sm"
-              onClick={() => {
-                if (pendingDelete) {
-                  onRemove(pendingDelete.id);
-                  toast(`${pendingDelete.name} deleted`);
-                }
+              onClick={async () => {
+                const service = pendingDelete;
+                if (!service) return;
                 setPendingDelete(null);
+                if (await onRemove(service.id)) toast(`${service.name} deleted`);
               }}
             >
               Delete service

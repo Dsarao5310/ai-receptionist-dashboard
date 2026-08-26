@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { useBusinessFormat } from "@/lib/business-format";
 import { CAPABILITY_LABELS } from "@/services/integrations";
 import { getAffectedCapabilities } from "@/services/integrations-providers";
-import { ConnectionBadge, HealthBadge } from "./StatusIndicators";
+import { ConnectionBadge, HealthBadge, shouldShowIntegrationError } from "./StatusIndicators";
 
 /**
  * One provider, as an administrator sees it. Provider names are expected here —
@@ -69,7 +69,7 @@ export function IntegrationCard({
         </div>
       </dl>
 
-      {record.lastError && (
+      {shouldShowIntegrationError(record) && (
         <p className="mt-3 rounded-md border border-border bg-surface-sunken px-2.5 py-2 text-xs text-text-secondary">
           {record.lastError.message}
         </p>

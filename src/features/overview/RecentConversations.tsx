@@ -21,7 +21,7 @@ export function RecentConversations({ conversations, onSelect }: { conversations
       </CardHeader>
       <CardContent className="pt-4">
         {conversations.length === 0 ? (
-          <EmptyState title="No conversations in this range" description="Voice, SMS, and email conversations will show up here." />
+          <EmptyState title="No conversations yet" description="Voice, SMS, and email conversations will show up here." />
         ) : (
           <ul className="divide-y divide-border -mx-5">
             {conversations.map((c) => {

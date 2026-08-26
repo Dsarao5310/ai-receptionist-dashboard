@@ -36,20 +36,19 @@ export function ReceptionistHeader({
   ai: AIConfiguration;
   status: ReceptionistStatus;
   activity: ReceptionistActivity;
-  onToggleEnabled: (enabled: boolean) => void;
-  onToggleChannel: (channel: "voice" | "sms" | "email", enabled: boolean) => void;
+  onToggleEnabled: (enabled: boolean) => Promise<boolean>;
+  onToggleChannel: (channel: "voice" | "sms" | "email", enabled: boolean) => Promise<boolean>;
 }) {
   // Timestamps are rendered on the business's clock, not the viewer's.
   const fmt = useBusinessFormat();
   const [confirmOff, setConfirmOff] = useState(false);
   const overall = OVERALL_TONE[status.overall];
 
-  function requestToggle(next: boolean) {
+  async function requestToggle(next: boolean) {
     // Turning it on is harmless; turning it off stops automated customer
     // handling, so that direction gets a confirmation.
     if (next) {
-      onToggleEnabled(true);
-      toast.success("AI receptionist is back online");
+      if (await onToggleEnabled(true)) toast.success("AI receptionist is back online");
     } else {
       setConfirmOff(true);
     }
@@ -133,9 +132,8 @@ export function ReceptionistHeader({
                     <Switch
                       checked={on}
                       disabled={!ai.enabled}
-                      onCheckedChange={(v) => {
-                        onToggleChannel(key, v);
-                        toast.success(`${label} ${v ? "enabled" : "disabled"}`);
+                      onCheckedChange={async (v) => {
+                        if (await onToggleChannel(key, v)) toast.success(`${label} ${v ? "enabled" : "disabled"}`);
                       }}
                       aria-label={`${label} channel — ${hint}`}
                     />
@@ -163,9 +161,9 @@ export function ReceptionistHeader({
             <Button
               variant="danger"
               size="sm"
-              onClick={() => {
-                onToggleEnabled(false);
+              onClick={async () => {
                 setConfirmOff(false);
+                if (!(await onToggleEnabled(false))) return;
                 toast("AI receptionist turned off", {
                   description: "Customer messages are no longer handled automatically.",
                   action: { label: "Undo", onClick: () => onToggleEnabled(true) },

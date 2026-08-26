@@ -89,20 +89,30 @@ import {
 
 // ── Slice shapes ────────────────────────────────────────────────────────────
 
+/**
+ * Every optimistic write here resolves to whether the *server* actually
+ * accepted it, not just whether the local state update ran — a caller that
+ * shows its own success toast right after calling one of these needs to
+ * await that answer first. Firing a success toast unconditionally on the
+ * synchronous return (the previous shape of every method here) meant a real
+ * server failure showed a false "saved" toast immediately followed by this
+ * store's own rollback-triggered "Couldn't save" toast — a genuinely
+ * confusing, contradictory sequence, not just a missed nicety.
+ */
 export interface ConfigurationState extends AppConfiguration {
-  updateBusiness: (patch: Partial<BusinessIdentity>) => void;
-  updateHours: (hours: DayHours[]) => void;
-  addSpecialHours: (entry: Omit<SpecialHours, "id">) => void;
-  updateSpecialHours: (id: string, patch: Partial<Omit<SpecialHours, "id">>) => void;
-  removeSpecialHours: (id: string) => void;
-  addService: (service: Omit<BusinessService, "id">) => void;
-  updateService: (id: string, patch: Partial<Omit<BusinessService, "id">>) => void;
-  removeService: (id: string) => void;
-  moveService: (id: string, direction: -1 | 1) => void;
-  addKnowledge: (entry: Omit<KnowledgeEntry, "id">) => void;
-  updateKnowledge: (id: string, patch: Partial<Omit<KnowledgeEntry, "id">>) => void;
-  removeKnowledge: (id: string) => void;
-  updateAI: (patch: Partial<AIConfiguration>) => void;
+  updateBusiness: (patch: Partial<BusinessIdentity>) => Promise<boolean>;
+  updateHours: (hours: DayHours[]) => Promise<boolean>;
+  addSpecialHours: (entry: Omit<SpecialHours, "id">) => Promise<boolean>;
+  updateSpecialHours: (id: string, patch: Partial<Omit<SpecialHours, "id">>) => Promise<boolean>;
+  removeSpecialHours: (id: string) => Promise<boolean>;
+  addService: (service: Omit<BusinessService, "id">) => Promise<boolean>;
+  updateService: (id: string, patch: Partial<Omit<BusinessService, "id">>) => Promise<boolean>;
+  removeService: (id: string) => Promise<boolean>;
+  moveService: (id: string, direction: -1 | 1) => Promise<boolean>;
+  addKnowledge: (entry: Omit<KnowledgeEntry, "id">) => Promise<{ saved: boolean; warning?: string }>;
+  updateKnowledge: (id: string, patch: Partial<Omit<KnowledgeEntry, "id">>) => Promise<{ saved: boolean; warning?: string }>;
+  removeKnowledge: (id: string) => Promise<{ saved: boolean; warning?: string }>;
+  updateAI: (patch: Partial<AIConfiguration>) => Promise<boolean>;
 }
 
 export interface IntegrationsState {
@@ -125,7 +135,7 @@ export interface IntegrationsState {
   connect: (id: string) => Promise<void>;
   disconnect: (id: string) => Promise<void>;
   testConnection: (id: string) => Promise<TestResult | null>;
-  setInternalNotes: (workspaceId: string, notes: string) => void;
+  setInternalNotes: (workspaceId: string, notes: string) => Promise<boolean>;
   setFeatureFlag: (workspaceId: string, flag: string, enabled: boolean) => void;
 }
 
@@ -155,7 +165,7 @@ export interface SettingsState {
   account: { name: string; email: string; jobTitle: string };
   notifications: Record<NotificationEventKey, NotificationChannels>;
   dashboard: { landingPage: string; defaultRange: DateRangeKey; timestampStyle: TimestampStyle };
-  setAccount: (patch: Partial<SettingsState["account"]>) => void;
+  setAccount: (patch: Partial<SettingsState["account"]>) => Promise<boolean>;
   setNotification: (key: NotificationEventKey, channel: keyof NotificationChannels, value: boolean) => void;
   setDashboard: (patch: Partial<SettingsState["dashboard"]>) => void;
 }
@@ -255,7 +265,7 @@ export function WorkspaceStoresProvider({
       optimistic: (previous: AppConfiguration) => AppConfiguration,
       call: () => Promise<{ ok: boolean; error?: string }>,
       description: string
-    ) => {
+    ): Promise<boolean> => {
       let rollback: AppConfiguration | null = null;
       setState((s) => {
         if (!s) return s;
@@ -268,9 +278,42 @@ export function WorkspaceStoresProvider({
         const previous = rollback;
         if (previous) setState((s) => (s ? { ...s, configuration: previous } : s));
         toast(`Couldn't save ${description}`, { description: result.error });
-        return;
+        return false;
       }
       router.refresh();
+      return true;
+    },
+    [router]
+  );
+
+  const commitKnowledge = React.useCallback(
+    async (
+      optimistic: (previous: AppConfiguration) => AppConfiguration,
+      call: () => Promise<{ ok: boolean; error?: string; warning?: string }>,
+      description: string
+    ): Promise<{ saved: boolean; warning?: string }> => {
+      let rollback: AppConfiguration | null = null;
+      setState((s) => {
+        if (!s) return s;
+        rollback = s.configuration;
+        return { ...s, configuration: optimistic(s.configuration) };
+      });
+
+      const result = await call();
+      if (!result.ok) {
+        const previous = rollback;
+        if (previous) setState((s) => (s ? { ...s, configuration: previous } : s));
+        toast(`Couldn't save ${description}`, { description: result.error });
+        return { saved: false };
+      }
+      router.refresh();
+      if (result.warning) {
+        toast("Knowledge saved, but synchronization needs attention", {
+          description: result.warning,
+        });
+        return { saved: true, warning: result.warning };
+      }
+      return { saved: true };
     },
     [router]
   );
@@ -287,21 +330,21 @@ export function WorkspaceStoresProvider({
         ...configuration,
 
         updateBusiness: (patch) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({ ...c, business: { ...c.business, ...patch } }),
             () => updateBusinessAction(patch),
             "your business details"
           ),
 
         updateHours: (hours) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({ ...c, hours }),
             () => updateHoursAction(hours),
             "your opening hours"
           ),
 
         addSpecialHours: (entry) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({
               ...c,
               specialHours: [...c.specialHours, { ...entry, id: draftId("sh") }].sort((a, b) =>
@@ -313,7 +356,7 @@ export function WorkspaceStoresProvider({
           ),
 
         updateSpecialHours: (id, patch) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({
               ...c,
               specialHours: c.specialHours
@@ -325,35 +368,35 @@ export function WorkspaceStoresProvider({
           ),
 
         removeSpecialHours: (id) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({ ...c, specialHours: c.specialHours.filter((e) => e.id !== id) }),
             () => removeSpecialHoursAction(id),
             "that change"
           ),
 
         addService: (service) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({ ...c, services: [...c.services, { ...service, id: draftId("svc") }] }),
             () => addServiceAction(service),
             `“${service.name}”`
           ),
 
         updateService: (id, patch) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({ ...c, services: c.services.map((s) => (s.id === id ? { ...s, ...patch } : s)) }),
             () => updateServiceAction(id, patch),
             "that service"
           ),
 
         removeService: (id) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({ ...c, services: c.services.filter((s) => s.id !== id) }),
             () => removeServiceAction(id),
             "that change"
           ),
 
         moveService: (id, direction) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => {
               const index = c.services.findIndex((s) => s.id === id);
               const target = index + direction;
@@ -367,28 +410,28 @@ export function WorkspaceStoresProvider({
           ),
 
         addKnowledge: (entry) =>
-          void commitConfiguration(
+          commitKnowledge(
             (c) => ({ ...c, knowledge: [...c.knowledge, { ...entry, id: draftId("kn") }] }),
             () => addKnowledgeAction(entry),
             "that answer"
           ),
 
         updateKnowledge: (id, patch) =>
-          void commitConfiguration(
+          commitKnowledge(
             (c) => ({ ...c, knowledge: c.knowledge.map((k) => (k.id === id ? { ...k, ...patch } : k)) }),
             () => updateKnowledgeAction(id, patch),
             "that answer"
           ),
 
         removeKnowledge: (id) =>
-          void commitConfiguration(
+          commitKnowledge(
             (c) => ({ ...c, knowledge: c.knowledge.filter((k) => k.id !== id) }),
             () => removeKnowledgeAction(id),
             "that change"
           ),
 
         updateAI: (patch) =>
-          void commitConfiguration(
+          commitConfiguration(
             (c) => ({ ...c, ai: { ...c.ai, ...patch } }),
             () => updateAIAction(patch),
             "your receptionist settings"
@@ -446,7 +489,7 @@ export function WorkspaceStoresProvider({
           return result.result;
         },
 
-        setInternalNotes(workspaceId, internalNotes) {
+        async setInternalNotes(workspaceId, internalNotes) {
           setState((s) =>
             s
               ? {
@@ -460,9 +503,12 @@ export function WorkspaceStoresProvider({
                 }
               : s
           );
-          void setWorkspaceNotesAction(internalNotes).then((result) => {
-            if (!result.ok) toast("Couldn't save those notes", { description: result.error });
-          });
+          const result = await setWorkspaceNotesAction(internalNotes);
+          if (!result.ok) {
+            toast("Couldn't save those notes", { description: result.error });
+            return false;
+          }
+          return true;
         },
 
         setFeatureFlag(workspaceId, flag, enabled) {
@@ -504,19 +550,19 @@ export function WorkspaceStoresProvider({
       settings: {
         ...settings,
 
-        setAccount(patch) {
+        async setAccount(patch) {
           let rollback: SettingsState["account"] | null = null;
           setState((s) => {
             if (!s) return s;
             rollback = s.settings.account;
             return { ...s, settings: { ...s.settings, account: { ...s.settings.account, ...patch } } };
           });
-          void updateAccountAction({ name: patch.name, jobTitle: patch.jobTitle }).then((result) => {
-            if (result.ok) return;
-            const previous = rollback;
-            if (previous) setState((s) => (s ? { ...s, settings: { ...s.settings, account: previous } } : s));
-            toast("Couldn't save your details", { description: result.error });
-          });
+          const result = await updateAccountAction({ name: patch.name, jobTitle: patch.jobTitle });
+          if (result.ok) return true;
+          const previous = rollback;
+          if (previous) setState((s) => (s ? { ...s, settings: { ...s.settings, account: previous } } : s));
+          toast("Couldn't save your details", { description: result.error });
+          return false;
         },
 
         setNotification(key, channel, value) {
@@ -560,7 +606,7 @@ export function WorkspaceStoresProvider({
         },
       },
     };
-  }, [state, ready, commitConfiguration, router]);
+  }, [state, ready, commitConfiguration, commitKnowledge, router]);
 
   return <WorkspaceStoresContext.Provider value={stores}>{children}</WorkspaceStoresContext.Provider>;
 }

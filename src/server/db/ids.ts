@@ -29,6 +29,7 @@ export type IdPrefix =
   | "apt"
   | "svc"
   | "kn"
+  | "kns"
   | "sh"
   | "act"
   | "ntf"

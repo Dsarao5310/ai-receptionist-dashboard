@@ -1,9 +1,9 @@
 # Google Calendar — live validation runbook
 
-The architecture is complete and verified against the simulator. This is the
-checklist that proves it against the real provider. It has **not been run yet**:
-this deployment has no Google OAuth client, and creating one requires a person
-signed into Google Cloud Console.
+The architecture was historically verified against both the simulator and a
+real Google Calendar integration. This checklist is retained as the required
+procedure for re-certifying a new deployment, credential, or provider change;
+it is not evidence that the current credential remains healthy until rerun.
 
 Nothing in this document changes the product. It is the sequence to follow, the
 exact things to look at, and the state to restore afterwards.

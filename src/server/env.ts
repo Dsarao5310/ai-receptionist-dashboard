@@ -341,6 +341,29 @@ export const serverEnv = {
     return Boolean(read("AI_GATEWAY_API_KEY") || read("VERCEL_OIDC_TOKEN"));
   },
 
+  // ── Business Knowledge retrieval ────────────────────────────────────────
+  // Live mode is deliberately unavailable in this foundation. Development
+  // can exercise the exact tenant/sync contract with a deterministic simulator.
+  get knowledgeProviderMode(): ProviderMode {
+    const raw = read("KNOWLEDGE_PROVIDER_MODE");
+    if (raw === "disabled" || raw === "simulated" || raw === "live") return raw;
+    if (raw) {
+      throw new Error(`KNOWLEDGE_PROVIDER_MODE must be one of disabled, simulated, live — received "${raw}".`);
+    }
+    return IS_PRODUCTION ? "disabled" : "simulated";
+  },
+
+  /**
+   * The Pinecone index's data-plane host, e.g. `my-index-abc123.svc.pinecone.io`.
+   * Not a secret — resolving an index by host (rather than by name, which
+   * costs an extra `describeIndex` call) is Pinecone's own recommended
+   * production pattern. One shared index; each workspace gets its own
+   * namespace within it via the existing server-issued namespace mapping.
+   */
+  get pineconeIndexHost(): string | undefined {
+    return read("PINECONE_INDEX_HOST");
+  },
+
   // ── Privacy retention maintenance ───────────────────────────────────────
   // Disabled by default even in production. Enabling scheduled execution also
   // requires a dedicated bearer secret; it is never inferred from deployment.

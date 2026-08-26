@@ -52,6 +52,7 @@ export class ConfigurationRepository extends WorkspaceScopedRepository {
                  where s.workspace_id = ${this.ws} order by i.special_hours_id, i.position`,
         this.sql`select * from services where workspace_id = ${this.ws} order by position, created_at`,
         this.sql`select * from knowledge_entries where workspace_id = ${this.ws}
+                 and deleted_at is null
                  order by position, created_at`,
         this.sql`select * from ai_configurations where workspace_id = ${this.ws}`,
       ]);
@@ -249,9 +250,11 @@ export class ConfigurationRepository extends WorkspaceScopedRepository {
   async addKnowledge(entry: Omit<KnowledgeEntry, "id">): Promise<string> {
     const id = newId("kn");
     await this.sql`
-      insert into knowledge_entries (id, workspace_id, category, title, content, active, position)
+      insert into knowledge_entries
+        (id, workspace_id, category, title, content, active, position, provider_document_id)
       values (${id}, ${this.ws}, ${entry.category}, ${entry.title}, ${entry.content}, ${entry.active},
-              coalesce((select max(position) + 1 from knowledge_entries where workspace_id = ${this.ws}), 0))`;
+              coalesce((select max(position) + 1 from knowledge_entries where workspace_id = ${this.ws}), 0),
+              ${id})`;
     return id;
   }
 

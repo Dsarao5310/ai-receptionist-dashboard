@@ -1,13 +1,15 @@
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 import { Activity, BellOff, Clock3, DatabaseZap } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { requirePlatformOperator } from "@/server/auth/guards";
+import { AuthenticationError, AuthorizationError, requirePlatformOperator } from "@/server/auth/guards";
 import { serverNow } from "@/server/clock";
 import { serverEnv } from "@/server/env";
 import { readPrivacyOperationsHealth, type PrivacyOperationsState } from "@/server/privacy/operations-health";
+import { AdminDenied } from "@/features/integrations/AdminDenied";
 
 const tone = {
   disabled: "neutral",
@@ -30,8 +32,18 @@ const label = {
 } as const;
 
 export default async function AdminPrivacyPage() {
-  const user = await requirePlatformOperator();
-  const health = await readPrivacyOperationsHealth(user, serverEnv.privacyPurgeMode, serverNow());
+  // Loaded inside the try, rendered outside it — see admin/workflows/page.tsx
+  // for why: JSX built within the try would make the component's own render
+  // errors indistinguishable from the authorization check's.
+  let health: Awaited<ReturnType<typeof readPrivacyOperationsHealth>>;
+  try {
+    const user = await requirePlatformOperator();
+    health = await readPrivacyOperationsHealth(user, serverEnv.privacyPurgeMode, serverNow());
+  } catch (error) {
+    unstable_rethrow(error);
+    if (error instanceof AuthorizationError || error instanceof AuthenticationError) return <AdminDenied />;
+    throw error;
+  }
 
   return (
     <div className="space-y-4">

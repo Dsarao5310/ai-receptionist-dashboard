@@ -217,9 +217,8 @@ function AdminSettingsView() {
           />
           <SaveBar
             dirty={notesDirty}
-            onSave={() => {
-              setInternalNotes(workspace.id, notesDraft);
-              toast.success("Notes saved");
+            onSave={async () => {
+              if (await setInternalNotes(workspace.id, notesDraft)) toast.success("Notes saved");
             }}
             onCancel={() => setNotesDraft(workspace.internalNotes)}
           />

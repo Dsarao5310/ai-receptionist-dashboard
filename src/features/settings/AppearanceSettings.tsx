@@ -90,8 +90,18 @@ function OptionButton({
 }
 
 export function AppearanceSettings() {
-  const { theme, accent, density, sidebarCollapsed, setTheme, setAccent, setDensity, setSidebarCollapsed } =
-    usePreferences();
+  const {
+    theme,
+    accent,
+    density,
+    sidebarCollapsed,
+    sidebarHoverExpand,
+    setTheme,
+    setAccent,
+    setDensity,
+    setSidebarCollapsed,
+    setSidebarHoverExpand,
+  } = usePreferences();
 
   return (
     <Card>
@@ -102,7 +112,7 @@ export function AppearanceSettings() {
       <CardContent className="space-y-5">
         <fieldset>
           <legend className="text-xs font-semibold uppercase tracking-wide text-text-muted">Theme</legend>
-          <div className="mt-2.5 grid grid-cols-3 gap-2 sm:max-w-md">
+          <div className="mt-2.5 grid grid-cols-3 gap-2 sm:max-w-lg">
             {THEME_OPTIONS.map((opt) => (
               <OptionButton
                 key={opt.value}
@@ -133,7 +143,7 @@ export function AppearanceSettings() {
 
         <fieldset className="border-t border-border pt-5">
           <legend className="text-xs font-semibold uppercase tracking-wide text-text-muted">Density</legend>
-          <div className="mt-2.5 grid grid-cols-3 gap-2 sm:max-w-md">
+          <div className="mt-2.5 grid grid-cols-3 gap-2 sm:max-w-lg">
             {DENSITY_OPTIONS.map((opt) => (
               <OptionButton
                 key={opt.value}
@@ -159,6 +169,23 @@ export function AppearanceSettings() {
             checked={sidebarCollapsed}
             onCheckedChange={setSidebarCollapsed}
             aria-label="Start with the sidebar collapsed"
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t border-border pt-5">
+          <div>
+            <label htmlFor="sidebar-hover-pref" className="text-sm text-text-primary">
+              Expand on hover
+            </label>
+            <p className="text-xs text-text-muted">
+              While collapsed, hovering the sidebar briefly shows the full labels.
+            </p>
+          </div>
+          <Switch
+            id="sidebar-hover-pref"
+            checked={sidebarHoverExpand}
+            onCheckedChange={setSidebarHoverExpand}
+            aria-label="Expand sidebar on hover"
           />
         </div>
       </CardContent>

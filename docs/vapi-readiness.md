@@ -44,8 +44,10 @@ Current Vapi references:
   if a future provider adapter invokes it.
 - A disabled-by-default daily purge scheduler now exists locally with dedicated
   bearer authentication, an expiring database lease, bounded work, and
-  sanitized execution history. It is not remotely migrated, deployed, enabled,
-  or live certified.
+  sanitized execution history. Its code and cron definition are deployed, but
+  the mode remains disabled. The schema is in the verified 17-file remote
+  checkpoint; the secret, monitoring, purge execution, and live behavior are not
+  certified.
 
 ## Verified evidence
 
@@ -72,8 +74,8 @@ client-secret audit. The privacy/Vapi/client focused gate passed 51/51 tests.
   side effects.
 - Model selection, latency/cost policy, evaluation, or safety certification.
 - Partial/live transcript streaming.
-- Recording ingestion, approved consent wording/retention, a purge scheduler,
-  privacy administration UI, remote migration, or live privacy certification.
+- Recording ingestion, approved consent wording/retention, enabled purge
+  execution, or live privacy certification.
 - Live retry behavior, provider outage semantics, operator diagnostics, or
   cleanup certification.
 

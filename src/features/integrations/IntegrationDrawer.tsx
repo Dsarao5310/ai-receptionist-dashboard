@@ -23,7 +23,7 @@ import {
   getAffectedCapabilities,
   getProviderEvents,
 } from "@/services/integrations-providers";
-import { ConnectionBadge, HealthBadge } from "./StatusIndicators";
+import { ConnectionBadge, HealthBadge, shouldShowIntegrationError } from "./StatusIndicators";
 
 /**
  * The administrator's view of one provider.
@@ -92,7 +92,7 @@ export function IntegrationDrawer({
               {busy && <Loader2 className="h-4 w-4 animate-spin text-text-muted" aria-label="Working" />}
             </div>
 
-            {record.lastError && (
+            {shouldShowIntegrationError(record) && (
               <div className="rounded-lg border border-border bg-surface-sunken px-3.5 py-3">
                 <p className="text-xs font-medium text-text-primary">{record.lastError.message}</p>
                 {record.lastError.adminDetail && (

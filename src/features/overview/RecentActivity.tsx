@@ -37,7 +37,7 @@ export function RecentActivity({ events, onSelect }: { events: ActivityEvent[]; 
       </CardHeader>
       <CardContent className="pt-4">
         {events.length === 0 ? (
-          <EmptyState title="No activity in this range" description="Try a wider date range to see what your AI receptionist has been up to." />
+          <EmptyState title="No activity yet" description="Activity from your AI receptionist will show up here as it happens." />
         ) : (
           <ul className="divide-y divide-border -mx-5">
             {events.map((event) => {

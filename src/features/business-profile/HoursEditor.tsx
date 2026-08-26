@@ -24,7 +24,7 @@ export function HoursEditor({
   onDirtyChange,
 }: {
   value: DayHours[];
-  onSave: (next: DayHours[]) => void;
+  onSave: (next: DayHours[]) => Promise<boolean>;
   onDirtyChange: (dirty: boolean) => void;
 }) {
   const [draft, setDraft] = useState<DayHours[]>(value);
@@ -87,14 +87,13 @@ export function HoursEditor({
     toast.success(`Copied ${WEEKDAY_LABELS[source.day]} to ${targets.length} day${targets.length === 1 ? "" : "s"}`);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (hasErrors) {
       toast("Please fix the highlighted times");
       return;
     }
     // Closing a day keeps its intervals so re-opening restores the previous times.
-    onSave(draft);
-    toast.success("Business hours saved");
+    if (await onSave(draft)) toast.success("Business hours saved");
   }
 
   return (

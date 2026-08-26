@@ -38,9 +38,9 @@ export function KnowledgeManager({
   onRemove,
 }: {
   entries: KnowledgeEntry[];
-  onAdd: (entry: Omit<KnowledgeEntry, "id">) => void;
-  onUpdate: (id: string, patch: Partial<Omit<KnowledgeEntry, "id">>) => void;
-  onRemove: (id: string) => void;
+  onAdd: (entry: Omit<KnowledgeEntry, "id">) => Promise<{ saved: boolean; warning?: string }>;
+  onUpdate: (id: string, patch: Partial<Omit<KnowledgeEntry, "id">>) => Promise<{ saved: boolean; warning?: string }>;
+  onRemove: (id: string) => Promise<{ saved: boolean; warning?: string }>;
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<KnowledgeEntry | null>(null);
@@ -52,8 +52,8 @@ export function KnowledgeManager({
   const visible = useMemo(() => (filter === "all" ? entries : entries.filter((e) => e.category === filter)), [entries, filter]);
   const dialogOpen = addOpen || !!editing;
 
-  function openAdd() {
-    setDraft(EMPTY_DRAFT);
+  function openAdd(category?: KnowledgeCategory) {
+    setDraft(category ? { ...EMPTY_DRAFT, category } : EMPTY_DRAFT);
     setError(null);
     setEditing(null);
     setAddOpen(true);
@@ -72,18 +72,14 @@ export function KnowledgeManager({
     setError(null);
   }
 
-  function submit() {
+  async function submit() {
     if (!draft.title.trim()) return setError("Add a title or question.");
     if (!draft.content.trim()) return setError("Add the answer your receptionist should give.");
 
     const payload = { category: draft.category, title: draft.title.trim(), content: draft.content.trim(), active: draft.active };
-    if (editing) {
-      onUpdate(editing.id, payload);
-      toast.success("Knowledge updated");
-    } else {
-      onAdd(payload);
-      toast.success("Knowledge added");
-    }
+    const result = editing ? await onUpdate(editing.id, payload) : await onAdd(payload);
+    if (!result.saved) return;
+    if (!result.warning) toast.success(editing ? "Knowledge updated" : "Knowledge added");
     closeDialog();
   }
 
@@ -109,7 +105,7 @@ export function KnowledgeManager({
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={openAdd}>
+            <Button size="sm" onClick={() => openAdd()}>
               <Plus className="h-3.5 w-3.5" /> Add
             </Button>
           </div>
@@ -121,13 +117,22 @@ export function KnowledgeManager({
               title="No business knowledge yet"
               description="Add FAQs and policies so your receptionist can answer more customer questions."
               action={
-                <Button size="sm" onClick={openAdd}>
+                <Button size="sm" onClick={() => openAdd()}>
                   <Plus className="h-3.5 w-3.5" /> Add knowledge
                 </Button>
               }
             />
           ) : visible.length === 0 ? (
-            <EmptyState title="Nothing in this category yet" description="Add an entry, or choose a different category." className="py-10" />
+            <EmptyState
+              title="Nothing in this category yet"
+              description="Add an entry, or choose a different category."
+              className="py-10"
+              action={
+                <Button size="sm" variant="outline" onClick={() => openAdd(filter === "all" ? undefined : filter)}>
+                  <Plus className="h-3.5 w-3.5" /> Add entry
+                </Button>
+              }
+            />
           ) : (
             <ul className="divide-y divide-border">
               {visible.map((entry) => (
@@ -247,10 +252,12 @@ export function KnowledgeManager({
             <Button
               variant="danger"
               size="sm"
-              onClick={() => {
-                if (pendingDelete) onRemove(pendingDelete.id);
+              onClick={async () => {
+                const entry = pendingDelete;
+                if (!entry) return;
                 setPendingDelete(null);
-                toast("Knowledge deleted");
+                const result = await onRemove(entry.id);
+                if (result.saved && !result.warning) toast("Knowledge deleted");
               }}
             >
               Delete
