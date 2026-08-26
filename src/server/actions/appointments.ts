@@ -249,6 +249,13 @@ export async function updateAppointmentNotesAction(input: {
  * that day, the undo is refused with the reason. That reads as a limitation and
  * is really the rule holding: there is no path, including this one, that puts an
  * appointment somewhere the ordinary rules would not allow.
+ *
+ * The other half of undoing either action: a cancel or reschedule that reached
+ * a real calendar left a real event moved or cancelled there, and reverting
+ * only this application's row would leave that event out of step silently. So
+ * undo goes through the same reschedule workflow/executor whenever it moves
+ * the appointment in time or reverses a cancellation, and commits its own
+ * write through the same sync guard as any other calendar-touching mutation.
  */
 export async function restoreAppointmentAction(input: {
   appointmentId: string;
@@ -265,17 +272,59 @@ export async function restoreAppointmentAction(input: {
     if (!appointment) return { ok: false, error: "Appointment not found." };
 
     const config = await getWorkspaceConfiguration(context);
+    const now = serverNow();
     const movesInTime = appointment.date !== input.date || appointment.time !== input.time;
+    const uncancels = appointment.status === "cancelled" && input.status !== "cancelled";
 
     if (movesInTime) {
-      const check = checkRescheduleSlot(config, appointment, input.date, input.time, serverNow());
+      const check = checkRescheduleSlot(config, appointment, input.date, input.time, now);
       if (!check.valid) return { ok: false, error: check.message };
     }
 
-    await scope.appointments.restore(
-      { ...appointment, date: input.date, time: input.time, status: input.status, notes: input.notes },
-      config.business.timezone
+    // A move back in time, or a status flip off "cancelled", is exactly what
+    // can leave a real calendar entry out of step with the record it is being
+    // undone from — the same danger `rescheduleAppointmentAction` guards
+    // against. The reschedule workflow/executor already self-heals a
+    // cancelled-tombstone or missing event by creating a fresh one, so undo
+    // asks for that same operation rather than a bespoke one.
+    let operationId: string | null = null;
+    if (movesInTime || uncancels) {
+      const disposition = await requestAppointmentReschedule(context, {
+        appointment,
+        configuration: config,
+        date: input.date,
+        time: input.time,
+        now,
+      });
+      const gated = gate(disposition);
+      if (!gated.proceed) return { ok: false, error: gated.error };
+      operationId = gated.operationId;
+    }
+
+    const committed = await commitWithSyncGuard(
+      context,
+      {
+        appointmentId: input.appointmentId,
+        operationId,
+        detail: "The calendar was restored but this record could not be saved.",
+        now,
+      },
+      () =>
+        scope.appointments.restore(
+          { ...appointment, date: input.date, time: input.time, status: input.status, notes: input.notes },
+          config.business.timezone
+        )
     );
+    if (!committed.ok) return { ok: false, error: committed.error };
+
+    await recordAuditEvent({
+      actorUserId: context.user.id,
+      workspaceId: context.workspaceId,
+      action: "appointment.restored",
+      targetType: "appointment",
+      targetId: input.appointmentId,
+      metadata: { toStatus: input.status },
+    });
 
     revalidateWorkspaceViews();
     return { ok: true };

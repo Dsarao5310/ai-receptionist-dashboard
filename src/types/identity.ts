@@ -136,6 +136,7 @@ export type AuditAction =
   | "privacy.content_erased"
   | "appointment.rescheduled"
   | "appointment.cancelled"
+  | "appointment.restored"
   | "invitation.created"
   | "invitation.revoked";
 
