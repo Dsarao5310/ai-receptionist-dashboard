@@ -1,6 +1,25 @@
 # Current Task
 
-Phase: **Business Knowledge provider foundation**
+Phase: **Booking-engine correctness fix — Undo/calendar desync**
+
+Status: **FIXED, PUSHED, NOT YET DB/LIVE VERIFIED — 2026-08-26**
+
+Fixed the real bug flagged during independent review (see the Knowledge/
+Pinecone history below for that closed-out phase): `restoreAppointmentAction`
+(`src/server/actions/appointments.ts`) never touched the calendar, so Undo
+after a cancel/reschedule could revert the database while a real Google
+Calendar event stayed cancelled or at the wrong time. Undo now routes through
+the same `requestAppointmentReschedule` workflow/executor and
+`commitWithSyncGuard` the sibling cancel/reschedule actions already use, and
+records the `appointment.restored` audit event they were missing (added that
+action to `AuditAction` in `src/types/identity.ts`). Full detail in
+`handoffs/latest.md`.
+
+Pushed to `claude/read-markdown-file-7f7r3j` (commit `96612b2`); no PR opened
+(not requested). Not merged, not applied to staging/production (nothing to
+apply — this is application code, not a migration).
+
+## Prior phase — Business Knowledge provider foundation
 
 Status: **LIVE KNOWLEDGE/PINECONE FLOW CERTIFIED END-TO-END — 2026-08-26**
 

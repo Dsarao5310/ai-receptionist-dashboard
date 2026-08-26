@@ -1,5 +1,58 @@
 # Latest Handoff
 
+## Claude — fixed the calendar-desync Undo bug flagged earlier (2026-08-26)
+
+Picked up the real bug found during independent code review (documented
+below under "real bug: Undo on cancel/reschedule never touches the
+calendar") and fixed it, with the user's go-ahead to pick the highest-
+impact open item.
+
+**Root cause confirmed**: `restoreAppointmentAction`
+(`src/server/actions/appointments.ts`) called `scope.appointments.restore()`
+directly — a pure database write — and never touched
+`requestAppointmentReschedule`/`commitWithSyncGuard` the way
+`cancelAppointmentAction`/`rescheduleAppointmentAction` do. On a workspace
+with a live calendar: undoing a cancel left the Google Calendar event
+cancelled while the database flipped back to confirmed; undoing a reschedule
+left the calendar event at the new time while the database reverted to the
+old one.
+
+**Fix**: `restoreAppointmentAction` now detects the two cases that can leave
+the calendar out of step — moving back in time (`movesInTime`, existing
+logic) and reversing a cancellation (new `uncancels` check) — and when
+either applies, calls `requestAppointmentReschedule` (the same
+workflow/executor the sibling actions use) before committing the database
+write through `commitWithSyncGuard`. No new calendar logic was written: the
+existing `rescheduleAppointmentEvent` already self-heals when the previously
+mapped event is missing or a cancelled tombstone by creating a fresh one —
+exactly the state a cancel leaves behind — so a cancel-undo reuses that same
+path by "rescheduling" back to the same slot. Also added the
+`appointment.restored` audit event (the action had none, unlike its
+siblings) and the matching `AuditAction` union member in
+`src/types/identity.ts`.
+
+**Verification**: `tsc --noEmit` clean (only pre-existing `LayoutProps`
+errors from the missing `.next/` build-generated types, confirmed unrelated
+by the missing `.next/` directory in this fresh checkout). Targeted ESLint
+on both changed files clean. Full non-DB `vitest` suite: 358/358 passing, no
+regressions. **Not verified**: no DB credentials were available in this
+session, so every DB-backed suite (including the orchestration/calendar
+tests that exercise `requestAppointmentReschedule` and the executors this
+fix now calls) skipped via their `hasDatabase` guard, and there is no
+existing test file for `restoreAppointmentAction` to extend. This is static/
+code-review-level verification only — a hosted regression and, ideally, a
+manual undo-cancel/undo-reschedule check against a workspace with a real
+calendar connected are still needed before calling this DB/live-certified.
+
+**Git**: committed (`96612b2`) and pushed to `claude/read-markdown-file-7f7r3j`.
+Push initially failed with a 403 ("Resource not accessible by integration")
+on both the raw git remote and the GitHub MCP API — confirmed as a genuine
+missing write scope on the Claude GitHub App installation, not a stale-
+session issue, by testing both paths fresh. Access was corrected outside
+this session; a retried `git push` then succeeded. No PR opened (not
+requested); not merged; not applied to staging or production (this is
+application code, nothing to migrate/deploy).
+
 ## Claude — live Knowledge/Pinecone flow CERTIFIED end-to-end through the real UI (2026-08-26)
 
 Re-ran the authenticated staging test that originally surfaced the
