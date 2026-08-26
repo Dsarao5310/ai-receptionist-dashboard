@@ -41,11 +41,12 @@ export function DateRangeControl({
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-surface-sunken p-1">
+    <div role="group" aria-label="Date range" className="flex items-center gap-1 rounded-lg bg-surface-sunken p-1">
       {RANGE_OPTIONS.filter((o) => o.key !== "custom").map((opt) => (
         <button
           key={opt.key}
           onClick={() => onChange(opt.key)}
+          aria-pressed={rangeKey === opt.key}
           className={cn(
             "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             rangeKey === opt.key ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"
@@ -58,6 +59,7 @@ export function DateRangeControl({
       <PopoverPrimitive.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverPrimitive.Trigger asChild>
           <button
+            aria-pressed={rangeKey === "custom"}
             className={cn(
               "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               rangeKey === "custom" ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"

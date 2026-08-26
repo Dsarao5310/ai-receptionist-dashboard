@@ -237,6 +237,15 @@ export function productionConfigurationProblems(env: EnvironmentSource): string[
   if (modelProviderMode === "simulated") {
     problems.push("MODEL_PROVIDER_MODE is simulated, which is development-only");
   }
+
+  const knowledgeProviderMode = validateMode(problems, env, "KNOWLEDGE_PROVIDER_MODE");
+  if (knowledgeProviderMode === "simulated") {
+    problems.push("KNOWLEDGE_PROVIDER_MODE is simulated, which is development-only");
+  }
+  if (knowledgeProviderMode === "live") {
+    if (!read(env, "PINECONE_API_KEY")) problems.push("live Business Knowledge requires PINECONE_API_KEY");
+    if (!read(env, "PINECONE_INDEX_HOST")) problems.push("live Business Knowledge requires PINECONE_INDEX_HOST");
+  }
   if (modelProviderMode === "live") {
     if (!read(env, "AI_GATEWAY_API_KEY") && !read(env, "VERCEL_OIDC_TOKEN")) {
       problems.push("live model provider requires AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN");
@@ -278,7 +287,7 @@ export function productionConfigurationProblems(env: EnvironmentSource): string[
 
   if (
     vercelEnvironment === "preview" &&
-    [n8nMode, calendarMode, twilioMode, vapiMode, modelProviderMode, emailProviderMode].includes("live") &&
+    [n8nMode, calendarMode, twilioMode, vapiMode, modelProviderMode, emailProviderMode, knowledgeProviderMode].includes("live") &&
     read(env, "VERCEL_GIT_COMMIT_REF") !== "staging"
   ) {
     problems.push("live providers in Preview are restricted to the staging branch");

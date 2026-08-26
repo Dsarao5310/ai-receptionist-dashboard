@@ -30,9 +30,20 @@ vi.mock("./email/adapter", () => ({
       })),
   },
 }));
+vi.mock("./knowledge/adapter", () => ({
+  knowledgeProviderServerAdapter: {
+    provider: "pinecone",
+    getCapabilities: ({ record }: { record: IntegrationRecord }) =>
+      record.capabilities.map((capability) => ({
+        ...capability,
+        enabled:
+          record.connection === "connected" &&
+          record.admin.environment === "sandbox",
+      })),
+  },
+}));
 
 const NOW = new Date("2026-08-20T20:00:00.000Z");
-const unavailable: ProviderId[] = ["pinecone"];
 
 function record(provider: ProviderId): IntegrationRecord {
   return {
@@ -54,19 +65,6 @@ function record(provider: ProviderId): IntegrationRecord {
 }
 
 describe("server provider registry", () => {
-  it.each(unavailable)("fails closed for unimplemented provider %s", async (provider) => {
-    expect(isLiveProvider(provider)).toBe(false);
-    const adapter = getServerAdapter(provider);
-    const ctx = { record: record(provider), now: NOW };
-    const patch = await adapter.connect(ctx);
-    const test = await adapter.testConnection(ctx);
-
-    expect(patch).toMatchObject({ connection: "not_configured", health: "unknown" });
-    expect(patch.capabilities?.every((capability) => !capability.enabled)).toBe(true);
-    expect(test).toMatchObject({ outcome: "configuration_incomplete", health: "unknown" });
-    expect(test.error?.code).toBe("provider_unavailable");
-  });
-
   it("registers Vapi as an application-side server implementation", () => {
     expect(isLiveProvider("vapi")).toBe(true);
     expect(getServerAdapter("vapi").provider).toBe("vapi");
@@ -87,7 +85,10 @@ describe("server provider registry", () => {
     expect(projected.capabilities.every((capability) => !capability.enabled)).toBe(true);
   });
 
-  it("does not project a stale connected seed row for an unavailable provider as operational", () => {
+  it("registers the Knowledge foundation without projecting a production-shaped seed as live", () => {
+    expect(isLiveProvider("pinecone")).toBe(true);
+    expect(getServerAdapter("pinecone").provider).toBe("pinecone");
+
     const projected = effectiveIntegrationRecord(record("pinecone"), NOW);
 
     expect(projected.connection).toBe("not_configured");

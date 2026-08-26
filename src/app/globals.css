@@ -267,17 +267,68 @@
   --color-hero-text: var(--color-text-on-accent);
   --color-hero-muted: rgba(255, 255, 255, 0.85);
   --color-hero-line: rgba(255, 255, 255, 0.24);
+
+  /*
+   * A 3-step single-hue magnitude ramp — "how much", not "which one" — for
+   * a calendar/activity-heatmap cell fill. Built from --color-accent via
+   * color-mix rather than eighteen hand-picked hex values (6 accents × 3
+   * themes' worth of steps), so it automatically tracks whichever of the
+   * six accent palettes is active with one definition.
+   *
+   * Two earlier shapes were tried and rejected on direct visual review
+   * (both were validator-clean and still wrong):
+   *
+   * 1. Mixing toward the *surface* color for a "fades toward the
+   *    background" light step failed the dataviz skill's ordinal-ramp
+   *    light-end-contrast check outright (verified with
+   *    scripts/validate_palette.js --ordinal: every light-mode accent came
+   *    back ~1.3–1.8:1 against the 2:1 floor) — a step meant to be legible
+   *    on its own came out barely-there.
+   * 2. A light→dark (light mode) / dark→light (dark mode) ramp anchored at
+   *    the accent's own black/white-mixed extremes passed the validator at
+   *    steep percentages, but looked wrong on screen for two independent
+   *    reasons: pushed toward black, the top light-mode step read as
+   *    "boring," muddy, barely distinguishable from ink rather than a
+   *    richer version of the accent; pushed toward white for "flips anchor
+   *    in dark," the top *dark*-mode step (the busiest cell) washed out
+   *    pale, which reads as "faintest" to a viewer regardless of what the
+   *    raw lightness math says — the exact opposite of what it meant.
+   *    Both were caught by looking at the rendered heatmap, not by the
+   *    validator, which is blind to "reads as boring" or "reads backwards."
+   *
+   * The shape that held up: the accent itself is the *middle* step, not an
+   * end, with mild, symmetric lightening/darkening on either side — fewer
+   * lightens 30% toward white, more darkens toward black, same direction in
+   * both themes (no "flips anchor" reversal), never going far enough in
+   * either direction to lose its own hue. Dark mode's darken step uses a
+   * shallower 20% rather than 30% — the same 30% loses too much contrast
+   * against an already-dark surface (verified: 1.2–1.97:1, under the 2:1
+   * floor); 20% clears it for five of the six accents. The sixth, the
+   * "neutral" gray accent, still falls short in dark mode at any reasonable
+   * percentage — its base color is already close in lightness to the dark
+   * surface itself, which is a property of choosing a low-chroma accent,
+   * not a bug in this ramp. Left as a known, low-stakes gap rather than a
+   * one-off special case: a viewer who picked "no distinct color" is not
+   * relying on this chart to pop with saturation.
+   */
+  --color-heat-1: color-mix(in srgb, var(--color-accent) 70%, white);
+  --color-heat-2: var(--color-accent);
+  --color-heat-3: color-mix(in srgb, var(--color-accent) 70%, black);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
     --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.5);
+
+    --color-heat-3: color-mix(in srgb, var(--color-accent) 80%, black);
   }
 }
 :root[data-theme="dark"] {
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.5);
+
+  --color-heat-3: color-mix(in srgb, var(--color-accent) 80%, black);
 }
 
 /* ---------- Tailwind theme bridge ---------- */
@@ -289,6 +340,10 @@
   --color-hero-text: var(--color-hero-text);
   --color-hero-muted: var(--color-hero-muted);
   --color-hero-line: var(--color-hero-line);
+
+  --color-heat-1: var(--color-heat-1);
+  --color-heat-2: var(--color-heat-2);
+  --color-heat-3: var(--color-heat-3);
 
   --color-page: var(--color-page);
   --color-surface: var(--color-surface);
@@ -476,4 +531,32 @@ body {
 @keyframes overlay-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* A moving highlight sweep for loading skeletons, in place of a flat pulse.
+   The highlight is mixed from the current theme's own text color rather than
+   a fixed white/black, so one definition works unmodified in light and dark
+   and across all six accent palettes — same technique as
+   --color-border-interactive above. Reduced-motion is already handled by the
+   global `*, *::before, *::after` duration override further up this file. */
+@keyframes shimmer-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-text-primary) 8%, transparent),
+    transparent
+  );
+  animation: shimmer-sweep 1.6s ease-in-out infinite;
 }

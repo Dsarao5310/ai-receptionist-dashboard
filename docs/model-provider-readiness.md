@@ -28,7 +28,7 @@ booking exists.
 - Gateway options request zero data retention and disallow prompt training.
 - Usage is attributed to the trusted workspace and fixed prompt-version tags.
 
-The model ids and public token pricing were checked on 2026-08-24 against the
+The model ids and public token pricing were rechecked on 2026-08-26 against the
 [AI Gateway model catalog](https://ai-gateway.vercel.sh/v1/models). Recheck both
 before live certification; model availability and pricing are external state.
 Implementation follows the [official AI Gateway documentation](https://vercel.com/docs/ai-gateway)
@@ -61,6 +61,9 @@ external spend cap separately.
 - Provider errors are mapped to safe application codes. Raw bodies, request
   payloads, credential fragments, upstream URLs, model ids, and hidden prompts
   are not returned.
+- AI SDK structured-output parse/schema failures (`NoObjectGeneratedError`) and
+  missing final output (`NoOutputGeneratedError`) both map to the sanitized,
+  retryable `model_invalid_response` application error.
 - The existing client import-closure test proves business-facing pages cannot
   reach server integration modules.
 
@@ -78,6 +81,8 @@ Deterministic fixtures verify:
 - disabled and incomplete-live fail-closed behavior;
 - approved distinct primary/fallback policy;
 - sanitized auth, rate-limit, and timeout errors;
+- sanitized malformed structured-output errors without generated text or model
+  metadata leakage;
 - adapter capability state and browser boundary protection.
 
 Simulator output costs zero and is always labelled `simulated: true`. It is not

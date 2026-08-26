@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 const MAX_LENGTH = 300;
 
-export function GreetingEditor({ config, onSave }: { config: AppConfiguration; onSave: (greeting: string) => void }) {
+export function GreetingEditor({ config, onSave }: { config: AppConfiguration; onSave: (greeting: string) => Promise<boolean> }) {
   const stored = config.ai.greeting;
   const [draft, setDraft] = useState(stored);
 
@@ -33,11 +33,10 @@ export function GreetingEditor({ config, onSave }: { config: AppConfiguration; o
     [config.business.name]
   );
 
-  function save() {
+  async function save() {
     if (empty) return toast("Your greeting can't be empty");
     if (tooLong) return toast("Your greeting is too long");
-    onSave(draft.trim());
-    toast.success("Greeting saved");
+    if (await onSave(draft.trim())) toast.success("Greeting saved");
   }
 
   return (

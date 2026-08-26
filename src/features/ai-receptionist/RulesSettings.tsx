@@ -24,7 +24,7 @@ const validateDuration = numberInRange("Appointment duration", 5, 480);
 const validateConcurrent = numberInRange("Concurrent appointments", 1, 50);
 
 /** Business rules the receptionist follows when booking. No scheduling internals surfaced. */
-export function BookingRulesCard({ booking, onChange }: { booking: BookingRules; onChange: (patch: Partial<BookingRules>) => void }) {
+export function BookingRulesCard({ booking, onChange }: { booking: BookingRules; onChange: (patch: Partial<BookingRules>) => Promise<boolean> }) {
   const durationError = validateDuration(booking.defaultDurationMin);
   const concurrentError = validateConcurrent(booking.maxConcurrent);
 
@@ -135,9 +135,10 @@ export function BookingRulesCard({ booking, onChange }: { booking: BookingRules;
               <Switch
                 id={`rule-${row.key}`}
                 checked={booking[row.key]}
-                onCheckedChange={(v) => {
-                  onChange({ [row.key]: v } as Partial<BookingRules>);
-                  toast.success(`${row.label} ${v ? "on" : "off"}`);
+                onCheckedChange={async (v) => {
+                  if (await onChange({ [row.key]: v } as Partial<BookingRules>)) {
+                    toast.success(`${row.label} ${v ? "on" : "off"}`);
+                  }
                 }}
               />
             </div>
@@ -215,7 +216,7 @@ export function EscalationCard({ escalation, onChange }: { escalation: Escalatio
   );
 }
 
-export function AfterHoursCard({ value, onChange }: { value: AfterHoursBehavior; onChange: (v: AfterHoursBehavior) => void }) {
+export function AfterHoursCard({ value, onChange }: { value: AfterHoursBehavior; onChange: (v: AfterHoursBehavior) => Promise<boolean> }) {
   return (
     <Card>
       <CardHeader className="flex-col items-start gap-1">
@@ -231,9 +232,8 @@ export function AfterHoursCard({ value, onChange }: { value: AfterHoursBehavior;
                 key={option.value}
                 role="radio"
                 aria-checked={selected}
-                onClick={() => {
-                  onChange(option.value);
-                  toast.success(`After-hours: ${option.label}`);
+                onClick={async () => {
+                  if (await onChange(option.value)) toast.success(`After-hours: ${option.label}`);
                 }}
                 className={cn(
                   "flex w-full items-start gap-2.5 rounded-lg border p-3 text-left transition-colors",

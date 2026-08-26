@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, CircleDashed, CircleSlash, Loader2, MinusCircle } from "lucide-react";
-import type { CapabilityStatus, ConnectionStatus, HealthStatus } from "@/types";
+import type { CapabilityStatus, ConnectionStatus, HealthStatus, IntegrationRecord } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import {
   CAPABILITY_STATUS_LABELS,
@@ -8,6 +8,30 @@ import {
   SYSTEM_HEALTH_LABELS,
   type SystemHealthState,
 } from "@/services/integrations";
+
+/**
+ * Whether an integration's `lastError` is safe to show given its connection
+ * state — shared by the admin card and its drawer so the rule can't drift
+ * between the two surfaces.
+ *
+ * `not_configured` only contradicts a *rate_limit* or *network* category:
+ * those presuppose a connection that was actually reached and is now
+ * misbehaving. A `configuration`/`auth`/`permission`/`provider` category is
+ * the opposite — every adapter's own `notConfigured()` helper populates
+ * exactly that category specifically to explain why nothing is configured
+ * (e.g. "Voice calling is not fully configured" naming the missing env
+ * vars), so hiding it there would remove the one piece of admin-facing
+ * guidance for fixing it.
+ */
+const OPERATIONAL_ONLY_CATEGORIES = new Set(["rate_limit", "network"]);
+
+export function shouldShowIntegrationError(
+  record: IntegrationRecord
+): record is IntegrationRecord & { lastError: NonNullable<IntegrationRecord["lastError"]> } {
+  if (!record.lastError) return false;
+  if (record.connection !== "not_configured") return true;
+  return !OPERATIONAL_ONLY_CATEGORIES.has(record.lastError.category);
+}
 
 /**
  * Status is never communicated by colour alone.

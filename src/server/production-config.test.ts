@@ -13,6 +13,7 @@ function valid(overrides: EnvironmentSource = {}): EnvironmentSource {
     TWILIO_MODE: "disabled",
     VAPI_MODE: "disabled",
     MODEL_PROVIDER_MODE: "disabled",
+    KNOWLEDGE_PROVIDER_MODE: "disabled",
     EMAIL_PROVIDER_MODE: "disabled",
     PRIVACY_PURGE_MODE: "disabled",
     ...overrides,
@@ -37,13 +38,14 @@ describe("production configuration", () => {
 
   it("refuses development providers and the unbacked email magic-link path", () => {
     const problems = productionConfigurationProblems(
-      valid({ N8N_MODE: "simulated", GOOGLE_CALENDAR_MODE: "simulated", TWILIO_MODE: "simulated", VAPI_MODE: "simulated", MODEL_PROVIDER_MODE: "simulated", EMAIL_PROVIDER_MODE: "simulated", EMAIL_SERVER: "smtp://mail", EMAIL_FROM: "hello@example.com" })
+      valid({ N8N_MODE: "simulated", GOOGLE_CALENDAR_MODE: "simulated", TWILIO_MODE: "simulated", VAPI_MODE: "simulated", MODEL_PROVIDER_MODE: "simulated", KNOWLEDGE_PROVIDER_MODE: "simulated", EMAIL_PROVIDER_MODE: "simulated", EMAIL_SERVER: "smtp://mail", EMAIL_FROM: "hello@example.com" })
     );
     expect(problems).toContain("N8N_MODE is simulated, which is development-only");
     expect(problems).toContain("GOOGLE_CALENDAR_MODE is simulated, which is development-only");
     expect(problems).toContain("TWILIO_MODE is simulated, which is development-only");
     expect(problems).toContain("VAPI_MODE is simulated, which is development-only");
     expect(problems).toContain("MODEL_PROVIDER_MODE is simulated, which is development-only");
+    expect(problems).toContain("KNOWLEDGE_PROVIDER_MODE is simulated, which is development-only");
     expect(problems).toContain("EMAIL_PROVIDER_MODE is simulated, which is development-only");
     expect(problems).toContain("email magic-link sign-in is disabled until a durable Auth.js adapter is implemented");
   });
@@ -52,6 +54,22 @@ describe("production configuration", () => {
     expect(productionConfigurationProblems(valid({ EMAIL_PROVIDER_MODE: "live" }))).toContain(
       "live email is unavailable until Gmail OAuth and mailbox watches are implemented"
     );
+  });
+
+  it("requires complete live Pinecone credentials", () => {
+    const incomplete = productionConfigurationProblems(valid({ KNOWLEDGE_PROVIDER_MODE: "live" }));
+    expect(incomplete).toContain("live Business Knowledge requires PINECONE_API_KEY");
+    expect(incomplete).toContain("live Business Knowledge requires PINECONE_INDEX_HOST");
+
+    expect(
+      productionConfigurationProblems(
+        valid({
+          KNOWLEDGE_PROVIDER_MODE: "live",
+          PINECONE_API_KEY: "private-pinecone-api-key",
+          PINECONE_INDEX_HOST: "ai-receptionist-knowledge-staging-0b2bbjx.svc.aped-4627-b74a.pinecone.io",
+        })
+      )
+    ).toEqual([]);
   });
 
   it("pins live callback routes to the canonical deployment origin", () => {

@@ -21,7 +21,7 @@ export function PersonalitySettings({
   onChange,
 }: {
   personality: Personality;
-  onChange: (p: Personality) => void;
+  onChange: (p: Personality) => Promise<boolean>;
 }) {
   return (
     <Card>
@@ -38,9 +38,8 @@ export function PersonalitySettings({
                 key={option.value}
                 role="radio"
                 aria-checked={selected}
-                onClick={() => {
-                  onChange(option.value);
-                  toast.success(`Style set to ${option.label}`);
+                onClick={async () => {
+                  if (await onChange(option.value)) toast.success(`Style set to ${option.label}`);
                 }}
                 className={cn(
                   "flex items-start gap-2.5 rounded-lg border p-3.5 text-left transition-colors",

@@ -8,6 +8,7 @@ import { twilioServerAdapter } from "./twilio/adapter";
 import { vapiServerAdapter } from "./vapi/adapter";
 import { modelProviderServerAdapter } from "./model-provider/adapter";
 import { emailServerAdapter } from "./email/adapter";
+import { knowledgeProviderServerAdapter } from "./knowledge/adapter";
 import { unavailableServerAdapter } from "./unavailable-adapter";
 
 /**
@@ -35,6 +36,7 @@ const SERVER_ADAPTERS: Partial<Record<ProviderId, IntegrationAdapter>> = {
   vapi: vapiServerAdapter,
   model_provider: modelProviderServerAdapter,
   gmail: emailServerAdapter,
+  pinecone: knowledgeProviderServerAdapter,
 };
 
 export function getServerAdapter(provider: ProviderId): IntegrationAdapter {

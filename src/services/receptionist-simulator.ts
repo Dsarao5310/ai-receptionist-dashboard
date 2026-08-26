@@ -239,6 +239,24 @@ export function simulateReply(config: AppConfiguration, rawInput: string, now: D
     return reply(`We offer:\n${list}`, "services", "Services");
   }
 
+  // ── Cancel / reschedule ──────────────────────────────────────────────────
+  // Checked before the generic Booking intent below: a real "cancel my
+  // appointment" / "can I reschedule my booking" always also contains
+  // "appointment" or "booking", so if Booking's broader regex ran first it
+  // would catch every realistic cancel/reschedule phrasing and this branch
+  // would be effectively unreachable.
+  if (/\b(cancel|reschedul|move|change)\w*\b/.test(input) && /\b(appointment|booking)\b/.test(input)) {
+    const canCancel = ai.booking.allowCancellation;
+    const canReschedule = ai.booking.allowReschedule;
+    if (/\bcancel\b/.test(input) && !canCancel) {
+      return reply(`Cancellations need to go through the team — please call us on ${business.phone}.`, "cancel", "Booking rules");
+    }
+    if (!canReschedule && !/\bcancel\b/.test(input)) {
+      return reply(`Changes to bookings are handled by the team — please call us on ${business.phone}.`, "cancel", "Booking rules");
+    }
+    return reply("Of course — could you tell me the name the appointment is under and the day it's booked for?", "cancel", "Booking rules");
+  }
+
   // ── Booking ──────────────────────────────────────────────────────────────
   if (/\b(book|appointment|schedule|reserve|availab)\w*\b/.test(input)) {
     const closedNow = isOutsideBusinessHours(config, now);
@@ -262,12 +280,13 @@ export function simulateReply(config: AppConfiguration, rawInput: string, now: D
     }
 
     const service = findServiceByName(config, input);
+    const hours = Math.round(ai.booking.minNoticeMin / 60);
     const noticeText =
       ai.booking.minNoticeMin === 0
         ? "I can book you in right away"
         : ai.booking.minNoticeMin < 60
           ? `I can book you in from ${ai.booking.minNoticeMin} minutes' time`
-          : `I can book you in from ${Math.round(ai.booking.minNoticeMin / 60)} hour${ai.booking.minNoticeMin >= 120 ? "s" : ""}' time`;
+          : `I can book you in from ${hours} hour${hours === 1 ? "'s" : "s'"} time`;
 
     const serviceText = service
       ? `${service.name} takes ${formatServiceDuration(service)} and is ${formatServicePrice(service)}. `
@@ -277,19 +296,6 @@ export function simulateReply(config: AppConfiguration, rawInput: string, now: D
       "booking",
       "Booking rules"
     );
-  }
-
-  // ── Cancel / reschedule ──────────────────────────────────────────────────
-  if (/\b(cancel|reschedul|move|change)\w*\b/.test(input) && /\b(appointment|booking)\b/.test(input)) {
-    const canCancel = ai.booking.allowCancellation;
-    const canReschedule = ai.booking.allowReschedule;
-    if (/\bcancel\b/.test(input) && !canCancel) {
-      return reply(`Cancellations need to go through the team — please call us on ${business.phone}.`, "cancel", "Booking rules");
-    }
-    if (!canReschedule && !/\bcancel\b/.test(input)) {
-      return reply(`Changes to bookings are handled by the team — please call us on ${business.phone}.`, "cancel", "Booking rules");
-    }
-    return reply("Of course — could you tell me the name the appointment is under and the day it's booked for?", "cancel", "Booking rules");
   }
 
   // ── Location / contact ───────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import type { KPI } from "@/types";
 import { KPICard } from "@/components/shared/KPICard";
 import { SkeletonCard } from "@/components/ui/Skeleton";
+import { KPI_DRILL_HREF } from "@/lib/kpi-format";
 
 /** Booking conversion is the headline answer to "is the receptionist working?" — give it the visual weight. */
 const HERO_KEY = "booking_conversion";
@@ -18,7 +19,7 @@ export function AnalyticsKPIs({ kpis, basis }: { kpis: KPI[]; basis: string }) {
     <div className="space-y-2">
       <div className={GRID}>
         {kpis.map((kpi) => (
-          <KPICard key={kpi.key} kpi={kpi} hero={kpi.key === HERO_KEY} />
+          <KPICard key={kpi.key} kpi={kpi} hero={kpi.key === HERO_KEY} href={KPI_DRILL_HREF[kpi.key]} />
         ))}
       </div>
       <p className="text-xs text-text-muted">{basis} Comparisons are against the immediately preceding period of the same length.</p>

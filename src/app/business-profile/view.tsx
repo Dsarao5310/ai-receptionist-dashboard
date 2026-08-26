@@ -14,9 +14,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { getSetupCompleteness } from "@/services/business";
-
-export type ProfileTab = "details" | "hours" | "services" | "knowledge";
-export const PROFILE_TABS: ProfileTab[] = ["details", "hours", "services", "knowledge"];
+import type { ProfileTab } from "./tabs";
 
 export default function BusinessProfileView({ initialTab }: { initialTab: ProfileTab }) {
   const config = useConfiguration();

@@ -18,6 +18,7 @@ import { SettingsRepository } from "./repositories/settings";
 import { WorkspaceRepository } from "./repositories/workspaces";
 import { VapiCallRepository } from "./repositories/vapi-calls";
 import { EmailRepository } from "./repositories/email";
+import { KnowledgeSyncRepository } from "./repositories/knowledge-sync";
 import { can } from "@/lib/permissions";
 
 /**
@@ -68,6 +69,7 @@ export interface WorkspaceScope {
   readonly settings: SettingsRepository;
   readonly vapi: VapiCallRepository;
   readonly email: EmailRepository;
+  readonly knowledgeSync: KnowledgeSyncRepository;
 }
 
 export function workspaceScope(context: AuthContext, sql: Sql = getDb()): WorkspaceScope {
@@ -96,5 +98,6 @@ export function workspaceScope(context: AuthContext, sql: Sql = getDb()): Worksp
     settings: new SettingsRepository(sql, workspaceId),
     vapi: new VapiCallRepository(sql, workspaceId),
     email: new EmailRepository(sql, workspaceId),
+    knowledgeSync: new KnowledgeSyncRepository(sql, workspaceId),
   };
 }

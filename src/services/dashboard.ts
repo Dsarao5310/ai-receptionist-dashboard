@@ -9,10 +9,13 @@ import type {
   IntentBreakdownEntry,
   KPI,
   TrendPoint,
+  Weekday,
 } from "@/types";
+import { WEEKDAYS } from "@/types";
 import { CHANNEL_LABELS, INTENT_LABELS } from "@/data/constants";
 import { getPreviousPeriod, inBounds, type Bounds } from "@/lib/date-range";
 import { buildBuckets, countInBucket } from "@/lib/buckets";
+import { getZonedParts } from "@/lib/timezone";
 import { appointmentInstant } from "./business";
 
 /**
@@ -109,6 +112,62 @@ export function getDashboardStats(dataset: Dataset, bounds: Bounds, timeZone: st
   }));
 
   return { kpis, trend };
+}
+
+export interface TopServicesByDay {
+  /** Up to `limit` service names, ordered by total bookings in the period, most first. */
+  services: string[];
+  /** One entry per (service, weekday) pair, including zero counts, for a dense grid. */
+  cells: { service: string; day: Weekday; count: number }[];
+  /** The single highest cell count, for scaling a bubble's size against the rest of the grid. */
+  maxCount: number;
+}
+
+/**
+ * Which services get booked on which day of the week — a different lens than
+ * the trend chart's "how much, over time" (this is "what, and when in the
+ * week"), scoped to the same selected period and re-using the exact
+ * booked-vs-scheduled distinction the rest of this file already draws:
+ * `createdAt` (booked), not the appointment's future `date`.
+ *
+ * Fixed at seven weekday columns regardless of the selected range — unlike
+ * the trend chart's buckets, which grow from hourly to weekly as the range
+ * widens, a compact grid has no room for 30 or 90 daily columns, and "which
+ * weekday" is a meaningful axis on its own rather than a cramped substitute
+ * for a longer one.
+ */
+export function getTopServicesByDay(dataset: Dataset, bounds: Bounds, timeZone: string, limit = 5): TopServicesByDay {
+  const appointmentsIn = dataset.appointments.filter((a) => inBounds(a.createdAt, bounds));
+
+  const totals = new Map<string, number>();
+  for (const a of appointmentsIn) {
+    totals.set(a.service.name, (totals.get(a.service.name) ?? 0) + 1);
+  }
+  const services = [...totals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([name]) => name);
+  const serviceSet = new Set(services);
+
+  const counts = new Map<string, number>();
+  for (const a of appointmentsIn) {
+    if (!serviceSet.has(a.service.name)) continue;
+    const day = getZonedParts(new Date(a.createdAt), timeZone).weekday;
+    const key = `${a.service.name}|${day}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const cells: TopServicesByDay["cells"] = [];
+  let maxCount = 0;
+  for (const service of services) {
+    for (const day of WEEKDAYS) {
+      const count = counts.get(`${service}|${day}`) ?? 0;
+      cells.push({ service, day, count });
+      maxCount = Math.max(maxCount, count);
+    }
+  }
+
+  return { services, cells, maxCount };
 }
 
 export function getCallVolume(dataset: Dataset, bounds: Bounds, timeZone: string): { date: string; label: string; answered: number; missed: number }[] {

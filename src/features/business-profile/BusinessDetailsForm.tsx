@@ -50,7 +50,7 @@ export function BusinessDetailsForm({
   onDirtyChange,
 }: {
   value: BusinessIdentity;
-  onSave: (next: BusinessIdentity) => void;
+  onSave: (next: BusinessIdentity) => Promise<boolean>;
   onDirtyChange: (dirty: boolean) => void;
 }) {
   const [draft, setDraft] = useState<BusinessIdentity>(value);
@@ -75,14 +75,14 @@ export function BusinessDetailsForm({
     setDraft((d) => ({ ...d, [key]: v }));
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (hasErrors) {
       // Reveal every problem at once rather than one per attempt.
       setTouched(Object.fromEntries(FIELDS.map((f) => [f.key, true])));
       toast("Please fix the highlighted fields");
       return;
     }
-    onSave(draft);
+    if (!(await onSave(draft))) return;
     setTouched({});
     toast.success("Business details saved");
   }

@@ -228,10 +228,10 @@ async function seedConfiguration(tx: Tx, { workspaceId, configuration }: TenantP
   for (const [position, entry] of knowledge.entries()) {
     await tx`
       insert into knowledge_entries
-        (id, workspace_id, category, title, content, active, position)
+        (id, workspace_id, category, title, content, active, position, provider_document_id)
       values
         (${scoped(workspaceId, entry.id)}, ${workspaceId}, ${entry.category}, ${entry.title},
-         ${entry.content}, ${entry.active}, ${position})`;
+         ${entry.content}, ${entry.active}, ${position}, ${scoped(workspaceId, entry.id)})`;
   }
 
   await tx`

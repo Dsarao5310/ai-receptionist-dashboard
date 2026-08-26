@@ -32,10 +32,10 @@ Why this model:
 - Vercel Preview branch tracking: enabled for all non-production branches.
 - Staging origin:
   `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
-- Latest verified Preview deployment: `dpl_2YM2FkEQ3MPEjv5PeEqzhpfDME3E`,
-  commit `96a124d`, `READY`.
-- Preview variables: the eight required values are scoped to branch `staging`
-  only. Other Preview branches receive none of them.
+- Latest verified Preview deployment: `dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`,
+  commit `ccf6272`, `READY` and five-role re-certified.
+- Required Preview values are scoped to branch `staging` only, including the
+  rotated runtime `DATABASE_URL`. Other Preview branches remain fail-closed.
 - Production-only variables: `AUTH_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`,
   `AUTH_GOOGLE_SECRET`, `DATABASE_URL`, `N8N_MODE`,
   `GOOGLE_CALENDAR_MODE`, and `TWILIO_MODE`.
@@ -43,11 +43,13 @@ Why this model:
 - Supabase production project: `rkzwubwogtezqbuhieuo`.
 - Supabase staging project: `AI Receptionist Staging`
   (`jhkbsfsbnynysplvnwca`), healthy in `ca-central-1`.
-- Staging database: migrations `0001` through `0011` applied, guarded fixture
-  seed verified, five explicitly authorized real role-test identities, no
+- Staging database: files 1-18 are applied and verified; local file 19
+  (`knowledge_namespace_immutability`) passes disposable `app_test` verification
+  and is pending explicit application to staging `app`. Guarded fixture seed
+  verified, five explicitly authorized real role-test identities, no
   provider/OAuth secrets, and staging-only environment/identity audit markers.
-- Staging Security Advisor: 0 findings. Performance Advisor reports only 56
-  expected unused-index INFO findings on the fresh fixture database.
+- Staging Security Advisor: 0 findings. Performance Advisor has no unindexed-FK
+  or non-INFO findings; remaining notices are unused-index INFO on fresh data.
 
 ## Provisioning order
 
@@ -108,8 +110,9 @@ composite tenant foreign keys, hardening indexes, and locked function settings
 that the numbered migration chain did not reproduce. Idempotent migration
 `0010_production_hardening_parity.sql` now restores that state from source, and
 `0011_twilio_fk_indexes.sql` covers the two relationships introduced later by
-`0009`. Both are applied in staging; neither has been applied to production in
-this phase.
+`0009`. This paragraph records the original foundation discovery; both remote
+projects advanced through the verified 17-file checkpoint; staging later
+advanced alone to file 18 for the Knowledge schema foundation.
 
 The staging-backed focused suite passed 5 files and 66 tests against the
 disposable `app_test` schema, including bidirectional tenant isolation, forged
@@ -128,7 +131,7 @@ AUTH_URL=https://<stable-staging-branch-alias>
 
 Do not use the random deployment URL.
 
-Completed. Branch `staging` points to commit `96a124d`, and the stable alias is
+Completed. Branch `staging` points to commit `ccf6272`, and the stable alias is
 `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
 
 ### 5. Create the staging Google OAuth client

@@ -25,8 +25,9 @@ live call is connected.
   content from staff payloads. Vapi still does not call the recording-storage
   gate.
 - The local daily privacy purge scheduler is bearer-authenticated,
-  lease-protected, bounded, and disabled by default. It has not been deployed,
-  enabled, or connected to an external monitor.
+  lease-protected, bounded, and disabled by default. Its code and Vercel cron
+  definition are deployed, but it is not enabled, remotely migration-verified,
+  live-certified, or connected to an external monitor.
 
 ## Still required
 

@@ -7,6 +7,7 @@ import { AppointmentsFilters } from "@/features/appointments/AppointmentsFilters
 import { AppointmentsTable, AppointmentsTableSkeleton } from "@/features/appointments/AppointmentsTable";
 import { AppointmentsCalendar } from "@/features/appointments/calendar/AppointmentsCalendar";
 import { AppointmentDrawer } from "@/features/appointments/AppointmentDrawer";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -58,6 +59,8 @@ export default function AppointmentsView({ initial }: { initial: { status: Appoi
 
   return (
     <div className="space-y-4">
+      <PageHeader description="Every appointment your AI receptionist has booked, rescheduled, or cancelled." />
+
       <Tabs value={view} onValueChange={(v) => setView(v as "list" | "calendar")}>
         <TabsList>
           <TabsTrigger value="list">List</TabsTrigger>

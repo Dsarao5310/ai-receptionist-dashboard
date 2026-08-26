@@ -54,7 +54,8 @@ function toListItem(dataset: Dataset, config: AppConfiguration, customer: Custom
   };
 }
 
-function normalizePhone(v: string) {
+/** Digits only, so differently-formatted phone numbers still compare equal. */
+export function normalizePhone(v: string) {
   return v.replace(/\D/g, "");
 }
 
