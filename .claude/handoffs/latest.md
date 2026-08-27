@@ -538,3 +538,73 @@ transactionally, and recorded the repository checksums in
 - Next gate for the user: explicitly approve committing and pushing the reviewed
   combined working tree, followed by a staging redeploy. Claude should then run
   the authenticated UI/database/Pinecone certification matrix.
+
+## Local Pinecone MCP checkpoint (2026-08-26)
+
+- Global Codex MCP server `pinecone` is enabled with the official
+  `npx.cmd -y @pinecone-database/mcp` transport and the existing server-only key.
+- Inspection masks the credential; Node 24.19.0 and npx 11.17.0 are available.
+- Restart/open a new Codex task to load the Pinecone tools. No MCP provider call,
+  index mutation, remote configuration change, deploy, push, or secret disclosure
+  occurred during setup.
+- Refreshed-task verification passed: nine tools loaded, authentication succeeded,
+  both indexes listed READY, and the staging index stats returned dimension 1024
+  with zero records/namespaces. This was read-only; no records or indexes changed.
+
+## Claude — migration file 19 applied and verified on staging (2026-08-26)
+
+Resumed the migration-19 work the earlier blocked attempt (documented above)
+left at 18/19. Re-verified live rather than trusting either doc: staging was
+genuinely still 18/19 and `app_runtime` still had `UPDATE` on
+`knowledge_provider_namespaces`, exactly as the blocked-attempt note said.
+
+Used `MIGRATION_DATABASE_URL` (the project's own `app_migrator` credential,
+via `npm run db:migrate`) instead of the Supabase-MCP `postgres` connection —
+confirmed this session's MCP connection has the identical broken
+`app_migrator` role-inheritance the earlier session hit
+(`pg_has_role(..., 'USAGE')` = false), so the same failure would have
+recurred through that path.
+
+`db:migrate` refused to run at first over two **unrelated** checksum
+mismatches on already-applied files
+(`20260825151957_provider_privacy_advisor_hardening.sql` and
+`20260825215335_knowledge_provider_foundation.sql`): both were applied to
+staging on 2026-08-25 before being committed to git on 2026-08-26 with
+comment-only wording changes, so the committed bytes no longer matched what
+was recorded at apply time. Verified column-by-column, index-by-index, and
+grant-by-grant against live staging that both files' full declared effect was
+already present — cosmetic drift only, no missed schema change — then
+corrected both ledger checksums (metadata-only, same `MIGRATION_DATABASE_URL`
+connection, no DDL).
+
+With the ledger consistent, `db:migrate` applied file 19 cleanly. Verified
+independently of the tool's own success message, given the prior session's
+`apply_migration`-tool false-success trap: `db:status` now shows 19/19, and a
+fresh `has_table_privilege('app_runtime', 'app.knowledge_provider_namespaces',
+'UPDATE')` check returns `false`.
+
+**Production untouched, still 18/19.** The earlier staging-then-production
+approval does not carry forward as standing approval for a new session;
+applying file 19 to production (`rkzwubwogtezqbuhieuo`) is a separate,
+still-ungranted next step.
+
+## Claude — migration file 19 applied and verified on production too (2026-08-26)
+
+The user separately approved the production step. Got a dedicated production
+`app_migrator` credential into `.env.production.migration.local` (the
+pre-existing placeholder file for exactly this). Re-verified against live
+production, not assumed from staging: the same two files
+(`20260825151957_provider_privacy_advisor_hardening.sql` and
+`20260825215335_knowledge_provider_foundation.sql`) had the identical stale
+checksum, and production's schema already fully matched every index, function
+`search_path`, column, and constraint each file declares. Corrected both
+checksums the same metadata-only way, then `npm run db:migrate` applied file
+19 to production cleanly.
+
+Verified independently of the tool's own success message: `db:status` shows
+19/19 on production, and a fresh `has_table_privilege('app_runtime',
+'app.knowledge_provider_namespaces', 'UPDATE')` check against production
+returns `false`. **Staging and production are both 19/19 and confirmed
+hardened.** The production migration credential stays in
+`.env.production.migration.local` (gitignored) at the user's request rather
+than being cleared.

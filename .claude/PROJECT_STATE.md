@@ -108,14 +108,20 @@ committed; none of the five migrations already applied to staging was edited.
   its schema is applied remotely through file 17, but no legal approval, true
   reauthentication, configured schedule secret, external alerting, recording
   ingestion, or live certification exists.
-- Knowledge/Pinecone: **APPLICATION FOUNDATION BUILT + STAGING AND PRODUCTION
-  SCHEMA VERIFIED; NOT LIVE**. Server-issued tenant namespaces, durable sync
+- Knowledge/Pinecone: **LIVE FLOW CERTIFIED END-TO-END ON STAGING; SCHEMA
+  HARDENING COMPLETE ON STAGING AND PRODUCTION; PRODUCTION STILL FAIL-CLOSED
+  (NO LIVE CREDENTIAL)**. Server-issued tenant namespaces, durable sync
   and reconciliation state, tombstones, monotonic version ordering, bounded
   contracts, a deterministic simulator, registry projection, and production
-  fail-closed policy are implemented. Schema migration 18 is applied and
-  verified in both staging and production (2026-08-26). No Pinecone
-  account/API/index, credential, embedding, or live certification exists;
-  production remains in its existing fail-closed live-mode policy.
+  fail-closed policy are implemented. Schema migrations 18 and 19 are both
+  applied and verified in staging and production (18: 2026-08-26; 19:
+  2026-08-26, same day, later session). An authenticated real-UI test on
+  staging certified the complete flow end-to-end: add → persists past reload
+  → DB row correct → real Pinecone vector found via semantic search → delete
+  → confirmed gone from both DB and Pinecone (see `CURRENT_TASK.md`).
+  Production has no Pinecone account/API/index/credential and remains in its
+  existing fail-closed live-mode policy — schema readiness is not the same as
+  production being live.
   **Addendum, Claude, same day:** wrote the actual live adapter
   (`src/server/integrations/knowledge/pinecone.ts`, real
   `@pinecone-database/pinecone` SDK calls, 9/9 unit tests against a fake
@@ -372,3 +378,36 @@ No remote configuration, database migration, provider traffic, commit, push, or
 deployment occurred. Because the releasable state spans a large shared
 uncommitted tree rather than an isolated Knowledge patch, committing/pushing and
 deploying it remains a separate explicit-approval boundary.
+
+## Codex addendum — Pinecone MCP enabled locally (2026-08-26)
+
+The global Codex MCP entry `pinecone` now launches the official
+`@pinecone-database/mcp` package through `npx.cmd` with the existing local
+server-only API key. Read-only inspection reports the registration enabled and
+masks the key. Node/npx prerequisites pass. This only configures the local Codex
+client; no MCP tool becomes callable in the already-running task, and no live
+Pinecone operation or remote change was performed.
+
+A refreshed-task check subsequently loaded all nine Pinecone MCP tools. Live,
+read-only `list_indexes` and `describe_index_stats` calls authenticated and
+confirmed both account indexes READY. The intended staging index uses integrated
+`llama-text-embed-v2` inference, 1024 dimensions, and the `content` field map;
+it currently has zero records and namespaces. No provider mutation occurred.
+
+## Claude addendum — migration 19 applied to staging (2026-08-26)
+
+File 19 (`20260826033517_knowledge_namespace_immutability.sql`, the
+`app_runtime` UPDATE revoke on `knowledge_provider_namespaces`) is now applied
+and verified on staging (`jhkbsfsbnynysplvnwca`): `db:status` reports 19/19,
+and `has_table_privilege('app_runtime', 'app.knowledge_provider_namespaces',
+'UPDATE')` independently confirms `false`. Full mechanism, including two
+pre-existing unrelated ledger-checksum corrections required to unblock the
+runner, is in `CURRENT_TASK.md` and `handoffs/latest.md`.
+
+With separate explicit approval, file 19 is now also applied and verified on
+**production** (`rkzwubwogtezqbuhieuo`): `db:status` reports 19/19, and
+`has_table_privilege('app_runtime', 'app.knowledge_provider_namespaces',
+'UPDATE')` independently confirms `false`. The same two ledger-checksum drifts
+existed on production and were corrected the same way after re-verifying the
+live schema there matched (not assumed from staging). Both staging and
+production are now 19/19.

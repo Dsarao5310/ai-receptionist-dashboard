@@ -279,3 +279,84 @@ decision with the user rather than making it. Full detail in
   occurred. The next action is still explicitly gated: decide whether to commit
   and push the large combined uncommitted tree so staging can receive matching
   Knowledge code, then redeploy and hand authenticated certification to Claude.
+
+## Local Pinecone MCP registration (2026-08-26)
+
+- Updated the existing global Codex `pinecone` MCP registration to pass the
+  server-only `PINECONE_API_KEY` already stored in `.env.local`.
+- Verified the registration is enabled and uses `npx.cmd -y
+  @pinecone-database/mcp`; Codex masks the configured key in inspection output.
+- Node.js 24.19.0 and npx 11.17.0 satisfy the MCP server prerequisite.
+- No Pinecone tool call, index mutation, Vercel/Supabase change, deploy, push, or
+  secret output occurred. A fresh Codex task/session is required to load the new
+  MCP tools into the available tool inventory.
+- Follow-up verification in a refreshed task loaded all nine Pinecone MCP tools.
+  A read-only live call authenticated successfully and listed two READY indexes.
+  `ai-receptionist-knowledge-staging` reports integrated
+  `llama-text-embed-v2`, 1024 dimensions, `content` field mapping, zero records,
+  and zero namespaces. No data was written or removed.
+
+## Migration file 19 applied to staging (2026-08-26)
+
+Picked up the migration-19 work left blocked by a prior session (see
+`handoffs/latest.md` for the original blocked-attempt detail). Diagnosed and
+resolved the actual blocker before touching anything live:
+
+- Confirmed directly against staging (`jhkbsfsbnynysplvnwca`), not from any
+  doc: the real ledger (`app.schema_migrations`) was genuinely 18/19, and
+  `has_table_privilege('app_runtime', 'app.knowledge_provider_namespaces',
+  'UPDATE')` was `true` — the prior session's diagnosis was accurate, nothing
+  was silently applied.
+- Used the project's own `MIGRATION_DATABASE_URL` credential (via
+  `npm run db:migrate` / `npm run db:status`), which authenticates directly as
+  `app_migrator` and sidesteps the `postgres`-role INHERIT problem the blocked
+  session hit. Confirmed via `pg_has_role` that this session's Supabase-MCP
+  connection has the same broken inheritance, so this path was necessary, not
+  optional.
+- `db:migrate` initially refused to proceed on two **unrelated, pre-existing**
+  checksum mismatches: `20260825151957_provider_privacy_advisor_hardening.sql`
+  and `20260825215335_knowledge_provider_foundation.sql` had each been applied
+  to staging on 2026-08-25 *before* being committed to git on 2026-08-26 with
+  comment-only wording edits, so the committed file no longer byte-matches
+  what was recorded at apply time. Verified for both files, column-by-column /
+  index-by-index / grant-by-grant against live staging, that every effect the
+  current committed file declares is already exactly present — the drift is
+  cosmetic, not a missed or extra schema change. Corrected both ledger
+  checksums to match the current committed files (metadata-only `UPDATE`, no
+  DDL) via a one-off script using the same `MIGRATION_DATABASE_URL` connection.
+- With the ledger consistent again, `npm run db:migrate` applied
+  `20260826033517_knowledge_namespace_immutability.sql` cleanly.
+- Verified independently (not trusting the tool's own success message, given
+  the prior session's false-success trap with the `apply_migration` MCP tool):
+  `npm run db:status` shows 19/19 applied, and a fresh
+  `has_table_privilege('app_runtime', ..., 'UPDATE')` check now returns
+  `false`. The REVOKE is real and confirmed on staging.
+- **Production is untouched and still 18/19.** The prior session's approval
+  was staging-then-production for this exact migration and does not carry
+  forward automatically; applying to production (`rkzwubwogtezqbuhieuo`)
+  remains its own explicit-approval step.
+
+## Migration file 19 applied to production (2026-08-26)
+
+With the user's explicit approval for this second, separate step, applied
+file 19 to production as well:
+
+- Obtained a dedicated production `app_migrator` credential (session pooler,
+  port 5432) into the pre-existing `.env.production.migration.local`
+  placeholder, following the same `scripts/db.mjs` connection model used for
+  staging.
+- Verified column-by-column, index-by-index, and grant-by-grant against live
+  production (not assumed from staging parity) that both previously-drifted
+  files' full declared effect was already present, exactly mirroring the
+  staging finding. Corrected both ledger checksums on production the same
+  way (metadata-only, no DDL).
+- `npm run db:migrate` (run against production via the dedicated credential)
+  then applied file 19 cleanly.
+- Verified independently of the tool's own success message:
+  `npm run db:status` shows 19/19 on production, and a fresh
+  `has_table_privilege('app_runtime', 'app.knowledge_provider_namespaces',
+  'UPDATE')` check against production returns `false`.
+- **Both staging and production are now 19/19 and confirmed hardened.** The
+  production `app_migrator` credential remains in
+  `.env.production.migration.local` (gitignored, not committed) at the
+  user's request rather than being blanked back out.
