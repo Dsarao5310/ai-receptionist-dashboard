@@ -30,8 +30,10 @@ Updated: 2026-08-27
   Isolated staging deployment `dpl_8SuiPxLYLawkfkZQu5KNgZQPMkKr`
   is READY at `64fa59a` (redeployed 2026-08-27 to pick up the rotated
   Pinecone key). The one-hour Production runtime-error scan is
-  clean. Generic Preview remains fail-closed. The duplicate
-  `ai-receptionist-dashboard-dsarao` project remains approval-gated cleanup debt.
+  clean. Generic Preview remains fail-closed. The previously-noted duplicate
+  `ai-receptionist-dashboard-dsarao` project no longer exists — checked
+  `list_projects`/`list_teams` (2026-08-27): only one team and one project
+  exist under this account. That cleanup item is resolved/moot.
 - Recovery-rehearsal implementation deployment
   `dpl_4J364H4NyKxNZRrmiirmhjyYBSXn` is READY in Production at `87d1db9`, has
   the canonical Production alias, and its fresh one-hour runtime-error scan is
@@ -295,6 +297,33 @@ audit all pass. Pushed `origin/master`. Production
 `dpl_6Dvm3QuoVuif5ys63WQzDBv9WmvZ` is READY at `b24e51c`; runtime-error scan
 found nothing new (3 groups, all tied to older deployments). The
 calendar-Undo-sync fix is now live. Full detail in `CURRENT_TASK.md`.
+
+## Claude addendum — housekeeping: stale branches and duplicate Vercel project (2026-08-27)
+
+Duplicate Vercel project `ai-receptionist-dashboard-dsarao`, previously noted
+as cleanup debt: no longer exists. `list_projects`/`list_teams` show only one
+team and one project under this account. Nothing to remove; the note was
+stale.
+
+Branch cleanup: deleted two fully-merged branches (local + remote) —
+`knowledge/pinecone-provider-foundation` (PR #2) and `ui/dashboard-reconstruction`
+(PR #1) — both confirmed as git ancestors of `master`, so nothing unique was
+lost. `knowledge/pinecone-provider-foundation`'s remote ref was already gone
+(GitHub auto-delete-on-merge).
+
+Also investigated and deleted `origin/claude/read-markdown-file-7f7r3j`, an
+unmerged stray branch (auto-generated Claude Code cloud-session name)
+containing an earlier, less-correct draft of the calendar-Undo-sync fix:
+skipped slot validation on a plain uncancel, routed uncancel through the
+reschedule workflow instead of the booking workflow, and removed the
+`knowledge.reconciliation_*` audit-action types still used by the live
+Knowledge feature — would have been a regression if ever merged. The actual
+shipped fix (`e59cc7c` → `b24e51c`, live on master, 55/55 tests) came from a
+different, more refined lineage. Confirmed with the user before deleting.
+
+Left untouched: `fix/undo-calendar-sync` (local+remote) — already merged,
+but still checked out in the locked `.claude/worktrees/quizzical-sniffing-waffle`
+worktree, which `CLAUDE.md` explicitly protects.
 
 ## Claude addendum — Pinecone key rotation, production env vars checked clean (2026-08-27)
 

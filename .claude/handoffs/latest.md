@@ -247,3 +247,15 @@ Vercel's Environment Variables page directly showed all production vars
 present and untouched since Aug 21 — the redeploys just weren't scoped to
 Production, and live production was never affected. Full detail in
 `CURRENT_TASK.md` and `.claude/providers/knowledge.md`.
+
+## Claude — housekeeping pass (2026-08-27)
+
+Duplicate Vercel project `ai-receptionist-dashboard-dsarao` no longer
+exists (stale doc note, resolved). Deleted two fully-merged branches
+(local+remote): `knowledge/pinecone-provider-foundation`,
+`ui/dashboard-reconstruction`. Investigated an unmerged stray branch
+(`origin/claude/read-markdown-file-7f7r3j`) before deleting it: an earlier,
+less-correct draft of the calendar-Undo fix, superseded by what actually
+shipped to master. Left `fix/undo-calendar-sync` alone — merged, but tied
+to the locked, explicitly-protected worktree. Final branch state: `master`,
+`staging`, `fix/undo-calendar-sync`.

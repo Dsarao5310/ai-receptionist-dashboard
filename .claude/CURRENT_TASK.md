@@ -352,3 +352,26 @@ Confirmed the old exposed key deleted from the Pinecone console (three keys
 existed: two unrelated "Claude"-labeled MCP integration keys plus the app
 key; user identified and deleted the correct one themselves after I
 declined to guess). Full detail in `.claude/providers/knowledge.md`.
+
+## Claude — housekeeping pass (2026-08-27)
+
+User asked for general housekeeping. Duplicate Vercel project
+(`ai-receptionist-dashboard-dsarao`, previously flagged as cleanup debt) no
+longer exists — `list_projects`/`list_teams` show only one team/project;
+the doc note was stale.
+
+Branch cleanup: deleted two branches (local+remote) confirmed as full git
+ancestors of `master` — `knowledge/pinecone-provider-foundation` and
+`ui/dashboard-reconstruction`. Investigated an unmerged stray branch
+(`origin/claude/read-markdown-file-7f7r3j`, an auto-named Claude Code
+cloud-session branch) before touching it: its version of the calendar-Undo
+fix was an earlier, less-correct draft (no slot check on plain uncancel,
+wrong workflow routing, and it would have dropped the
+`knowledge.reconciliation_*` audit-action types still in active use) —
+superseded by the actual shipped fix already live on master. Confirmed with
+the user, then deleted it.
+
+Left `fix/undo-calendar-sync` alone (local+remote) — already merged, but
+still checked out in the locked `.claude/worktrees/quizzical-sniffing-waffle`
+worktree, which is explicitly protected in `CLAUDE.md`. Final branch state:
+`master`, `staging`, `fix/undo-calendar-sync` only.
