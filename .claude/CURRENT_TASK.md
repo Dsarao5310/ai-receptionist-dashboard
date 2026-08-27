@@ -6,7 +6,8 @@ Status: **LOCAL FOUNDATION COMMITTED AND VERIFIED; LIVE RECONCILIATION NOT EXECU
 
 ## Authoritative checkpoint
 
-- `master` and `origin/master` are at `b91524c`.
+- `master` and `origin/master` are at `64fa59a`; that commit contains only the
+  accepted documentation reconciliation on top of `b91524c`.
 - Protected Knowledge reconciliation operations and the whole-run `app_test`
   advisory lock are committed in `9a5b957`.
 - The Nodemailer security update is committed in `42e8bad`; `b91524c` adds the
@@ -15,6 +16,10 @@ Status: **LOCAL FOUNDATION COMMITTED AND VERIFIED; LIVE RECONCILIATION NOT EXECU
   for the pre-existing untracked `.claude/worktrees/` directory. Current changes
   are limited to the authoritative Markdown updates recorded here.
 - Staging and production remain verified at 19/19 database migrations.
+- Read-only Vercel inspection confirms Production deployment
+  `dpl_Am55oNx5pFPkAykFuHmVE5fXzCJL` is READY at `64fa59a`, while the isolated
+  staging deployment `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D` remains READY at
+  `0b444ac` and therefore does not contain the reconciliation command.
 
 ## Knowledge state
 
@@ -43,11 +48,36 @@ Status: **LOCAL FOUNDATION COMMITTED AND VERIFIED; LIVE RECONCILIATION NOT EXECU
 
 ## Approval boundary and next action
 
-The next external phase requires explicit approval: confirm the intended
-staging deployment contains `9a5b957` or later, authenticate as an authorized
-staging owner, run dry-run first, then reconcile only the eight historical
-pending rows and verify scoped database/Pinecone settlement, cross-workspace
-negatives, sanitized logs, and cleanup.
+The next external phase requires explicit approval: advance the isolated
+`staging` branch/deployment to `9a5b957` or later, confirm READY, authenticate as
+an authorized staging owner, run dry-run first, then reconcile only the eight
+historical pending rows and verify scoped database/Pinecone settlement,
+cross-workspace negatives, sanitized logs, and cleanup.
 
 Production Pinecone, deployments, environment changes, remote migrations,
 provider writes, project removal, commits, and pushes remain separately gated.
+
+## Claude — unrelated sidebar accessibility fix (2026-08-27)
+
+Separate from the Knowledge reconciliation work above: ran a UI/accessibility
+QA pass on `Sidebar.tsx`. Found a real WCAG 2.4.4/4.1.2 gap, not cosmetic —
+the sidebar's default state is collapsed, which fully removes the visible
+label span from the DOM and relies on a purely visual Radix tooltip (no
+aria-label wiring), leaving every nav link with no accessible name in the
+default view.
+
+Fixed with `aria-label={item.label}` directly on the Link (one line,
+`src/components/shell/Sidebar.tsx`). Verified live by reloading the
+authenticated dashboard and reading the accessibility tree: all 10 sidebar
+links now report their correct accessible name. Ruled out a second
+candidate (StatusStrip's icon+text links) after reading its source — the
+text there is plain, unsuppressed content, so it's very likely a tool
+display artifact, not a real gap; left unchanged. Could not visually verify
+the 375px mobile layout (window resize didn't take effect in this
+environment), but confirmed via code that `MobileBottomNav.tsx` always
+renders visible text labels and isn't affected by the same bug.
+
+Typecheck and lint pass; no dedicated Sidebar test file exists to extend.
+Skipped the full test suite to avoid contending with the concurrent
+Knowledge-reconciliation dry-run work on the shared database. Committed in
+`d867931`, scoped to just that one file — not yet pushed.

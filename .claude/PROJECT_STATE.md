@@ -4,7 +4,8 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; `HEAD` and `origin/master`: `b91524c`.
+- Branch: `master`; `HEAD` and `origin/master`: `64fa59a` (documentation-only
+  reconciliation on top of `b91524c`).
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
   their tests, current documentation, and whole-run `app_test` advisory lock.
 - `42e8bad` updates Nodemailer to 9.0.5; `b91524c` adds the npm override needed
@@ -19,9 +20,11 @@ Updated: 2026-08-27
 - Authentication and tenancy: Auth.js is authoritative. Hosted staging OAuth,
   RBAC, and tenant checks are live-verified; cross-tenant leakage remains a
   release blocker.
-- Vercel: the intended production and isolated staging projects exist. Generic
-  Preview remains fail-closed. The duplicate `ai-receptionist-dashboard-dsarao`
-  project remains approval-gated cleanup debt.
+- Vercel: Production deployment `dpl_Am55oNx5pFPkAykFuHmVE5fXzCJL` is READY at
+  `64fa59a`. Isolated staging deployment `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`
+  remains READY at `0b444ac`, so it does not yet contain the reconciliation
+  command. Generic Preview remains fail-closed. The duplicate
+  `ai-receptionist-dashboard-dsarao` project remains approval-gated cleanup debt.
 - Google Calendar is historically live-verified. n8n remains application-ready
   but externally inaccessible and not live-certified. Twilio, Vapi, Gmail, and
   the model provider still lack their respective live certification evidence.
@@ -65,10 +68,21 @@ Updated: 2026-08-27
 
 ## Approval-gated next phases
 
-1. Confirm a staging deployment includes the reconciliation commit, then run an
-   authorized dry-run-first reconciliation of the eight historical pending rows
-   and verify scoped DB/Pinecone settlement and cross-tenant negatives.
+1. With explicit approval, advance isolated staging to `9a5b957` or later,
+   confirm READY, then run an authorized dry-run-first reconciliation of the
+   eight historical pending rows and verify scoped DB/Pinecone settlement and
+   cross-tenant negatives.
 2. Enable Production Pinecone only as a separate approved data-policy,
    credential, cost, monitoring, deployment, and certification phase.
 3. Deploy, alter environment variables, remove Vercel projects, apply future
    remote migrations, commit, or push only with explicit approval.
+
+## Claude addendum — sidebar accessibility fix (2026-08-27)
+
+Unrelated to Knowledge/Pinecone: the collapsed sidebar (the default state)
+had no accessible name on any of its 10 nav links — the visible label is
+removed from the DOM when collapsed and the wrapping tooltip carries no
+aria-label. Fixed with `aria-label={item.label}` on the Link
+(`src/components/shell/Sidebar.tsx`), verified via the live accessibility
+tree after reload. Typecheck/lint pass. Committed in `d867931`; not yet
+pushed. Full detail in `CURRENT_TASK.md` and `handoffs/latest.md`.
