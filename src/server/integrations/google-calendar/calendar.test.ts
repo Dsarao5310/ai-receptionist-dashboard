@@ -8,7 +8,11 @@ import type { Sql } from "@/server/db/client";
 import { loadWorkspaceDashboard } from "@/server/workspace-data";
 import { Secret } from "@/server/integrations/credential-store";
 import { SecretStore } from "@/server/integrations/secret-store";
-import { requestAppointmentCancellation, requestAppointmentReschedule } from "@/server/integrations/workflows";
+import {
+  requestAppointmentBooking,
+  requestAppointmentCancellation,
+  requestAppointmentReschedule,
+} from "@/server/integrations/workflows";
 import { commitWithSyncGuard, createExecutor } from "@/server/integrations/calendar-sync";
 import { ingestEvent } from "@/server/integrations/n8n/inbound";
 import { sign } from "@/server/integrations/n8n/signing";
@@ -162,7 +166,8 @@ async function disconnectCalendar(context: AuthContext): Promise<void> {
 async function unmapWorkflows(workspaceId: string): Promise<void> {
   await sql`
     update workflow_mappings set operation = null
-    where workspace_id = ${workspaceId} and operation in ('appointment.reschedule','appointment.cancel')`;
+    where workspace_id = ${workspaceId}
+      and operation in ('appointment.reschedule','appointment.cancel','appointment.book')`;
 }
 
 async function remapWorkflows(workspaceId: string): Promise<void> {
@@ -172,6 +177,9 @@ async function remapWorkflows(workspaceId: string): Promise<void> {
   await sql`
     update workflow_mappings set operation = 'appointment.cancel'
     where workspace_id = ${workspaceId} and id like '%__wf_cancel'`;
+  await sql`
+    update workflow_mappings set operation = 'appointment.book'
+    where workspace_id = ${workspaceId} and id like '%__wf_calendar'`;
 }
 
 async function anAppointment(context: AuthContext) {
@@ -516,6 +524,86 @@ describeDb("rescheduling reaches the calendar when no workflow is mapped", () =>
 
     expect(simulatedCalendar.all("primary")).toHaveLength(1);
     expect(simulatedCalendar.all("primary")[0].start.toISOString()).toBe(before);
+  });
+});
+
+// ── Undoing a cancellation reaches the calendar too ─────────────────────────
+//
+// `restoreAppointmentAction`'s Undo used to be a pure database write: it put
+// the status and time back without telling the calendar anything, so a real
+// cancel-undo left the dashboard saying "confirmed" while the calendar still
+// showed the event gone (or, for an undone reschedule, still at the moved
+// time). These exercise the fix at the same workflow-spine level the
+// reschedule/cancel suite above already does.
+
+describeDb("undoing a cancellation reaches the calendar when no workflow is mapped", () => {
+  beforeEach(async () => {
+    await unmapWorkflows(DEV_WORKSPACE_A);
+  });
+
+  afterEach(async () => {
+    await remapWorkflows(DEV_WORKSPACE_A);
+  });
+
+  it("creates a fresh event for a previously cancelled appointment", async () => {
+    const context = await contextFor(await alex(), DEV_WORKSPACE_A);
+    await connectCalendar(context);
+
+    const appointment = await anAppointment(context);
+    const configuration = await configFor(context);
+    const scope = workspaceScope(context, sql);
+
+    await createAppointmentEvent(context, { appointment, configuration, now: NOW });
+    const [created] = simulatedCalendar.all("primary");
+    await scope.appointments.setProviderMapping(appointment.id, {
+      provider: "google_calendar",
+      eventId: created.id,
+      calendarId: "primary",
+      syncedAt: NOW,
+    });
+    await requestAppointmentCancellation(context, { appointment, configuration, now: NOW });
+    expect(simulatedCalendar.all("primary")[0].status).toBe("cancelled");
+
+    const disposition = await requestAppointmentBooking(context, { appointment, configuration, now: NOW });
+
+    expect(disposition.kind).toBe("succeeded");
+    // The old event stays a tombstone; the undo gets a live replacement rather
+    // than reporting success against a cancelled event nobody would see.
+    const events = simulatedCalendar.all("primary");
+    expect(events).toHaveLength(2);
+    expect(events.some((e) => e.status !== "cancelled")).toBe(true);
+  });
+
+  it("produces one external effect however many times it is retried", async () => {
+    const context = await contextFor(await alex(), DEV_WORKSPACE_A);
+    await connectCalendar(context);
+
+    const appointment = await anAppointment(context);
+    const configuration = await configFor(context);
+    const input = { appointment, configuration, now: NOW };
+
+    const first = await requestAppointmentBooking(context, input);
+    const second = await requestAppointmentBooking(context, input);
+    const third = await requestAppointmentBooking(context, input);
+
+    expect(first.kind).toBe("succeeded");
+    expect(second.kind).toBe("duplicate");
+    expect(third.kind).toBe("duplicate");
+    expect(simulatedCalendar.all("primary")).toHaveLength(1);
+  });
+
+  it("records the mapping and marks the appointment in step", async () => {
+    const context = await contextFor(await alex(), DEV_WORKSPACE_A);
+    await connectCalendar(context);
+
+    const appointment = await anAppointment(context);
+    await requestAppointmentBooking(context, { appointment, configuration: await configFor(context), now: NOW });
+
+    const scope = workspaceScope(context, sql);
+    const mapping = await scope.appointments.providerMapping(appointment.id);
+    expect(mapping.eventId).toBeTruthy();
+    expect(mapping.calendarId).toBe("primary");
+    expect((await scope.appointments.findById(appointment.id))?.syncState).toBe("synced");
   });
 });
 

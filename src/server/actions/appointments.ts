@@ -7,6 +7,7 @@ import { recordAuditEvent } from "@/server/audit";
 import { serverNow } from "@/server/clock";
 import { getWorkspaceConfiguration, scopeFor } from "@/server/workspace-data";
 import {
+  requestAppointmentBooking,
   requestAppointmentCancellation,
   requestAppointmentReschedule,
 } from "@/server/integrations/workflows";
@@ -241,13 +242,20 @@ export async function updateAppointmentNotesAction(input: {
  * Undo.
  *
  * The subtlety worth being explicit about: undo does not get a pass on the
- * scheduling rules. Undoing a cancellation only changes a status, so nothing
- * needs checking. Undoing a *reschedule* moves the appointment back to a time —
- * and that time is validated exactly as any other move would be.
+ * scheduling rules, and it does not get a pass on the calendar either. Undoing
+ * a *reschedule* moves the appointment back to a time, so it goes through the
+ * same workflow gate as an ordinary reschedule — otherwise the dashboard would
+ * revert while a live calendar stayed at the new time. Undoing a
+ * *cancellation* is asking the calendar to recreate an event it was already
+ * told to remove, so it goes through the booking workflow instead. A plain
+ * status change with no time movement (undoing nothing calendar-shaped) skips
+ * the workflow entirely, same as it always has.
  *
- * So if the original slot has since passed, or the business has since closed
- * that day, the undo is refused with the reason. That reads as a limitation and
- * is really the rule holding: there is no path, including this one, that puts an
+ * Both of those calendar-touching paths are also time moves in the sense that
+ * matters here, so both get the same slot check a reschedule would: if the
+ * original slot has since passed, or the business has since closed that day,
+ * the undo is refused with the reason. That reads as a limitation and is
+ * really the rule holding: there is no path, including this one, that puts an
  * appointment somewhere the ordinary rules would not allow.
  */
 export async function restoreAppointmentAction(input: {
@@ -265,17 +273,52 @@ export async function restoreAppointmentAction(input: {
     if (!appointment) return { ok: false, error: "Appointment not found." };
 
     const config = await getWorkspaceConfiguration(context);
+    const now = serverNow();
     const movesInTime = appointment.date !== input.date || appointment.time !== input.time;
+    const uncancels = appointment.status === "cancelled" && input.status !== "cancelled";
 
-    if (movesInTime) {
-      const check = checkRescheduleSlot(config, appointment, input.date, input.time, serverNow());
+    if (movesInTime || uncancels) {
+      const check = checkRescheduleSlot(config, appointment, input.date, input.time, now);
       if (!check.valid) return { ok: false, error: check.message };
     }
 
-    await scope.appointments.restore(
-      { ...appointment, date: input.date, time: input.time, status: input.status, notes: input.notes },
-      config.business.timezone
+    // Validation first, workflow second, database third — the same ordering
+    // reschedule and cancel already follow, for the same reason.
+    let gated: WorkflowGate = { proceed: true, operationId: null };
+    if (uncancels) {
+      const disposition = await requestAppointmentBooking(context, {
+        appointment: { ...appointment, date: input.date, time: input.time },
+        configuration: config,
+        now,
+      });
+      gated = gate(disposition);
+    } else if (movesInTime) {
+      const disposition = await requestAppointmentReschedule(context, {
+        appointment,
+        configuration: config,
+        date: input.date,
+        time: input.time,
+        now,
+      });
+      gated = gate(disposition);
+    }
+    if (!gated.proceed) return { ok: false, error: gated.error };
+
+    const committed = await commitWithSyncGuard(
+      context,
+      {
+        appointmentId: input.appointmentId,
+        operationId: gated.operationId,
+        detail: "The calendar was updated but this undo could not be saved.",
+        now,
+      },
+      () =>
+        scope.appointments.restore(
+          { ...appointment, date: input.date, time: input.time, status: input.status, notes: input.notes },
+          config.business.timezone
+        )
     );
+    if (!committed.ok) return { ok: false, error: committed.error };
 
     revalidateWorkspaceViews();
     return { ok: true };
