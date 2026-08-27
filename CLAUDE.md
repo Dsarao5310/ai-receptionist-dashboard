@@ -10,8 +10,10 @@ At the beginning of a task:
 
 1. Read `CLAUDE.md`.
 2. Read `.claude/CURRENT_TASK.md`.
-3. Run `git status`.
-4. Inspect only code relevant to the current task.
+3. Read `.claude/ACTIVE_WORK.md` and update your own section to `in-progress`
+   before starting.
+4. Run `git status`.
+5. Inspect only code relevant to the current task.
 
 Read `.claude/PROJECT_STATE.md` only when current implementation status is needed.
 Load additional scoped files only when relevant:
@@ -64,7 +66,9 @@ Do not read every scoped file by default.
 
 ## Completion behavior
 
-At the end of every successfully completed task:
+At the end of every successfully completed task — including small or unrelated
+side tasks, not just the main multi-step work — automatically, without waiting
+to be asked or reminded:
 
 - Update the relevant Claude Markdown files so they match the verified repository
   and runtime state; never leave known-stale task or status claims behind.
@@ -77,3 +81,26 @@ At the end of every successfully completed task:
 - Update any related scoped rules, provider notes, runbooks, or other Markdown
   documentation affected by the task.
 - Do not record unverified claims or turn `CLAUDE.md` into project history.
+- Commit the change (code and/or docs) once it is verified and ready — do not
+  leave finished, verified work sitting uncommitted waiting for a prompt to
+  commit it. Push follows the repo's normal push handling (the auto-mode
+  classifier gates risky/deploy-triggering pushes on its own; that gate is the
+  safety backstop, not a reason to wait for a separate human request).
+
+## Multi-agent collaboration (Claude + Codex)
+
+This repository is worked on by multiple concurrent agents. "Don't interfere"
+means don't touch files or areas another agent's own doc entry describes as
+still in progress — it is not a permanent no-touch zone on anything they have
+ever authored. Once another agent's own `.claude/*.md` entry marks a piece of
+work finished and verified, it is expected collaboration — not overstepping —
+to review it yourself (read the diff, check for secrets, run typecheck/lint/
+tests), and commit and push it. Attribute correctly in the commit message when
+work spans authors, since git cannot split authorship within one file.
+
+`.claude/ACTIVE_WORK.md` is the live "who is doing what right now" board —
+check it before starting anything that could collide (shared database
+schema, migrations, package.json, docs, deploys), keep your own section
+current while working, and set it back to idle when done. It is not a
+substitute for `CURRENT_TASK.md`/`PROJECT_STATE.md`/`handoffs/latest.md`,
+which remain the record of finished work.

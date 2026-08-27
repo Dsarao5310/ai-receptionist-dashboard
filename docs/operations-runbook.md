@@ -62,6 +62,24 @@ release decision. Database migrations are forward-only.
 5. Repair, verify in staging, release through the normal gates, and document the
    cause, impact, remediation, and follow-up owner.
 
+## Liveness and uptime monitoring
+
+1. Use `GET` or `HEAD /api/health` only as deployment liveness. HTTP 200 proves
+   the dynamic Next.js route executed; it does not certify Postgres, providers,
+   workflows, tenant operations, or business semantics.
+2. The endpoint must remain content-free and no-store. Do not add environment,
+   build, database, provider, tenant, secret, or customer fields to its response
+   or structured log.
+3. After deployment, verify the exact HTTPS endpoint and confirm its structured
+   completion event appears without query strings, authorization headers, or
+   customer content.
+4. External alerting is not complete until a named primary/backup owner,
+   notification route, acknowledgement target, escalation path, failure and
+   recovery thresholds, and maintenance-window procedure are recorded.
+5. Treat a liveness failure as an availability signal. Correlate it with Vercel
+   runtime errors and authenticated dependency/provider health before choosing
+   containment or rollback.
+
 ## Provider disable / fail-closed procedure
 
 1. Set the provider's environment-specific mode to `disabled`; never use

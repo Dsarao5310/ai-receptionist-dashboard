@@ -1,144 +1,103 @@
 # Business Knowledge Provider Readiness
 
-Updated: 2026-08-26
+Updated: 2026-08-27
 
-## Current status
+## Decision
 
-**Application foundation built, schema verified in staging and production, and
-the isolated live Pinecone adapter verified. The database-backed staging UI flow
-is not certified because deployed code is behind the migrated schema.**
+**READY for the certified isolated staging CRUD flow and completed historical
+backlog reconciliation. NOT READY for Production Pinecone.**
 
-Business Knowledge remains the owner-facing authority. The application now has
-a private server boundary for explicit provider synchronization without
-exposing Pinecone, namespaces, provider document ids, credentials, indexes, or
-embedding details to client DTOs.
+The hosted staging application has passed a real authenticated round trip from
+Business Profile through scoped Postgres persistence and Pinecone retrieval,
+then through deletion in both systems. Production intentionally has no Pinecone
+credential. The eight historical staging rows were reconciled in one explicitly
+approved, bounded, audited staging phase.
 
-## Implemented locally
+## Implemented boundary
 
-- One opaque, server-issued provider namespace per authorized workspace.
-- Workspace-scoped provider document identity and reconciliation state.
-- Explicit create, update, deactivate/delete, and reconciliation operations.
-- Local preservation when the provider is disabled.
-- Deterministic simulated indexing, deletion, and bounded lexical retrieval.
-- Safe normalized provider failure state with no raw body or credential leakage.
-- Runtime validation of retrieval input and provider matches, server-enforced
-  result limits, and retrieval-specific safe error normalization.
-- Workspace-scoped re-authorization and local hydration of provider match ids;
-  provider metadata is not treated as tenant authority and unknown/inactive/
-  deleted/foreign ids are discarded.
-- Deduplicated batch hydration resolves the bounded provider matches with one
-  workspace-scoped database query rather than an N+1 query path.
-- Automatic reconciliation selects only retryable `pending`/`error` rows;
-  `sync_required` remains parked for explicit manual reconciliation.
-- Version-aware failure settlement reports stale failed attempts as superseded.
-- Atomic settlement requires both the expected version and a retryable source
-  state, protecting `synced` and `sync_required` from same-version worker races.
-- Provider execution and local success confirmation use separate failure
-  boundaries. A failed confirmation after provider success is parked as
-  `sync_required`, preventing automatic replay of an uncertain external effect.
-- Server actions represent local acceptance and provider attention separately.
-  An accepted Knowledge write remains in the optimistic dashboard and refreshes
-  from durable state while a synchronization warning is shown; it is not rolled
-  back as though Postgres rejected it.
-- A forward-only privilege migration revokes unused runtime update authority on
-  the immutable workspace-to-provider namespace mapping.
-- Tombstoned deletion before idempotent provider removal.
-- Monotonic sync versions that ignore stale upserts/deletes and prevent stale
-  completions from settling newer revisions.
-- Server adapter/registry projection and production configuration gates.
-- Current Pinecone SDK adapter using server-only API key/index-host configuration,
-  integrated-inference text upsert/search, namespaced deletion, and normalized
-  retryability without raw SDK or credential leakage.
+- Server-issued namespace per authorized workspace.
+- Durable provider document identity, synchronization state, monotonic version,
+  safe error state, provider timestamp, and deletion tombstone.
+- Explicit create, update, deactivate/delete, search, and retryable
+  reconciliation operations.
+- Deterministic simulator for local tests and fail-closed disabled/live modes.
+- Runtime validation, bounded search, normalized failures, and local-authority
+  hydration of provider match ids.
+- Stale-write and stale-settlement protection.
+- Attempt-once handling when provider success cannot be confirmed locally:
+  `sync_required` is terminal for batch reconciliation.
+- Warning-aware action projection that preserves an accepted local write.
 
-## Verification evidence
+## Remote evidence
 
-- TypeScript: pass.
-- Targeted ESLint: pass.
-- Pure provider contract tests: 2/2 pass.
-- Production configuration tests: 13/13 pass.
-- Final focused hosted database suite: 9/9 pass after the shared `app_test`
-  contention cleared. Coverage includes distinct server-issued namespaces,
-  foreign-entry-id rejection, monotonic version ordering, disabled-mode
-  persistence, safe provider failures, tombstoned deletion, input bounds, pure
-  provider contracts, and registry projection.
-- Executed-schema hardening suite: 3/3 pass. The Knowledge namespace table is
-  owned by `app_migrator`, the private schema remains inaccessible to `anon` and
-  `authenticated`, and `app_runtime` has the required select/insert/update
-  access without delete. Runtime access to the new sync-state column is also
-  asserted. Targeted ESLint and typecheck pass.
-- Registry projection suite: 4/4 pass after removing stale expectations that
-  classified Pinecone as wholly unimplemented. Production-shaped state remains
-  projected fail-closed; only the deterministic simulator is locally ready.
-- First consolidated rerun: 530/532 tests passed across 37/38 files. The only
-  two failures were those now-corrected registry expectations. The final rerun
-  below resolves this intermediate checkpoint.
-- Final consolidated rerun: typecheck, full lint, 38/38 test files, and 531/531
-  tests pass, including the corrected registry projection, Knowledge database,
-  and executed-schema hardening coverage.
-- Retrieval-boundary follow-up: 8/8 pure contract tests, TypeScript, and targeted
-  ESLint pass. It covers invalid-input short-circuiting, malformed provider-match
-  rejection, result limiting, normalization of raw provider failures, and local
-  authority rehydration with unknown-id rejection.
-- Hosted-database regressions cover `sync_required` attempt-once behavior,
-  terminal-state settlement, provider-supplied cross-workspace matches, and the
-  real batch-hydration query. Final Knowledge result: 17/17 pass against
-  disposable `app_test`. Schema hardening passes 3/3.
-- Post-success settlement follow-up: 9/9 pure contracts, TypeScript, and
-  targeted ESLint pass. The expanded complete Knowledge suite passes 19/19
-  against disposable `app_test`; a completed provider write followed by failed
-  local confirmation is persisted as `sync_required`, excluded from automatic
-  reconciliation, and invoked exactly once.
-- Accepted-save projection follow-up: 2/2 focused tests, TypeScript, and targeted
-  ESLint pass; provider attention no longer triggers a false local rollback.
-- Latest repository gate (2026-08-26): typecheck, warning-free full lint, 40/40
-  test files, and 552/552 tests pass. The focused Knowledge release surface is
-  47/47; the Next.js production build and 56-artifact client-secret audit pass.
-- Controlled isolated live smoke: a dedicated non-tenant namespace in the
-  staging Pinecone index passed upsert, search, delete, and confirm-absent. This
-  proves the real adapter/provider path only; it is not a database-backed,
-  authenticated, or cross-tenant UI certification.
+- Staging Supabase: 19/19 migrations, namespace mapping hardened, runtime update
+  denied on the immutable namespace table.
+- Production Supabase: 19/19 migrations with the same hardening independently
+  verified.
+- Staging Vercel: Knowledge code and branch-scoped live Pinecone configuration
+  deployed; Production and generic Preview were not given Pinecone credentials.
+- Deployment inspection on 2026-08-27: Production is READY at `4899725`
+  (`dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N`), while isolated staging remains READY at
+  `64fa59a` (`dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`).
+- Staging Pinecone: READY integrated-inference index using
+  `llama-text-embed-v2`, dimension 1024, `content` field mapping.
+- Real staging owner certification: create → reload → scoped DB row with provider
+  identity and `synced` state → semantic Pinecone result → UI delete → DB
+  tombstone → Pinecone result absent. The test entry was removed.
 
-## Remote state
+## Local operational hardening
 
-The repository contains the foundation migration
-`20260825215335_knowledge_provider_foundation.sql` and local follow-up
-`20260826033517_knowledge_namespace_immutability.sql`.
+A protected manual reconciliation command is committed in `9a5b957` but is not
+wired into a dashboard control or schedule. Its provider-free dry-run and one
+explicitly approved, bounded staging execute have been invoked:
 
-Staging and production are both verified through file 18 and currently sit at
-18/19 after separate explicit
-approvals for each environment (staging by Codex on 2026-08-25, production by
-Claude on 2026-08-26). In both, the namespace table is migrator-owned; all
-existing entries (8/8 staging, 8/8 production) were backfilled and remain
-pending; both indexes exist; `anon`/`authenticated` lack private-schema
-access; the runtime can read and has select/insert/update without delete.
-Security Advisor is clear in both and Performance Advisor reports only
-unused-index INFO notices.
+- owner-level `business.edit` authorization on every Server Action call;
+- workspace derived only from the verified AuthContext;
+- strict input that cannot choose a workspace or provider resource;
+- provider-free dry run;
+- exact execute confirmation and a maximum batch size of 100;
+- disabled-mode refusal;
+- content-free health counts for pending/error/sync-required/synced;
+- safe preview/start/completion/failure audit events;
+- no automatic or manual batch replay of `sync_required`.
 
-The intended Vercel project now has `KNOWLEDGE_PROVIDER_MODE`,
-`PINECONE_API_KEY`, and `PINECONE_INDEX_HOST` configured only for Preview branch
-`staging`; the key is a server-only Secret and is not documented. Production and
-generic Preview were untouched. Deployment `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`
-is READY at commit `ccf6272`, but that commit predates the uncommitted Knowledge
-application code. A real authenticated owner create therefore reached the old
-action and failed on migration 18's required `provider_document_id`; Postgres
-rolled the insert back. This is schema/code skew, not a Pinecone failure.
+The approved provider-free staging preview completed on 2026-08-27. Coastal
+Bloom reported 4 eligible pending rows and 1 previously synced row; Harbour
+Dental reported 4 eligible pending rows and no synced rows. Both had 0 retryable
+errors, 0 `sync_required`, and 0 attempted. Each workspace recorded a
+content-free preview audit, independently found by the read-only status command.
+No Pinecone call or Knowledge-row mutation occurred.
 
-File 19 is local only. It preserves runtime select/insert and revokes unused
-update on the namespace mapping. Its permanent schema assertion passes against
-disposable `app_test`; staging/production `app` application remains separately
-approval-gated.
+The separately approved execute phase then ran exactly two four-row batches.
+Coastal reported 4 attempted and 4 synchronized; Harbour reported 4 attempted
+and 4 synchronized. Both had 0 superseded, 0 local-only, 0 needs-attention,
+0 remaining retryable, 0 `sync_required`, and a recorded completion audit.
+Read-only post-state is Coastal 5/5 synchronized and Harbour 4/4 synchronized.
+A Coastal actor's Harbour status probe failed closed before any provider call.
 
-## Required gates before staging UI certification
+## Local verification
 
-1. Explicitly approve committing and pushing the reviewed combined working tree,
-   then redeploy the `staging` branch so application code matches migration 18.
-2. Run the authenticated staging create/edit/search/deactivate/delete matrix and
-   correlate UI, scoped database rows, Pinecone state, and sanitized runtime logs.
-3. Include cross-workspace negative probes and verify no provider identifier,
-   namespace, credential, or raw error reaches client state.
-4. Keep migration file 19 and every Production Pinecone credential/request as
-   separate explicit approval phases.
+- Accepted uncontested gate: 42/42 files and 564/564 tests pass, including all
+  reconciliation/action and database-backed tenant checks.
+- TypeScript, full ESLint, production build, client-secret audit, and whitespace
+  check pass.
+- Two deliberately overlapping schema-hardening processes both passed 3/3; the
+  second waited for the whole-run advisory lock before rebuilding `app_test`.
+- Six focused operator-guard tests pass for CLI parsing, bounded limits,
+  direct/pooler project matching, explicit-actor refusal, active-owner
+  resolution, and content-free preview projection.
+- The local dashboard rendered its expected expired-session sign-in state with
+  no browser console errors.
 
-Production remains fail-closed in practice without Pinecone credentials. The
-isolated live adapter smoke is real provider evidence, but it does not certify
-the tenant-aware hosted application flow.
+## Staging reconciliation result
+
+The historical backlog gate is complete. Future operator runs must remain
+status-driven, dry-run-first, exact-targeted, bounded, authorized, and audited.
+Never replay `sync_required` rows.
+
+## Production boundary
+
+Production Pinecone requires its own approved account/index, credential path,
+data residency and retention decision, cost/limit policy, monitoring, deployment,
+tenant-isolation certification, and rollback plan. Production schema readiness
+does not authorize live provider traffic.
