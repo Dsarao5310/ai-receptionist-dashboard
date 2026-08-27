@@ -57,3 +57,26 @@ After explicit push approval and deployed HTTPS verification, the next safe impl
 isolated restore-drill preparation. Actually configuring a monitoring vendor,
 running a restore drill against remote data, or enabling provider traffic needs
 the relevant external access and approval.
+
+## Claude — pushed health endpoint, found it's SSO-gated, restore drill next (2026-08-27)
+
+Reviewed Codex's finished health-endpoint/monitoring work (no secrets, typecheck/
+lint/tests/build/audit already verified per Codex's own docs), pushed `d1b2d84`,
+confirmed production `dpl_3SG5Sm6Hr8sMtHNCustDUKyJe1K4` is READY.
+
+Tested `/api/health` over live HTTPS (the one remaining verification step) and
+found a real platform-level blocker, not a code bug: Vercel deployment
+protection (`ssoProtection.enabled=true`, `all_except_custom_domains`) gates
+every URL this project has — there is no custom domain, so every `.vercel.app`
+alias requires Vercel SSO login. An external uptime monitor cannot pass that
+gate, so `/api/health`'s own code is correctly public but currently
+unreachable by anything outside an authenticated Vercel session.
+
+No available Vercel MCP tool can generate the "Protection Bypass for
+Automation" secret (dashboard-only). Presented the user three options
+(bypass secret / custom domain / leave gated); the user has no external
+uptime monitor in use right now, so this stays a documented fact, not an
+active blocker — nothing was changed. No production security settings were
+modified.
+
+Next: proceeding to the user-approved isolated Supabase restore drill.

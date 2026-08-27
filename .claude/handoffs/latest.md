@@ -44,3 +44,22 @@ Status: LOCAL END-TO-END LIVENESS VERIFIED; PRODUCTION PUSH EXPLICITLY GATED
   remains fail-closed.
 - n8n, Twilio, Vapi/model live certification, privacy operations, external
   monitoring ownership, and the restore drill remain separate pilot blockers.
+
+## Claude — health endpoint pushed; found platform-level SSO gate (2026-08-27)
+
+Reviewed and pushed Codex's finished health-endpoint/monitoring commit
+(`d1b2d84`); production READY at `dpl_3SG5Sm6Hr8sMtHNCustDUKyJe1K4`. Tested
+`/api/health` over live HTTPS and found every URL this project has requires
+Vercel SSO login (`ssoProtection.enabled=true`,
+`all_except_custom_domains`, no custom domain configured) — the route's own
+code is correctly public, but no external uptime monitor could ever reach
+it as currently deployed. This is a platform-config finding, not a code
+defect, and wasn't catchable by local/build-time testing.
+
+No available Vercel MCP tool can generate the "Protection Bypass for
+Automation" secret this needs (dashboard-only, by design — kept it out of
+chat text). Presented three options; the user has no external monitor in
+use, so left unresolved by choice rather than acted on. Nothing about
+deployment protection was changed.
+
+Proceeding next to the user-approved isolated Supabase restore drill.

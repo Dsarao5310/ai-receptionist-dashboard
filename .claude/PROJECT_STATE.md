@@ -139,3 +139,14 @@ pass), then committed as `6cd661d` and pushed. Production
 `dpl_2rJpPZnT3hgovRHtJVdiV1HXKprk` is READY at that commit. Runtime scan
 clean; the one error in a 24h window is old, already-resolved, and tied to
 a different deployment. Full detail in `CURRENT_TASK.md`.
+
+## Claude addendum — health endpoint pushed; found SSO gate (2026-08-27)
+
+Pushed Codex's finished health/monitoring work (`d1b2d84`); production READY
+at `dpl_3SG5Sm6Hr8sMtHNCustDUKyJe1K4`. Live HTTPS test found every URL this
+project has requires Vercel SSO login (`all_except_custom_domains`, no
+custom domain configured) — a real platform-level blocker for external
+monitoring, not a code defect. No MCP tool can generate the Protection
+Bypass secret this needs (dashboard-only). User has no monitor in use
+currently, so this stays documented, unresolved by choice, not acted on.
+Full detail in `CURRENT_TASK.md`.
