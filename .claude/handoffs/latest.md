@@ -1,16 +1,17 @@
 # Latest Handoff
 
 Updated: 2026-08-27
-Status: KNOWLEDGE RECONCILIATION FOUNDATION COMMITTED AND VERIFIED; LIVE EXECUTION REMAINS APPROVAL-GATED
+Status: STAGING HISTORICAL KNOWLEDGE RECONCILIATION COMPLETE AND VERIFIED
 
 ## Repository checkpoint
 
-- `master` and `origin/master`: `64fa59a` (documentation-only reconciliation on
-  top of `b91524c`).
+- Local `master` and `origin/master`: Claude's documentation checkpoint
+  `4899725`, following unrelated accessibility commit `d867931`.
+  `origin/staging`: `64fa59a`.
 - Knowledge reconciliation and whole-run `app_test` lock: `9a5b957`.
 - Nodemailer security update: `42e8bad`; clean-install override: `b91524c`.
-- Working tree contains only this documentation reconciliation plus the
-  pre-existing untracked `.claude/worktrees/`; no application code is modified.
+- Working tree contains the Knowledge operator scripts/package entry and this
+  documentation reconciliation plus the pre-existing `.claude/worktrees/`.
 
 ## Completed behavior
 
@@ -33,19 +34,23 @@ Status: KNOWLEDGE RECONCILIATION FOUNDATION COMMITTED AND VERIFIED; LIVE EXECUTI
 
 ## Runtime boundary and next action
 
-- Read-only Vercel inspection: Production
-  `dpl_Am55oNx5pFPkAykFuHmVE5fXzCJL` is READY at `64fa59a`; isolated staging
-  `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D` is READY at `0b444ac` and does not contain
-  the reconciliation command.
-- No live reconciliation, Pinecone mutation, remote database/environment
-  change, or provider certification was performed.
+- The approved `master:staging` fast-forward completed. Isolated staging
+  deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa` is READY at `64fa59a`.
+  Production deployment `dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N` is READY at
+  `4899725` after Claude's push; its one-hour runtime-error scan is clean.
+- Provider-free staging dry runs reported 4 eligible rows in Coastal and 4 in
+  Harbour, with 0 errors and 0 `sync_required`; both preview audits recorded.
+- After explicit approval, bounded execute processed all 8 rows: each workspace
+  reported 4 attempted, 4 synchronized, 0 superseded/local-only/needs-attention,
+  0 remaining retryable, 0 `sync_required`, and a recorded completion audit.
+- Read-only post-state is Coastal 5 synced of 5 total and Harbour 4 synced of 4
+  total. A Coastal actor was denied Harbour status access before provider work.
+- Shared CLI guards now have 6 passing focused Vitest cases covering bounded
+  input, staging-project matching, actor fail-closed behavior, active-owner
+  resolution, and content-free preview projection.
 - The command is not wired into dashboard UI or scheduling.
-- Eight historical staging rows remain pending; Production remains fail-closed
-  without a Pinecone credential.
-- With explicit approval, advance isolated staging to `9a5b957` or later and
-  confirm READY, then perform an authorized dry run before any bounded staging
-  execution and verify tenant-scoped settlement, provider state, sanitized logs,
-  and cleanup.
+- No historical staging backlog remains. Production remains fail-closed without
+  a Pinecone credential and is a separate approval/certification phase.
 
 ## Claude — sidebar accessibility fix, unrelated to Knowledge (2026-08-27)
 
@@ -68,4 +73,15 @@ renders visible labels and isn't affected.
 Typecheck and lint pass. Skipped the full test suite to avoid contending
 with the concurrent database-backed dry-run work; no dedicated Sidebar test
 exists to extend. Committed in `d867931`, scoped to just that one file —
-not pushed yet, pending confirmation.
+pushed as an ancestor of `4899725`.
+
+## Claude — QA pass continued through Codex's live execute mode (2026-08-27)
+
+Checked Conversations, Appointments, Customers (+ its detail dialog), and
+Settings while Codex ran the actual staging execute-mode reconciliation
+(now complete per the section above: 5/5 Coastal, 4/4 Harbour synced, 0
+retryable/sync_required remaining). All clean: correct accessible names on
+every interactive element, no console errors, the customer dialog has
+proper `role="dialog"` with an accessible name and closes on Escape,
+Settings fields are properly labeled. No new issues found beyond the
+sidebar fix already committed; no code changes this round.

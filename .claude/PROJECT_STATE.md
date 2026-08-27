@@ -4,14 +4,15 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; `HEAD` and `origin/master`: `64fa59a` (documentation-only
-  reconciliation on top of `b91524c`).
+- Branch: `master`; local `HEAD` and `origin/master` are Claude's documentation
+  checkpoint `4899725`, following accessibility commit `d867931`;
+  `origin/staging` remains `64fa59a`.
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
   their tests, current documentation, and whole-run `app_test` advisory lock.
 - `42e8bad` updates Nodemailer to 9.0.5; `b91524c` adds the npm override needed
   for strict clean-environment dependency resolution.
-- Working tree: only this documentation reconciliation plus the pre-existing
-  untracked `.claude/worktrees/`; no application code is currently modified.
+- Working tree: Knowledge operator scripts/package entry and documentation
+  reconciliation plus the pre-existing untracked `.claude/worktrees/`.
 
 ## Live platform status
 
@@ -20,10 +21,10 @@ Updated: 2026-08-27
 - Authentication and tenancy: Auth.js is authoritative. Hosted staging OAuth,
   RBAC, and tenant checks are live-verified; cross-tenant leakage remains a
   release blocker.
-- Vercel: Production deployment `dpl_Am55oNx5pFPkAykFuHmVE5fXzCJL` is READY at
-  `64fa59a`. Isolated staging deployment `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`
-  remains READY at `0b444ac`, so it does not yet contain the reconciliation
-  command. Generic Preview remains fail-closed. The duplicate
+- Vercel: Production deployment `dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N` is READY at
+  `4899725`; isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`
+  remains READY at `64fa59a`. The one-hour Production runtime-error scan is
+  clean. Generic Preview remains fail-closed. The duplicate
   `ai-receptionist-dashboard-dsarao` project remains approval-gated cleanup debt.
 - Google Calendar is historically live-verified. n8n remains application-ready
   but externally inaccessible and not live-certified. Twilio, Vapi, Gmail, and
@@ -43,7 +44,14 @@ Updated: 2026-08-27
 - Provider success followed by failed local settlement becomes `sync_required`
   and is never batch-replayed. Retryable reconciliation selects only `pending`
   and retryable `error` rows.
-- Eight historical staging rows remain pending after migration backfill.
+- The eight historical staging rows from migration backfill are synchronized.
+  Coastal has 5 synced rows total and Harbour has 4; both have 0 pending,
+  0 errors, and 0 `sync_required`.
+- Provider-free dry runs are complete for both authorized staging workspaces:
+  4 eligible Coastal rows and 4 eligible Harbour rows, 0 errors,
+  0 `sync_required`, 0 attempted, and a content-free preview audit per workspace.
+  Read-only status checks confirmed the backlog remains unchanged. Coastal also
+  has 1 previously synchronized row; Harbour has none.
 
 ## Reconciliation operations
 
@@ -54,8 +62,14 @@ Updated: 2026-08-27
   disabled mode, and is bounded to 100 retryable rows.
 - Status and audit output are content-free and contain only safe counts,
   timestamps, and normalized outcomes.
-- The command is not wired into the dashboard or a schedule and has not been
-  executed against staging or production.
+- The command is not wired into the dashboard or a schedule. Dry-run and one
+  explicitly approved bounded execute were invoked against staging only.
+- Local CLI wrappers provide fail-closed staging dry-run and read-only status
+  checks with expected-project verification, real authorization, bounded limits,
+  content-free output, and no path to execute mode.
+- Shared CLI guards have 6 passing focused tests for argument parsing, batch
+  bounds, direct/pooler project matching, explicit-actor fail-closed behavior,
+  active-owner selection, and content-free metadata projection.
 - Vitest now holds a bounded session-level advisory lock for the complete run,
   preventing separate processes from rebuilding shared `app_test` concurrently.
 
@@ -65,16 +79,16 @@ Updated: 2026-08-27
 - TypeScript, full lint, production build, and client-secret audit passed.
 - The lock was independently exercised with two overlapping schema-hardening
   runs: both passed 3/3, and the second waited for the first to release ownership.
+- Live staging reconciliation: 8/8 attempted and synchronized across two
+  authorized workspace batches; 0 adverse outcomes, 0 retryable rows,
+  0 `sync_required`, and both completion audits recorded. A cross-workspace
+  status probe failed closed before any provider call.
 
 ## Approval-gated next phases
 
-1. With explicit approval, advance isolated staging to `9a5b957` or later,
-   confirm READY, then run an authorized dry-run-first reconciliation of the
-   eight historical pending rows and verify scoped DB/Pinecone settlement and
-   cross-tenant negatives.
-2. Enable Production Pinecone only as a separate approved data-policy,
+1. Enable Production Pinecone only as a separate approved data-policy,
    credential, cost, monitoring, deployment, and certification phase.
-3. Deploy, alter environment variables, remove Vercel projects, apply future
+2. Deploy, alter environment variables, remove Vercel projects, apply future
    remote migrations, commit, or push only with explicit approval.
 
 ## Claude addendum — sidebar accessibility fix (2026-08-27)
@@ -84,5 +98,11 @@ had no accessible name on any of its 10 nav links — the visible label is
 removed from the DOM when collapsed and the wrapping tooltip carries no
 aria-label. Fixed with `aria-label={item.label}` on the Link
 (`src/components/shell/Sidebar.tsx`), verified via the live accessibility
-tree after reload. Typecheck/lint pass. Committed in `d867931`; not yet
-pushed. Full detail in `CURRENT_TASK.md` and `handoffs/latest.md`.
+tree after reload. Typecheck/lint pass. Committed in `d867931` and pushed as an
+ancestor of `4899725`. Full detail in `CURRENT_TASK.md` and `handoffs/latest.md`.
+
+Follow-up QA pass (same day, while Codex ran the live execute-mode
+reconciliation): checked Conversations, Appointments, Customers (+ detail
+dialog), and Settings. All clean — correct accessible names throughout,
+no console errors, dialog has proper `role="dialog"` and closes on Escape.
+No new issues found; no code changes.

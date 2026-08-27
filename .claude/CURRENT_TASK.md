@@ -2,32 +2,41 @@
 
 Phase: **Business Knowledge reconciliation operations**
 
-Status: **LOCAL FOUNDATION COMMITTED AND VERIFIED; LIVE RECONCILIATION NOT EXECUTED — 2026-08-27**
+Status: **STAGING HISTORICAL KNOWLEDGE RECONCILIATION EXECUTED AND VERIFIED — 2026-08-27**
 
 ## Authoritative checkpoint
 
-- `master` and `origin/master` are at `64fa59a`; that commit contains only the
-  accepted documentation reconciliation on top of `b91524c`.
+- Local `master` and `origin/master` are at Claude's documentation checkpoint
+  `4899725`, which follows sidebar accessibility commit `d867931`;
+  `origin/staging` remains isolated at `64fa59a`.
 - Protected Knowledge reconciliation operations and the whole-run `app_test`
   advisory lock are committed in `9a5b957`.
 - The Nodemailer security update is committed in `42e8bad`; `b91524c` adds the
   npm override required for clean-environment dependency resolution.
-- Before this documentation reconciliation, the working tree was clean except
-  for the pre-existing untracked `.claude/worktrees/` directory. Current changes
-  are limited to the authoritative Markdown updates recorded here.
+- The working tree contains the Knowledge operator scripts/package entry and
+  documentation reconciliation plus the pre-existing untracked
+  `.claude/worktrees/`; Claude's sidebar and interim documentation are committed
+  separately in `d867931` and `4899725`.
 - Staging and production remain verified at 19/19 database migrations.
-- Read-only Vercel inspection confirms Production deployment
-  `dpl_Am55oNx5pFPkAykFuHmVE5fXzCJL` is READY at `64fa59a`, while the isolated
-  staging deployment `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D` remains READY at
-  `0b444ac` and therefore does not contain the reconciliation command.
+- The approved `master:staging` fast-forward deployed `64fa59a`. Isolated
+  staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa` is READY at that
+  commit. Production deployment `dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N` is READY
+  at `4899725`, with a clean one-hour runtime-error scan.
 
 ## Knowledge state
 
 - Isolated staging is live-certified for the existing authenticated Knowledge
   create/search/delete flow. Production has no Pinecone credential and remains
   fail-closed.
-- Eight historical staging Knowledge rows remain `pending`. They have not been
-  reconciled against Pinecone.
+- The eight historical staging Knowledge rows have been reconciled to Pinecone.
+  Coastal Bloom now has 5 synchronized rows total and Harbour Dental has 4;
+  both have 0 pending, 0 retryable errors, and 0 `sync_required`.
+- Authorized provider-free dry runs completed for both staging workspaces:
+  Coastal Bloom reported 4 eligible pending, 0 retryable errors,
+  0 `sync_required`, and 1 already synced; Harbour Dental reported 4 eligible
+  pending, 0 retryable errors, 0 `sync_required`, and 0 synced. Both attempted
+  0 rows and recorded content-free preview audits. Read-only status checks
+  independently confirmed the same counts and audits.
 - The committed command is not wired into dashboard UI or a schedule. Dry run
   is provider-free; execute requires `business.edit`, an exact confirmation,
   enabled provider mode, and a batch limit of at most 100.
@@ -43,16 +52,35 @@ Status: **LOCAL FOUNDATION COMMITTED AND VERIFIED; LIVE RECONCILIATION NOT EXECU
   launched two seconds apart both passed 3/3; the second completed in about 57
   seconds versus 30 seconds for the first, proving it waited for exclusive
   `app_test` ownership instead of racing the schema rebuild.
-- No live Knowledge reconciliation, Pinecone mutation, remote database change,
-  environment change, or provider certification was performed by this task.
+- The new local dry-run and read-only status commands pass TypeScript and focused
+  ESLint. They verify the expected Supabase project, enforce the `app` schema,
+  authorize an active workspace owner with `business.edit`, expose only
+  content-free counts, and cannot enter execute mode.
+- Shared targeting and actor-resolution guards now have 6 focused offline tests
+  covering CLI parsing, bounded limits, direct-host/pooler project matching,
+  wrong-project rejection, inactive-owner filtering, no fallback after an
+  invalid explicit actor, and content-free audit projection. All 6 pass through
+  the repository's normal Vitest configuration.
+- Read-only Vercel inspection found no Production runtime error clusters in the
+  one-hour window after deployment `dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N` reached
+  READY.
+- The dry runs wrote only the expected preview audits. No Pinecone/provider call,
+  Knowledge-row mutation, environment change, migration, or production action
+  was performed.
+- With explicit user approval, execute mode then processed exactly 4 Coastal and
+  4 Harbour rows. Each workspace reported 4 attempted, 4 synchronized,
+  0 superseded, 0 local-only, 0 needs-attention, 0 remaining retryable, and
+  0 `sync_required`; both completion audits recorded successfully.
+- Independent post-execution status checks confirmed the final 5/5 Coastal and
+  4/4 Harbour synchronized totals. A Coastal actor was denied Harbour status
+  access before any provider call, preserving the cross-workspace boundary.
 
 ## Approval boundary and next action
 
-The next external phase requires explicit approval: advance the isolated
-`staging` branch/deployment to `9a5b957` or later, confirm READY, authenticate as
-an authorized staging owner, run dry-run first, then reconcile only the eight
-historical pending rows and verify scoped database/Pinecone settlement,
-cross-workspace negatives, sanitized logs, and cleanup.
+The staging historical-backlog phase is complete. No retryable or
+manual-attention Knowledge rows remain. Future reconciliation should be run only
+when content-free status shows a new retryable backlog and must remain
+dry-run-first, bounded, authorized, and audited.
 
 Production Pinecone, deployments, environment changes, remote migrations,
 provider writes, project removal, commits, and pushes remain separately gated.
@@ -80,4 +108,15 @@ renders visible text labels and isn't affected by the same bug.
 Typecheck and lint pass; no dedicated Sidebar test file exists to extend.
 Skipped the full test suite to avoid contending with the concurrent
 Knowledge-reconciliation dry-run work on the shared database. Committed in
-`d867931`, scoped to just that one file — not yet pushed.
+`d867931`, scoped to just that one file, and pushed as an ancestor of `4899725`.
+
+## Claude — QA pass continued while Codex ran live execute mode (2026-08-27)
+
+While Codex ran the actual staging execute-mode reconciliation above, checked
+Conversations, Appointments, Customers (including its detail dialog), and
+Settings for the same class of issue. All clean: every interactive element
+(filters, sort buttons, row links, form fields) has a correct accessible
+name, no console errors on any page, the customer detail dialog uses proper
+`role="dialog"` with an accessible name and closes correctly on Escape, and
+Settings form fields are properly labeled. No new issues found — the sidebar
+fix above was the one real gap. No code changes this round.

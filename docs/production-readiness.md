@@ -25,7 +25,7 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 | Twilio | EXTERNALLY BLOCKED | Implementation and simulator tests pass; the account has no owned SMS-capable number and live callback certification is outstanding. |
 | Vapi | APPLICATION-READY + SIMULATOR VERIFIED | Authenticated status/end-report ingestion, trusted assistant/phone tenancy, durable idempotency, monotonic call lifecycle, transcript persistence, and client redaction pass. No account, credentials, registered webhook, model, or live call. See `vapi-readiness.md`. |
 | Gmail/email provider | APPLICATION-READY + SIMULATOR/DATABASE VERIFIED | Private mailbox/thread/message identity, trusted tenant mapping, shared inbound receipt/idempotency, outbound operation/sync-guard behavior, disabled/live fail-closed modes, and client boundary pass. Its schema is in the remote 17-file checkpoint and code is deployed. No Gmail OAuth/scopes, watch/Pub/Sub, public provider callback, live send/read, or certification. Auth.js email magic links remain separately disabled. See `email-provider-readiness.md`. |
-| Pinecone/knowledge provider | STAGING LIVE-CERTIFIED; HISTORICAL BACKLOG PENDING | Server-issued namespaces, durable reconciliation state, tombstones, monotonic versions, bounded contracts, deterministic simulation, local-authority hydration, and staging-only live policy pass. The real database-backed UI flow is certified end-to-end and migrations are 19/19 in both environments. Eight historical staging rows remain pending; protected dry-run/status/reconciliation operations are committed on `master` but are not UI-wired or live-executed, and their presence in staging is not yet confirmed. Production has no Pinecone credential. See `knowledge-provider-readiness.md`. |
+| Pinecone/knowledge provider | STAGING LIVE-CERTIFIED; HISTORICAL BACKLOG COMPLETE | Server-issued namespaces, durable reconciliation state, tombstones, monotonic versions, bounded contracts, deterministic simulation, local-authority hydration, and staging-only live policy pass. The database-backed UI flow is certified end-to-end and migrations are 19/19 in both environments. After provider-free previews, an explicitly approved bounded execution synchronized all eight historical rows across two authorized workspaces with zero adverse outcomes or `sync_required`; final status is Coastal 5/5 and Harbour 4/4 synced. Production has no Pinecone credential. See `knowledge-provider-readiness.md`. |
 | Model provider | APPLICATION-READY + SIMULATOR VERIFIED | Server-only AI Gateway transport, approved cross-provider fallback, strict reply/analysis outputs, deterministic evals, prompt-injection handling, normalized errors, and time/token/cost guardrails pass. No gateway auth, live request, billed usage, latency/failover evidence, Vapi connection, or live certification. See `model-provider-readiness.md`. |
 | Call privacy lifecycle | APPLICATION-READY + DATABASE/ACTION-TEST VERIFIED | Fail-closed recording mode, minimal consent evidence, bounded retention, sensitive-access redaction, a disabled authenticated/leased purge scheduler, owner/operator policy UI, durable identity-gated erasure requests, and a sanitized read-only platform-operator health page pass. Its schema is in the verified remote 17-file checkpoint. The cron route is deployed but disabled; true reauthentication, legal approval, configured schedule secret, external alerting, provider recording ingestion, and live certification remain. See `privacy-readiness.md`. |
 | CI | COMPLETE FOR CURRENT COMMITTED FOUNDATION | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. The committed reconciliation foundation passed the uncontested database-backed gate locally: 42/42 files and 564/564 tests. |
@@ -42,11 +42,15 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 
 - Staging origin:
   `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`
-- Last explicitly recorded certified Knowledge staging deployment:
-  `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, commit `0b444ac`, READY with branch-scoped
-  Pinecone configuration and matching application/schema code. The complete
-  Knowledge add/search/delete round trip passed there.
+- Current isolated staging deployment:
+  `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`, commit `64fa59a`, READY with branch-scoped
+  Pinecone configuration and the protected reconciliation foundation. The
+  earlier complete Knowledge add/search/delete certification remains applicable;
+  this phase added provider-free, audited dry-run evidence only.
 - Production origin: `https://ai-receptionist-dashboard-jade.vercel.app`
+- Current Production deployment: `dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N`, commit
+  `4899725`, READY. Vercel reported no Production runtime error clusters in the
+  subsequent one-hour inspection window.
 - Production has the merged Business Knowledge code. Pinecone remains disabled
   there because no Production credential is configured; no Production provider
   certification is claimed.
@@ -93,7 +97,13 @@ not deploy and does not receive production or provider credentials.
   verification passed 42/42 files and 564/564 tests, plus TypeScript, full lint,
   production build, and the client-secret audit. Two overlapping focused runs
   also proved the whole-run advisory lock serializes shared `app_test` ownership.
-  No live reconciliation was executed.
+  Provider-free staging previews completed for both workspaces, followed by an
+  explicitly approved live execution: 8/8 attempted and synchronized, zero
+  adverse outcomes, zero retryable/`sync_required`, and both completion audits
+  recorded. Final status is Coastal 5/5 and Harbour 4/4 synchronized; the
+  cross-workspace status probe failed closed before any provider call.
+  Six focused tests pass for the local operator CLI's targeting, bounds,
+  authorization-resolution, and content-free projection guards.
 
 - Email foundation verification passed 40/40 focused checks, including 10/10
   database-backed email contract, tenant-smuggling, replay/concurrency,

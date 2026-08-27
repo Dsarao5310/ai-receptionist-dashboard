@@ -1,6 +1,6 @@
 # Business Knowledge
 
-Status: **STAGING CRUD LIVE-CERTIFIED; SCHEMA 19/19 IN STAGING AND PRODUCTION; RECONCILIATION COMMITTED BUT NOT LIVE-EXECUTED**.
+Status: **STAGING CRUD AND HISTORICAL RECONCILIATION LIVE-CERTIFIED; SCHEMA 19/19; PRODUCTION DISABLED**.
 
 ## Permanent boundaries
 
@@ -24,14 +24,22 @@ Status: **STAGING CRUD LIVE-CERTIFIED; SCHEMA 19/19 IN STAGING AND PRODUCTION; R
 - Staging and production have migrations 18 and 19 applied and verified (19/19).
 - Only Preview branch `staging` has live Pinecone mode and its isolated secret/
   index host. Production and generic Preview remain fail-closed.
+- Isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa` is READY at
+  `64fa59a` and contains the protected reconciliation foundation. Production is
+  READY at `4899725` (`dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N`) but has no Pinecone
+  credential.
 - Authenticated staging certification passed the complete add, reload, database,
   semantic-search, delete, tombstone, and provider-removal path. Test data was
   cleaned up.
 - The staging Pinecone index is READY with integrated
   `llama-text-embed-v2`, dimension 1024, and `content` field mapping.
-- Eight pre-existing staging Knowledge rows remain `pending` from migration
-  backfill. They were not part of the certification entry and have not been
-  reconciled live.
+- The eight pre-existing staging Knowledge rows from migration backfill were
+  reconciled live after explicit approval. Coastal now has 5 synchronized rows
+  total and Harbour has 4; both have 0 pending, 0 errors, and 0 `sync_required`.
+- Provider-free authorized dry runs completed for both staging workspaces:
+  Coastal 4 eligible and Harbour 4 eligible, with 0 errors, 0 `sync_required`,
+  and 0 attempted. Each wrote a content-free preview audit; read-only status
+  checks confirmed the same unchanged backlog.
 
 ## Reconciliation operations
 
@@ -50,7 +58,8 @@ Status: **STAGING CRUD LIVE-CERTIFIED; SCHEMA 19/19 IN STAGING AND PRODUCTION; R
   totals only. A completion-audit failure returns a warning rather than inviting
   replay after provider settlement.
 - The mechanism is committed in `9a5b957`. No dashboard control or schedule
-  invokes it, and it has not contacted Pinecone through reconciliation.
+  invokes it. One explicitly approved staging run synchronized the historical
+  eight-row backlog in two exact four-row workspace batches.
 - Vitest holds a bounded session advisory lock across the complete run so two
   processes cannot rebuild shared `app_test` concurrently.
 
@@ -61,11 +70,16 @@ Status: **STAGING CRUD LIVE-CERTIFIED; SCHEMA 19/19 IN STAGING AND PRODUCTION; R
 - TypeScript, full lint, production build, and client-secret audit pass.
 - Two overlapping schema-hardening processes both passed 3/3; the second waited
   for the first lock holder, proving whole-run `app_test` serialization.
-- These are repository/test results, not live provider certification evidence.
+- Shared operator CLI guards pass 6/6 focused tests covering project targeting,
+  bounds, active-owner resolution, explicit-actor fail-closed behavior, and
+  content-free preview metadata.
+- Live execution evidence: 8/8 attempted and synchronized, 0 adverse outcomes,
+  0 remaining retryable, 0 `sync_required`, both completion audits recorded,
+  and the final 5/5 Coastal plus 4/4 Harbour status confirmed read-only.
+- A Coastal actor was denied Harbour status access before any provider call.
 
 ## Next live gate
 
-After explicit approval: authenticate as an authorized staging owner, run dry
-run first, reconcile only the bounded historical backlog, verify DB and Pinecone
-state, perform cross-workspace negative probes, scan sanitized runtime logs, and
-record cleanup. Production Pinecone remains a separate approval phase.
+The historical staging backlog gate is complete. Production Pinecone remains a
+separate approval phase covering policy, credential, index, cost, monitoring,
+deployment, tenant-isolation certification, and rollback.
