@@ -4,15 +4,15 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; local `HEAD` and `origin/master` are Claude's documentation
-  checkpoint `4899725`, following accessibility commit `d867931`;
+- Branch: `master`; local `HEAD` and `origin/master` were at coordination
+  checkpoint `7cad923` before the current monitoring change;
   `origin/staging` remains `64fa59a`.
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
   their tests, current documentation, and whole-run `app_test` advisory lock.
 - `42e8bad` updates Nodemailer to 9.0.5; `b91524c` adds the npm override needed
   for strict clean-environment dependency resolution.
-- Working tree: Knowledge operator scripts/package entry and documentation
-  reconciliation plus the pre-existing untracked `.claude/worktrees/`.
+- Working tree: the health route, route tests, monitoring documentation, and
+  current state updates plus the pre-existing untracked `.claude/worktrees/`.
 
 ## Live platform status
 
@@ -29,8 +29,20 @@ Updated: 2026-08-27
 - Google Calendar is historically live-verified. n8n remains application-ready
   but externally inaccessible and not live-certified. Twilio, Vapi, Gmail, and
   the model provider still lack their respective live certification evidence.
-- Monitoring, alert ownership, restore drill, comprehensive accessibility QA,
-  and full operational/privacy certification remain pilot blockers.
+- A safe local liveness endpoint now exists. External uptime monitoring, alert
+  ownership, error/log collection, restore drill, comprehensive accessibility
+  QA, and full operational/privacy certification remain pilot blockers.
+
+## Monitoring and alerting
+
+- Dynamic Node.js `GET`/`HEAD /api/health` is locally implemented and verified.
+- It is content-free and no-store, reads no database/provider state, and emits
+  only a bounded structured completion log.
+- This is deployment liveness only, not database, provider, workflow, tenant, or
+  business-semantic health.
+- No external uptime monitor, error/log drain, named owner/backup, paging route,
+  thresholds, acknowledgement target, escalation path, or controlled alert and
+  recovery proof exists yet.
 
 ## Business Knowledge and Pinecone
 
@@ -75,8 +87,10 @@ Updated: 2026-08-27
 
 ## Current verification
 
-- Accepted uncontested gate: **42/42 files; 564/564 tests passed**.
+- Accepted uncontested gate: **44/44 files; 572/572 tests passed**.
 - TypeScript, full lint, production build, and client-secret audit passed.
+- Focused health-route verification passed 2/2; the build lists `/api/health`
+  as dynamic and the client-secret audit covered 56 artifacts.
 - The lock was independently exercised with two overlapping schema-hardening
   runs: both passed 3/3, and the second waited for the first to release ownership.
 - Live staging reconciliation: 8/8 attempted and synchronized across two
@@ -84,12 +98,15 @@ Updated: 2026-08-27
   0 `sync_required`, and both completion audits recorded. A cross-workspace
   status probe failed closed before any provider call.
 
-## Approval-gated next phases
+## Next phases
 
-1. Enable Production Pinecone only as a separate approved data-policy,
+1. Deploy and verify `/api/health`, then configure an approved uptime/error
+   monitoring system with named owners and controlled failure/recovery evidence.
+2. Prepare and execute an isolated restore drill without touching production.
+3. Enable Production Pinecone only as a separate approved data-policy,
    credential, cost, monitoring, deployment, and certification phase.
-2. Deploy, alter environment variables, remove Vercel projects, apply future
-   remote migrations, commit, or push only with explicit approval.
+4. Environment changes, Vercel project removal, remote migrations, and provider
+   writes remain separately gated.
 
 ## Claude addendum — sidebar accessibility fix (2026-08-27)
 

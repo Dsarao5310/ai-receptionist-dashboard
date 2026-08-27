@@ -28,8 +28,8 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 | Pinecone/knowledge provider | STAGING LIVE-CERTIFIED; HISTORICAL BACKLOG COMPLETE | Server-issued namespaces, durable reconciliation state, tombstones, monotonic versions, bounded contracts, deterministic simulation, local-authority hydration, and staging-only live policy pass. The database-backed UI flow is certified end-to-end and migrations are 19/19 in both environments. After provider-free previews, an explicitly approved bounded execution synchronized all eight historical rows across two authorized workspaces with zero adverse outcomes or `sync_required`; final status is Coastal 5/5 and Harbour 4/4 synced. Production has no Pinecone credential. See `knowledge-provider-readiness.md`. |
 | Model provider | APPLICATION-READY + SIMULATOR VERIFIED | Server-only AI Gateway transport, approved cross-provider fallback, strict reply/analysis outputs, deterministic evals, prompt-injection handling, normalized errors, and time/token/cost guardrails pass. No gateway auth, live request, billed usage, latency/failover evidence, Vapi connection, or live certification. See `model-provider-readiness.md`. |
 | Call privacy lifecycle | APPLICATION-READY + DATABASE/ACTION-TEST VERIFIED | Fail-closed recording mode, minimal consent evidence, bounded retention, sensitive-access redaction, a disabled authenticated/leased purge scheduler, owner/operator policy UI, durable identity-gated erasure requests, and a sanitized read-only platform-operator health page pass. Its schema is in the verified remote 17-file checkpoint. The cron route is deployed but disabled; true reauthentication, legal approval, configured schedule secret, external alerting, provider recording ingestion, and live certification remain. See `privacy-readiness.md`. |
-| CI | COMPLETE FOR CURRENT COMMITTED FOUNDATION | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. The committed reconciliation foundation passed the uncontested database-backed gate locally: 42/42 files and 564/564 tests. |
-| Monitoring | NOT STARTED | No production error tracker, trace/log drain, uptime monitor, or provider health dashboard with an owner. |
+| CI | COMPLETE FOR CURRENT COMMITTED FOUNDATION | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. The current local monitoring foundation passed the uncontested database-backed gate: 44/44 files and 572/572 tests. |
+| Monitoring | LOCAL LIVENESS FOUNDATION; EXTERNAL BLOCKER | Dynamic, content-free, no-store `GET`/`HEAD /api/health` is locally implemented and verified without database/provider probes. No production error tracker, trace/log drain, external uptime monitor, or provider health dashboard with an owner exists yet. See `monitoring-readiness.md`. |
 | Alerting | NOT STARTED | No paging route, severity policy, acknowledgement target, or escalation schedule. |
 | Backups/recovery | PARTIAL | Forward-only and isolated restore procedures are documented; no isolated restore drill has been executed. |
 | Security | PARTIAL | Tenant hardening, private schemas, credential rotation, bounded webhooks, safe redirects, client-secret audits, and focused tests exist. Nodemailer was updated to 9.0.5 in `42e8bad`; `b91524c` adds the override needed for strict clean installs. Claude verified zero audit vulnerabilities. Recurring scanning and operational response remain. |
@@ -93,6 +93,11 @@ not deploy and does not receive production or provider credentials.
 
 ## Verification for this pass
 
+- Monitoring liveness verification passed focused route tests 2/2, full
+  typecheck and lint, 44/44 test files and 572/572 tests, the optimized
+  production build, and the 56-artifact client-secret audit. The build lists
+  `/api/health` as a dynamic route. Production HTTPS verification is still
+  pending; no external uptime or alerting system is claimed.
 - Current committed Knowledge reconciliation hardening: accepted uncontested
   verification passed 42/42 files and 564/564 tests, plus TypeScript, full lint,
   production build, and the client-secret audit. Two overlapping focused runs
@@ -158,8 +163,9 @@ not deploy and does not receive production or provider credentials.
 3. Live-certify the existing model-provider foundation in isolated staging,
    then provision/live-certify Vapi and connect the two in a separate call-safety
    phase.
-4. Add monitoring, alert ownership, uptime checks, and execute an isolated
-   restore drill.
+4. Point an approved uptime service at the new `/api/health` liveness target,
+   assign alert ownership/escalation, prove one failure and recovery alert, add
+   approved error/log collection, and execute an isolated restore drill.
 5. Approve privacy/recording/retention policy, apply and verify the migration in
    isolated staging, enable the authenticated schedule with external run/failure
    monitoring and administration flows,

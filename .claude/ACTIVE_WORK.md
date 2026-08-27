@@ -21,14 +21,14 @@ already mandatory. There is no live polling.
 
 ## Codex
 
-Status: idle
-Task: —
-Started: —
-Last updated: —
+Status: in-progress
+Task: Add and verify a safe application liveness endpoint and monitoring-readiness documentation
+Started: 2026-08-27
+Last updated: 2026-08-27
 
 ## Claude
 
-Status: idle
-Task: — (last: set up this coordination file and wired it into CLAUDE.md)
-Started: —
+Status: in-progress
+Task: Commit Codex's finished health-endpoint/monitoring work, then run the approved isolated Supabase restore drill
+Started: 2026-08-27
 Last updated: 2026-08-27
