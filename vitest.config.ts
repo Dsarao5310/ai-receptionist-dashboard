@@ -5,6 +5,11 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Every database-backed file rebuilds the same disposable app_test schema.
+    // File-level serialization protects one Vitest process; the global setup
+    // holds a Postgres advisory lock so a second process cannot drop the schema
+    // while the first process is still using it.
+    globalSetup: ["./src/test/database-lock.ts"],
     // Pin the runner's clock to a zone that is NOT the business timezone used in
     // tests. Timezone bugs are invisible when the two happen to match, which is
     // exactly the situation that hid them before.

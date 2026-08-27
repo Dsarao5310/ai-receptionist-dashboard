@@ -13,22 +13,22 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 
 | Area | Status | Evidence / blocker |
 | --- | --- | --- |
-| Supabase persistence | STAGING 18/19; PRODUCTION 18/19 | Production and isolated staging use private `app`/`app_test` schemas, separate runtime/migrator roles, and tenant-binding constraints. Knowledge foundation file 18 is applied and verified in both. File 19 revokes unused runtime update authority on the immutable namespace mapping and passes disposable-schema verification; remote `app` application remains pending explicit approval. |
+| Supabase persistence | STAGING 19/19; PRODUCTION 19/19 | Production and isolated staging use private `app`/`app_test` schemas, separate runtime/migrator roles, and tenant-binding constraints. Knowledge migrations 18 and 19 are applied and independently verified in both environments; runtime update access to the immutable namespace mapping is revoked. |
 | Auth.js | LIVE VERIFIED | Google OAuth, account selection, session persistence, sign-out, and safe continuation passed over hosted HTTPS. Auth.js remains the only authentication system. |
 | RBAC | LIVE VERIFIED | Coastal owner, manager, staff, Harbour owner, and platform operator passed their hosted staging route matrix. |
 | Tenancy | LIVE VERIFIED | Ordinary users saw only their workspace; the operator switched between both; cross-workspace reads/mutations remain server-scoped and database-tested. |
-| Isolated staging | AUTH/RBAC RE-CERTIFIED; KNOWLEDGE BLOCKED BY CODE/SCHEMA SKEW | Stable branch alias, separate OAuth client and Supabase project, and branch-scoped Preview secrets remain isolated. The five-role matrix passed on the earlier `ccf6272` deployment. Current deployment `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN` is READY at the same commit with staging-only Pinecone configuration, but authenticated Knowledge create fails because migrated schema 18 is ahead of the undeployed local application code. |
-| Production deployment | DEPLOYED; PARTIALLY AUTH RE-CERTIFIED | Git integration deployed `ccf6272` as `dpl_789Ci6wJ7bf4kKj6Lyup1JcxWnfx`. Public health and the inspected error window passed. A real Coastal owner passed the business-route/privacy/tenant probes, and a no-membership identity failed closed; manager, staff, Harbour owner, and operator remain unverified in production. |
+| Isolated staging | AUTH/RBAC RE-CERTIFIED; KNOWLEDGE LIVE-CERTIFIED | Stable branch alias, separate OAuth client and Supabase project, and branch-scoped Preview secrets remain isolated. After matching application code was deployed, a real owner passed Knowledge create, reload, scoped DB verification, semantic Pinecone retrieval, delete, tombstone, and provider-removal checks. |
+| Production deployment | DEPLOYED; PARTIALLY AUTH RE-CERTIFIED | Production has the current Business Knowledge application code but no Pinecone credential, so live Knowledge provider traffic remains fail-closed. Public health and the inspected error windows passed. A real Coastal owner passed business-route/privacy/tenant probes, and a no-membership identity failed closed; manager, staff, Harbour owner, and operator remain unverified in production. |
 | Duplicate Vercel project | MISCONFIGURED | `ai-receptionist-dashboard-dsarao` is also connected to the same repository and produces a second failing deployment stream. Its latest production build rejected an invalid `AUTH_URL`; removal/disconnection needs explicit approval. |
 | Google Calendar | LIVE VERIFIED | Real OAuth, encrypted token storage, CRUD, reconciliation, tombstone/replacement behavior, tenant isolation, idempotency, and `sync_required` behavior were verified previously. |
 | n8n | EXTERNALLY BLOCKED | Architecture and simulator coverage exist. Real instance URL, independent signing secrets, activated staging workflows/mappings, and execution of `n8n-live-certification.md` remain. |
 | Twilio | EXTERNALLY BLOCKED | Implementation and simulator tests pass; the account has no owned SMS-capable number and live callback certification is outstanding. |
 | Vapi | APPLICATION-READY + SIMULATOR VERIFIED | Authenticated status/end-report ingestion, trusted assistant/phone tenancy, durable idempotency, monotonic call lifecycle, transcript persistence, and client redaction pass. No account, credentials, registered webhook, model, or live call. See `vapi-readiness.md`. |
 | Gmail/email provider | APPLICATION-READY + SIMULATOR/DATABASE VERIFIED | Private mailbox/thread/message identity, trusted tenant mapping, shared inbound receipt/idempotency, outbound operation/sync-guard behavior, disabled/live fail-closed modes, and client boundary pass. Its schema is in the remote 17-file checkpoint and code is deployed. No Gmail OAuth/scopes, watch/Pub/Sub, public provider callback, live send/read, or certification. Auth.js email magic links remain separately disabled. See `email-provider-readiness.md`. |
-| Pinecone/knowledge provider | ISOLATED LIVE ADAPTER VERIFIED; DATABASE-BACKED STAGING FLOW NOT CERTIFIED | Server-issued namespaces, durable provider identity/reconciliation state, tombstones, monotonic versions, bounded contracts, deterministic simulation, batch-hydrated tenant-authoritative retrieval, and staging-only live policy pass. File 18 is applied in both environments; file 19 passes `app_test` but is not remotely applied to `app`. The isolated staging index passed real upsert/search/remove, but the current hosted UI runs old commit `ccf6272` and fails against the newer schema. Production has no Pinecone credential. See `knowledge-provider-readiness.md`. |
+| Pinecone/knowledge provider | STAGING LIVE-CERTIFIED; HISTORICAL BACKLOG PENDING | Server-issued namespaces, durable reconciliation state, tombstones, monotonic versions, bounded contracts, deterministic simulation, local-authority hydration, and staging-only live policy pass. The real database-backed UI flow is certified end-to-end and migrations are 19/19 in both environments. Eight historical staging rows remain pending; protected dry-run/status/reconciliation operations are implemented locally but not deployed or executed. Production has no Pinecone credential. See `knowledge-provider-readiness.md`. |
 | Model provider | APPLICATION-READY + SIMULATOR VERIFIED | Server-only AI Gateway transport, approved cross-provider fallback, strict reply/analysis outputs, deterministic evals, prompt-injection handling, normalized errors, and time/token/cost guardrails pass. No gateway auth, live request, billed usage, latency/failover evidence, Vapi connection, or live certification. See `model-provider-readiness.md`. |
 | Call privacy lifecycle | APPLICATION-READY + DATABASE/ACTION-TEST VERIFIED | Fail-closed recording mode, minimal consent evidence, bounded retention, sensitive-access redaction, a disabled authenticated/leased purge scheduler, owner/operator policy UI, durable identity-gated erasure requests, and a sanitized read-only platform-operator health page pass. Its schema is in the verified remote 17-file checkpoint. The cron route is deployed but disabled; true reauthentication, legal approval, configured schedule secret, external alerting, provider recording ingestion, and live certification remain. See `privacy-readiness.md`. |
-| CI | COMPLETE | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. The `ccf6272` run passed. Database-backed tests remain a protected staging release gate. |
+| CI | COMPLETE FOR COMMITTED FOUNDATION; LOCAL RECONCILIATION UNDER VERIFICATION | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. Database-backed tests remain a protected staging release gate; the current uncommitted reconciliation work must complete that gate before release. |
 | Monitoring | NOT STARTED | No production error tracker, trace/log drain, uptime monitor, or provider health dashboard with an owner. |
 | Alerting | NOT STARTED | No paging route, severity policy, acknowledgement target, or escalation schedule. |
 | Backups/recovery | PARTIAL | Forward-only and isolated restore procedures are documented; no isolated restore drill has been executed. |
@@ -42,14 +42,14 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 
 - Staging origin:
   `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`
-- Staging deployment: `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`, commit
-  `ccf6272`, READY with branch-scoped Pinecone configuration. The earlier
-  five-role auth/tenant matrix remains valid for that commit, but the current
-  database-backed Knowledge flow is not certified because schema 18 is ahead of
-  deployed application code.
+- Last explicitly recorded certified Knowledge staging deployment:
+  `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, commit `0b444ac`, READY with branch-scoped
+  Pinecone configuration and matching application/schema code. The complete
+  Knowledge add/search/delete round trip passed there.
 - Production origin: `https://ai-receptionist-dashboard-jade.vercel.app`
-- Production deployment: `dpl_789Ci6wJ7bf4kKj6Lyup1JcxWnfx`, commit
-  `ccf6272`, READY. It was triggered automatically by the Git push.
+- Production has the merged Business Knowledge code. Pinecone remains disabled
+  there because no Production credential is configured; no Production provider
+  certification is claimed.
 - Production origin returned HTTP 200 and the expected unauthenticated sign-in
   state. Owner business routes/privacy/tenant probes and no-workspace denial are
   authenticated; the remaining production roles are not claimed.
@@ -88,6 +88,13 @@ Preview browser verification, migration status, and runtime error scan. CI does
 not deploy and does not receive production or provider credentials.
 
 ## Verification for this pass
+
+- Current local Knowledge reconciliation hardening: 11/11 new unit/action tests,
+  TypeScript, full lint, production build, and the 56-artifact client-secret
+  audit pass. The consolidated database phase is not green because concurrent
+  `app_test` rebuilds produced missing fixtures/tables and tuple-concurrency
+  failures: 34/42 files and 377 tests passed; 91 failed and 96 skipped. Rerun
+  with one schema owner before release. No live reconciliation was executed.
 
 - Email foundation verification passed 40/40 focused checks, including 10/10
   database-backed email contract, tenant-smuggling, replay/concurrency,

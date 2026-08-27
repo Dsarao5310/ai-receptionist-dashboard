@@ -4,410 +4,85 @@ Updated: 2026-08-26
 
 ## Repository checkpoint
 
-Branch: `master`, HEAD `ccf6272`.
-
-PR #1 merged the former `ui/dashboard-reconstruction` branch as `5af8fd7`.
-Commit `ccf6272` then fixed fresh-checkout CI type generation by running
-`next typegen` before TypeScript. GitHub Actions subsequently passed.
-
-The working tree contains the existing Markdown reconciliation, Claude's active
-UI polish, the uncommitted advisor-hardening artifacts, and the Business
-Knowledge provider foundation. The repository now has 19 migration files. Both
-staging and production are verified through file 18 and are currently 18/19;
-file 19 is local-only namespace-immutability privilege hardening.
-The prior UI, provider, privacy, scheduler, and email foundation remains
-committed; none of the five migrations already applied to staging was edited.
+- Branch: `master`; current committed HEAD: `364e30a`.
+- PR #2 merged the Business Knowledge/Pinecone foundation. Staging was updated
+  to the certified application code at commit `0b444ac`; later commits are
+  documentation-only.
+- The working tree currently contains Codex's local Knowledge reconciliation
+  implementation and a separate Claude-owned Nodemailer dependency upgrade.
+  `.claude/worktrees/` is untracked and is not part of this task.
+- No commit, push, deployment, provider mutation, or remote database change was
+  made by the current task.
 
 ## Live platform status
 
-- Supabase persistence: **STAGING 18/19; PRODUCTION 18/19**.
-  Both projects record the first 18 files with exact checksums in
-  `app.schema_migrations`. The first production six-file batch (2026-08-25) and
-  the Knowledge migration on staging (2026-08-25) were applied by Codex, each
-  after separate explicit approval, through Supabase's authenticated SQL
-  channel under effective role `app_migrator` and schema `app`; none of these
-  actions rotated or exposed a database password. On 2026-08-26, with explicit
-  user approval scoped to schema-only (live Pinecone setup was explicitly
-  declined as a separate phase), Claude applied the same Knowledge migration
-  file to production via the same mechanism and independently verified ledger
-  parity, table ownership, grants, backfill, and advisors directly against the
-  live database — see `.claude/CURRENT_TASK.md` for the full evidence. No
-  Pinecone account, credential, or traffic exists anywhere. Local file 19
-  revokes unused runtime `UPDATE` on the immutable namespace mapping; it has not
-  been executed against either remote project.
-- Auth.js Google OAuth: **LIVE VERIFIED historically**.
-- Hosted staging RBAC/tenancy matrix: **LIVE RE-CERTIFIED AT `ccf6272`**.
-- Google Calendar: **LIVE VERIFIED historically**.
-- Production Vercel project: **DEPLOYED + PUBLIC SIGN-IN HEALTH VERIFIED**.
-  `ai-receptionist-dashboard` deployed `ccf6272` as
-  `dpl_789Ci6wJ7bf4kKj6Lyup1JcxWnfx`; the production origin returned HTTP 200.
-  A read-only 2026-08-26 refresh reconfirmed production and staging `READY` at
-  `ccf6272`, both public sign-in surfaces at HTTP 200, and zero 5xx,
-  error/fatal entries, or grouped runtime-error clusters in the inspected
-  24-hour production/Preview window.
-- Authenticated production behavior after the new deployment is **PARTIALLY
-  RE-CERTIFIED: OWNER + NO-WORKSPACE FAIL-CLOSED**. A real Coastal Bloom owner
-  completed Google OAuth in the in-app Browser on production and passed the
-  full business-route matrix, owner Privacy visibility, sensitive call-detail
-  access, and an own-versus-foreign customer-id probe. A saved active identity
-  with no membership received Auth.js `AccessDenied` and never entered a
-  workspace. Manager, staff, Harbour owner, and platform-operator production
-  identities were not available among the saved Google accounts, so their
-  production matrix is not claimed.
-- Staging alias: **READY AT `ccf6272` + PUBLIC SIGN-IN HEALTH VERIFIED**.
-  Remote branch `staging` was fast-forwarded from `96a124d` to `ccf6272`; Vercel
-  created Preview deployment `dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`. The stable
-  staging alias returned HTTPS 200 and no Preview runtime errors appeared in the
-  inspected 15-minute window. Five-role authenticated RBAC/tenant behavior was
-  subsequently re-certified on this exact deployment.
-- Staging database schema: **MIGRATED + ADVISORS CLEAR, NOT AUTH-CERTIFIED**. All
-  expected new tables exist; privacy defaults cover 2/2 workspaces and the
-  privacy-state backfill covers 443/443 calls. The forward hardening migration
-  pins both privacy functions and adds all eleven foreign-key indexes. Security
-  Advisor returns zero findings; Performance Advisor returns no unindexed-
-  foreign-key or non-INFO findings, only unused-index INFO notices on the
-  fresh/rebuilt schemas.
-- Staging custom-role pooler authentication: **LIVE VERIFIED AFTER ROTATION**.
-  Direct `app_migrator` authentication passed; after the propagation window,
-  session-pooler `db:status` passed and a transaction-pooler query authenticated
-  as `app_runtime`.
-- Vercel staging database secret: **UPDATED + DEPLOYED**. The intended
-  project's Secret `DATABASE_URL` for Preview branch `staging` was updated to
-  the rotated runtime transaction-pooler URL on 2026-08-25. The Production
-  variable was not changed. Deployment `dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`
-  activated the branch-scoped value for commit `ccf6272`.
-- Duplicate Vercel project: **STILL CONNECTED + MISCONFIGURED**.
-  `ai-receptionist-dashboard-dsarao` is connected to the same repository and
-  generates duplicate failures. Its latest deployment remains `ERROR`; current
-  logs reject invalid `AUTH_URL` and Preview use of the production Supabase
-  project. No removal or configuration change was performed.
-- Local dashboard runtime: **NOT RUNNING AT THE 2026-08-26 REFRESH**. Port 3000
-  refused connections. Codex left it stopped while Claude was changing
-  Pinecone dependencies rather than starting from an in-progress package state.
-- Preview deployment for PR #1: **FAILED CLOSED** because required Preview
-  authentication/database configuration was absent.
+- Supabase: **STAGING 19/19; PRODUCTION 19/19**. Both environments have the
+  Knowledge foundation and namespace-immutability hardening applied and
+  independently verified.
+- Authentication and tenancy: Auth.js remains authoritative; hosted staging
+  OAuth/RBAC/tenant checks and the documented production owner/no-membership
+  checks are live-verified. Cross-tenant leakage remains a release blocker.
+- Vercel: intended production and isolated staging deployments are operational.
+  Generic Preview remains fail-closed. The duplicate
+  `ai-receptionist-dashboard-dsarao` project remains external cleanup debt and
+  requires explicit approval to disconnect or remove.
+- Google Calendar: live-verified historically.
+- n8n: application-ready but externally inaccessible and not live-certified.
+- Twilio: simulator-verified; live certification remains blocked by account/
+  number prerequisites.
+- Vapi, Gmail, and model provider: application-ready/simulator-verified only;
+  no live certification is claimed.
+- Monitoring, alert ownership, restore drill, comprehensive accessibility QA,
+  and full operational/privacy certification remain pilot blockers.
 
-## Provider status
+## Business Knowledge and Pinecone
 
-- Google Calendar: **LIVE VERIFIED**.
-- n8n: **APPLICATION-READY; EXTERNALLY BLOCKED**. No accessible instance or live
-  staging certification.
-- Twilio: **BUILT + SIMULATOR VERIFIED**; not live-certified.
-- Vapi: **APPLICATION-READY + SIMULATOR VERIFIED**; no live account/webhook/call,
-  recording ingestion, or live certification.
-- Model provider: **APPLICATION-READY + SIMULATOR VERIFIED**; current Gateway
-  ids/base prices were rechecked on 2026-08-26 and structured-output schema
-  failures now receive explicit sanitized normalization. Focused verification is
-  13/13 plus TypeScript/targeted ESLint. No live gateway request, billed usage,
-  latency/failover observation, or Vapi connection.
-- Gmail/email: **APPLICATION-READY + SIMULATOR/DATABASE VERIFIED**; its schema
-  is applied remotely through file 17, but no Gmail OAuth, approved scopes,
-  watch/Pub/Sub lifecycle, public provider callback, live read/send, or provider
-  certification exists.
-- Call privacy lifecycle: **APPLICATION-READY + DATABASE/ACTION-TEST VERIFIED**;
-  its schema is applied remotely through file 17, but no legal approval, true
-  reauthentication, configured schedule secret, external alerting, recording
-  ingestion, or live certification exists.
-- Knowledge/Pinecone: **LIVE FLOW CERTIFIED END-TO-END ON STAGING; SCHEMA
-  HARDENING COMPLETE ON STAGING AND PRODUCTION; PRODUCTION STILL FAIL-CLOSED
-  (NO LIVE CREDENTIAL)**. Server-issued tenant namespaces, durable sync
-  and reconciliation state, tombstones, monotonic version ordering, bounded
-  contracts, a deterministic simulator, registry projection, and production
-  fail-closed policy are implemented. Schema migrations 18 and 19 are both
-  applied and verified in staging and production (18: 2026-08-26; 19:
-  2026-08-26, same day, later session). An authenticated real-UI test on
-  staging certified the complete flow end-to-end: add → persists past reload
-  → DB row correct → real Pinecone vector found via semantic search → delete
-  → confirmed gone from both DB and Pinecone (see `CURRENT_TASK.md`).
-  Production has no Pinecone account/API/index/credential and remains in its
-  existing fail-closed live-mode policy — schema readiness is not the same as
-  production being live.
-  **Addendum, Claude, same day:** wrote the actual live adapter
-  (`src/server/integrations/knowledge/pinecone.ts`, real
-  `@pinecone-database/pinecone` SDK calls, 9/9 unit tests against a fake
-  Index, typecheck/lint clean) plus a `pinecone` credential-store entry and
-  `PINECONE_INDEX_HOST` config. Deliberately did **not** wire it up:
-  `client.ts`'s unconditional "live" throw and `production-config.ts`'s
-  unconditional rejection of `KNOWLEDGE_PROVIDER_MODE=live` (every
-  environment, not just production) are untouched. No Pinecone index or
-  credential exists for this project either — the connected Pinecone
-  account has one unrelated pre-existing index (`drive1`), confirmed via
-  read-only `list-indexes`. Full detail in `claude-notes.md`.
-  **Second addendum, Claude, same day:** with explicit user approval, lifted
-  both gates the same way every other provider works (require real
-  `PINECONE_API_KEY`/`PINECONE_INDEX_HOST` instead of an unconditional
-  block; production stays blocked in practice because no production
-  credential exists, not via a special case) and created a real staging
-  index (`ai-receptionist-knowledge-staging`, `llama-text-embed-v2`,
-  `aws us-east-1`, fieldMap `content`). 552/552 tests pass after the
-  wiring change. User then added a real `PINECONE_API_KEY` to their own
-  local `.env.local`; a throwaway smoke-test script (deleted after use)
-  confirmed a genuine live round trip — upsert, embedded search found it,
-  remove, confirmed gone — against the real staging index. Nothing
-  deployed: Vercel staging Preview still has no Pinecone env vars set, and
-  production is completely untouched. Full detail in `claude-notes.md`.
+- **Isolated staging is live-certified end-to-end.** A real owner UI operation
+  passed UI → server action → scoped Postgres row → Pinecone upsert/search →
+  synchronized state → UI delete → Postgres tombstone → Pinecone removal.
+- The staging index uses integrated `llama-text-embed-v2` inference with 1024
+  dimensions and the `content` field mapping. Production has no Pinecone
+  credential and remains fail-closed.
+- Provider matches are ranking hints only. The application re-authorizes every
+  id through local active, non-deleted, workspace-scoped Business Knowledge.
+- Provider success followed by failed local settlement becomes `sync_required`;
+  it is never automatically replayed. Retryable reconciliation includes only
+  `pending` and `error`.
+- Eight historical staging rows remain pending after migration backfill. The
+  live certification entry was separate and was cleaned up after verification.
 
-## Verification checkpoint
+## Local reconciliation implementation
 
-- Authenticated staging checkpoint: five real Google identities completed OAuth
-  on deployment `dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`; staff/manager/owner/operator
-  route gates, staff sensitive-content redaction, owner privacy visibility,
-  bidirectional cross-tenant customer probes, operator workspace switching,
-  audit persistence, sign-out, and safe continuation passed. Vercel showed five
-  callback requests and no runtime error clusters in the inspected 30 minutes.
-- The refreshed scope did not mutate an identity to unknown/suspended, induce a
-  database outage, inspect cookies, spoof forwarded hosts, or re-test production
-  sign-in. Those cases are not claimed as newly live-verified.
-- Advisor-hardening checkpoint: official Supabase CLI generated
-  `20260825151957_provider_privacy_advisor_hardening.sql`; TypeScript and
-  targeted ESLint pass. With explicit approval, its focused staging `app_test`
-  verification passed 2/2, the migration applied transactionally to staging
-  `app`, and `db:status` reports all 17 files applied.
-- Final uncontested local gate recorded by Claude: typecheck, lint, and 519/519
-  tests across 36 files passed.
-- The focused Knowledge provider suite was rerun after shared-schema contention
-  cleared and passed 9/9, including tenant isolation, foreign-id rejection,
-  stale-write ordering, safe provider failure state, tombstones, and input
-  bounds. Migration file 18 is now applied and remotely verified in both staging
-  and production under separate explicit approvals.
-- A local retrieval-boundary follow-up now validates provider search results at
-  runtime, enforces requested limits, rejects invalid input through the safe
-  error contract, normalizes raw retrieval failures, and treats provider matches
-  only as ranked ids. Results are workspace-resolved and hydrated from active
-  local Business Knowledge; unknown or foreign ids are discarded. Rehydration
-  uses one deduplicated batch query instead of an N+1 path. Its pure contract
-  gate passes 8/8; typecheck and targeted ESLint are green.
-- Knowledge automatic reconciliation now enumerates only retryable `pending` and
-  `error` states; `sync_required` is excluded in accordance with the provider
-  safety rules. A database regression was added but not executed while Claude may
-  share `app_test`; static verification remains green.
-- Knowledge stale-failure settlement now returns `superseded` when its guarded
-  failure update loses to a newer revision. Pure contract coverage is 8/8;
-  typecheck and targeted ESLint pass.
-- Same-version settlement now also requires a retryable current state, preventing
-  concurrent workers from overwriting `synced` or `sync_required`. The complete
-  hosted Knowledge suite passes 17/17 against disposable `app_test`.
-- Provider success is now separated from local settlement failure. A failed
-  `markSynced()` after a completed external write records `sync_required`
-  rather than retryable `error`, preventing automatic duplicate provider work.
-  Pure contracts pass 9/9 and the expanded hosted Knowledge suite passes 19/19
-  against disposable `app_test`; typecheck and targeted ESLint also pass. The
-  final consolidated gate passes 38/38 files and 541/541 tests.
-- Knowledge action results no longer collapse provider attention into a rejected
-  local save. The accepted database mutation remains visible and is refreshed,
-  while the dashboard reports one synchronization warning. The focused result-
-  projection suite passes 2/2; typecheck and targeted ESLint pass.
-- Official Supabase CLI 2.115.0 generated local migration file 19 to revoke
-  unused `app_runtime` update authority on the immutable Knowledge namespace
-  mapping. Source inspection confirms only insert/select are used. The schema
-  regression expects update denial and passes 3/3 against disposable `app_test`;
-  neither staging nor production `app` has applied file 19.
-- Final uncontested repository gate after Claude became idle: typecheck, full
-  lint, 38/38 test files, and 539/539 tests pass. This supersedes the historical
-  531-test local total for the current working tree. Only disposable `app_test`
-  was rebuilt; no staging/production `app` schema changed.
-- The Knowledge migration's local pre-staging review is green. Executed-schema
-  hardening tests pass 3/3 and now assert `app_migrator` ownership, private-schema
-  isolation from `anon`/`authenticated`, and least-privilege `app_runtime`
-  access. Targeted ESLint and typecheck also pass.
-- Reconciled the main README, production/staging readiness, Calendar rerun
-  runbook, email/privacy/Vapi readiness, and server architecture README to the
-  then-current 17-file remote checkpoint and file-18 local Knowledge state. The
-  later environment-specific sections supersede that historical checkpoint.
-- A consolidated `npm.cmd run check` passed typecheck, full lint, and 530/532
-  tests across 37/38 files. The two failures were stale registry tests expecting
-  Pinecone to remain unavailable after the Knowledge adapter was registered.
-  The focused correction passes 4/4 with targeted ESLint clean; the final rerun
-  below resolves this intermediate checkpoint.
-- The final consolidated rerun is green: typecheck, full lint, 38/38 test files,
-  and 531/531 tests pass. The corrected registry suite is included, as are the
-  9/9 Knowledge and 3/3 schema-hardening suites.
-- Staging Knowledge migration verification: 18/18 ledger parity; namespace
-  table owned by `app_migrator`; 8/8 existing entries backfilled and pending;
-  both partial indexes present; Data API roles still lack private-schema usage;
-  `app_runtime` select/insert/update with delete denied and direct read passed;
-  zero Security Advisor findings; Performance Advisor contains 153 INFO-only
-  unused-index notices and no other finding.
-- Production build and client-secret audit passed across 49 artifacts.
-- GitHub Actions at `ccf6272` passed after the `next typegen` fix.
-- Vercel production build for `ccf6272` passed production configuration,
-  compilation, TypeScript, static generation, and deployment.
-- Production origin returned HTTP 200; staging origin returned HTTP 200.
-- No current authenticated browser matrix, remote schema ledger check, provider
-  live call, or destructive workflow was performed in this reconciliation.
-- A read-only remote schema-ledger check on 2026-08-25 confirmed the five new
-  migrations were initially pending in both projects. They are now applied and
-  verified in both projects. Production has real data, including 443 calls and
-  509 appointments; the approved privacy-state backfill and later Knowledge
-  schema backfill were verified after their respective migrations.
-- `anon` and `authenticated` have no `USAGE` on the private `app` schema in
-  either project. Production `app_runtime` has the intended direct table grants.
-- Production's Supabase security advisor currently reports two
-  mutable-search-path warnings in `app_test`; these are not live-schema findings
-  but remain cleanup debt.
-- First production migration-batch verification: 17/17 exact ledger entries at
-  that checkpoint; all 10 new
-  tables present and owned by `app_migrator`; privacy defaults cover 2/2
-  workspaces; call privacy state covers 443/443 calls; both privacy functions
-  use `search_path=app, pg_catalog`; and all 11 advisor-hardening indexes exist.
-  No secret-like columns were introduced in the new tables. Read-only checks as
-  `app_runtime` passed, while `anon` and `authenticated` remain unable to use
-  private schema `app`.
-- Post-migration advisors returned no live-`app` security or unindexed-FK
-  findings. Remaining findings are two known `app_test` mutable-search-path
-  WARN notices, eleven `app_test` unindexed-FK INFO notices, and unused-index
-  INFO notices. Vercel reported no production runtime errors in the inspected
-  one-hour window, and the public sign-in path remained healthy.
-- Local dashboard runtime checkpoint (2026-08-25): after confirming the port
-  owner was this repository's Next.js process, the unresponsive server was
-  restarted. Root redirects to `/sign-in?reason=expired`, that route returns
-  HTTP 200, and the visible in-app Browser authenticated the Alex Rivera Owner
-  development account and rendered Overview with no fresh console errors. This
-  was local-only; no deployment, environment change, provider call, migration,
-  or commit occurred.
-- Authenticated production owner checkpoint: Overview, Conversations, Calls,
-  Appointments, Customers, Analytics, AI Receptionist, Business Profile,
-  Connections, and Settings rendered under the expected Owner session. All
-  tested platform-admin routes denied access. Owner Privacy was visible; a real
-  call drawer exposed AI Summary/Transcript; an own customer drawer opened,
-  while a forged Harbour customer id opened no drawer or foreign content.
-- Production sign-out returned to `/sign-in`; a protected deep link while
-  signed out preserved only the same-origin `/admin/settings` continuation.
-  Database evidence kept the user count at 7, confirmed the denied identity had
-  zero active memberships, and recorded two sanitized `user.signed_out` audit
-  events (audit count 71 -> 73). The browser ended signed out, and the final
-  inspected Vercel error window contained no runtime error clusters.
-- Two non-security UI/observability defects were handed off without editing
-  Claude's UI files: owner access to `/admin/privacy` correctly throws a 403 but
-  renders generic "This page couldn't load" and temporarily appears as a
-  runtime-error cluster; Auth.js redirects a denied identity with
-  `error=AccessDenied`, which the sign-in page currently ignores, leaving no
-  explanatory status copy.
+- A server-only reconciliation DAL and protected Server Action now exist locally.
+- Authorization is `business.edit`; workspace scope comes only from the verified
+  AuthContext. Client input cannot select another workspace or provider resource.
+- Dry run is provider-free. Execute requires an exact confirmation phrase,
+  rejects disabled provider mode, and is capped at 100 retryable rows.
+- Operational status is content-free and reports pending/error/sync-required/
+  synced totals and oldest retryable age.
+- Safe audit events cover preview, start, completion, and unexpected failure.
+- The mechanism is not wired into dashboard UI, not deployed, and has not been
+  invoked against staging or production.
 
-## Current priority
+## Current verification
 
-1. Production and staging are both at 18/19. File 19 is a local-only,
-   forward-only least-privilege hardening migration; executed-schema validation
-   and any remote application require a separate explicit approval.
-2. Staging now has branch-scoped live Pinecone configuration and READY deployment
-   `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`. Claude owns authenticated staging and
-   provider-flow verification; do not call this live-certified until that
-   controlled matrix passes. Production remains unconfigured for Pinecone.
-3. Complete the production manager/staff/Harbour-owner/operator matrix only when
-   those provisioned Google identities are available in the in-app Browser.
-   Owner and no-workspace fail-closed behavior are now live verified.
-4. Decide whether to disconnect/remove the duplicate Vercel project. This needs
-   explicit approval because it changes external state.
-5. Keep generic Preview fail closed; only the `staging` branch has isolated
-   Preview secrets.
-6. Keep provider live work behind separate explicit phases; n8n remains
-   inaccessible and no provider foundation is live-certified merely because the
-   code is now deployed.
+- Reconciliation/action unit tests: 11/11 pass.
+- TypeScript, full lint, production build, 56-artifact client-secret audit, and
+  `git diff --check`: pass.
+- The consolidated test phase is not green: 34/42 files and 377 tests passed;
+  91 failed and 96 skipped after concurrent rebuilds of shared disposable
+  `app_test` removed fixtures/tables and produced one `tuple concurrently
+  updated`. The new reconciliation tests passed inside that run. Rerun the full
+  database gate with one schema owner before release.
+- The local dashboard is running on port 3000. The in-app Browser rendered the
+  expected expired-session sign-in page with no console errors.
 
-## Staging Pinecone deployment (2026-08-26)
+## Approval-gated next phases
 
-- Explicit user approval lifted the Vercel mutation/deploy gate for this phase.
-  The intended project now has `KNOWLEDGE_PROVIDER_MODE`, `PINECONE_API_KEY`,
-  and `PINECONE_INDEX_HOST` as Preview variables scoped only to branch
-  `staging`; the API key is stored as Secret and its value is not documented.
-- Production and generic Preview were untouched.
-- The exact prior staging Preview deployment was redeployed with current project
-  settings. New deployment `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`, source branch
-  `staging`, commit `ccf6272`, reached `READY`; the stable staging alias points
-  to it.
-- Codex did not perform authenticated UI or live Knowledge-flow testing. That
-  certification remains assigned to Claude.
-
-## Addendum, Claude, same day — real UI test surfaced a deployment mismatch
-
-Signed in as the real Coastal Bloom owner on `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`
-via genuine Google OAuth (user's own Chrome, already-authenticated account).
-Added a clearly-labeled test Knowledge entry through the real UI. It appeared
-to succeed but did not persist — confirmed via a fresh reload and a direct
-`execute_sql` check (zero new rows). Vercel runtime logs show why:
-`POST /business-profile 500` — `null value in column "provider_document_id"
-of relation "knowledge_entries" violates not-null constraint`.
-
-**Root cause is a deployment mismatch, not a Pinecone bug.** The Business
-Knowledge application code (server actions, repositories, UI) has never
-been committed to git — it exists only in the long-uncommitted local
-working tree. `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN` is a redeploy of the
-existing staging source at commit `ccf6272`, which predates all Knowledge
-foundation work. So staging is running old `addKnowledge` code (which never
-sets `provider_document_id`) against the new migrated schema (migration 18
-added that column's `NOT NULL` constraint). Schema is ahead of code.
-Secondary, separate finding: the client shows false success on a request
-that actually 500'd — worth its own fix.
-
-Testing the live Pinecone wiring through the real UI needs the Knowledge
-feature's *code* deployed to staging too, not just its schema — i.e.
-committing/pushing this entire uncommitted working tree. That's materially
-bigger than this task; stopped here rather than deciding it unilaterally.
-No DB cleanup needed (the failed insert rolled back). Full detail in
-`claude-notes.md`.
-
-## Model-provider audit follow-up (2026-08-26)
-
-- Current local AI SDK 6 documentation/source distinguishes
-  `NoObjectGeneratedError` for parse/schema-invalid structured output from
-  `NoOutputGeneratedError` for missing final output. The provider boundary now
-  sanitizes both as retryable `model_invalid_response`.
-- Added a regression carrying secret-like generated text and private model
-  metadata; neither crosses the normalized error boundary. The focused suite is
-  13/13 green; TypeScript and targeted ESLint pass.
-- Rechecked the two approved model ids and base prices against the public Gateway
-  catalog. No external model request or configuration mutation occurred.
-
-## Codex addendum — Knowledge deployment preflight (2026-08-26)
-
-Claude's real staging UI test remains blocked by schema/code skew: migration 18
-requires `provider_document_id`, while READY deployment
-`dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN` is built from `ccf6272`, before the local
-Knowledge implementation. Codex completed the non-mutating release preflight on
-the current combined working tree:
-
-- TypeScript: pass.
-- ESLint: pass with no warnings.
-- Focused Knowledge release suite: 5/5 files, 47/47 tests.
-- Complete suite: 40/40 files, 552/552 tests.
-- Next.js production build: pass.
-- Client-secret audit: pass across 56 built artifacts; values were not printed.
-- `git diff --check`: pass after a whitespace-only Sidebar cleanup.
-
-No remote configuration, database migration, provider traffic, commit, push, or
-deployment occurred. Because the releasable state spans a large shared
-uncommitted tree rather than an isolated Knowledge patch, committing/pushing and
-deploying it remains a separate explicit-approval boundary.
-
-## Codex addendum — Pinecone MCP enabled locally (2026-08-26)
-
-The global Codex MCP entry `pinecone` now launches the official
-`@pinecone-database/mcp` package through `npx.cmd` with the existing local
-server-only API key. Read-only inspection reports the registration enabled and
-masks the key. Node/npx prerequisites pass. This only configures the local Codex
-client; no MCP tool becomes callable in the already-running task, and no live
-Pinecone operation or remote change was performed.
-
-A refreshed-task check subsequently loaded all nine Pinecone MCP tools. Live,
-read-only `list_indexes` and `describe_index_stats` calls authenticated and
-confirmed both account indexes READY. The intended staging index uses integrated
-`llama-text-embed-v2` inference, 1024 dimensions, and the `content` field map;
-it currently has zero records and namespaces. No provider mutation occurred.
-
-## Claude addendum — migration 19 applied to staging (2026-08-26)
-
-File 19 (`20260826033517_knowledge_namespace_immutability.sql`, the
-`app_runtime` UPDATE revoke on `knowledge_provider_namespaces`) is now applied
-and verified on staging (`jhkbsfsbnynysplvnwca`): `db:status` reports 19/19,
-and `has_table_privilege('app_runtime', 'app.knowledge_provider_namespaces',
-'UPDATE')` independently confirms `false`. Full mechanism, including two
-pre-existing unrelated ledger-checksum corrections required to unblock the
-runner, is in `CURRENT_TASK.md` and `handoffs/latest.md`.
-
-With separate explicit approval, file 19 is now also applied and verified on
-**production** (`rkzwubwogtezqbuhieuo`): `db:status` reports 19/19, and
-`has_table_privilege('app_runtime', 'app.knowledge_provider_namespaces',
-'UPDATE')` independently confirms `false`. The same two ledger-checksum drifts
-existed on production and were corrected the same way after re-verifying the
-live schema there matched (not assumed from staging). Both staging and
-production are now 19/19.
+1. Run a controlled staging dry run and reconcile the eight historical pending
+   rows, then verify scoped DB state, Pinecone records, semantic retrieval,
+   sanitized logs, and cross-workspace negatives.
+2. Enable or provision Production Pinecone only as a separate data-policy,
+   credential, cost, monitoring, deployment, and certification phase.
+3. Remove the duplicate Vercel project, deploy, commit, push, alter environment
+   variables, or apply future remote migrations only with explicit approval.
