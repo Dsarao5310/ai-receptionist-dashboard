@@ -62,4 +62,21 @@ chat text). Presented three options; the user has no external monitor in
 use, so left unresolved by choice rather than acted on. Nothing about
 deployment protection was changed.
 
-Proceeding next to the user-approved isolated Supabase restore drill.
+Proceeding next to the user-approved isolated Supabase restore drill (paused
+— see below).
+
+## Claude — external monitoring unblocked (2026-08-27)
+
+User generated the Vercel bypass secret and created an UptimeRobot account.
+Verified `/api/health` end-to-end with the bypass header (read from a local
+`.env.local` entry, never typed into chat): `GET` and `HEAD` both return
+`200 OK`, the expected `{"status":"ok"}` body, and correct no-store headers.
+External monitoring is no longer blocked.
+
+The restore drill is paused, not abandoned: no available Supabase MCP tool
+can restore an actual backup (only fresh migration-based project/branch
+creation is exposed), so doing the drill as specified needs either a lesser
+migration-only substitute or the user restoring a real backup themselves via
+the Supabase dashboard. Presented both options; user dismissed the question
+without picking one, so this is holding for further direction rather than
+proceeding on either path.

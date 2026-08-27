@@ -150,3 +150,8 @@ monitoring, not a code defect. No MCP tool can generate the Protection
 Bypass secret this needs (dashboard-only). User has no monitor in use
 currently, so this stays documented, unresolved by choice, not acted on.
 Full detail in `CURRENT_TASK.md`.
+
+The user has since generated the bypass secret and created an UptimeRobot
+account. Verified `/api/health` with the bypass header (read from a local
+`.env.local` entry, never in chat): both `GET`/`HEAD` return `200 OK` with
+the expected body and no-store headers. External monitoring is unblocked.

@@ -80,3 +80,13 @@ active blocker — nothing was changed. No production security settings were
 modified.
 
 Next: proceeding to the user-approved isolated Supabase restore drill.
+
+## Claude — external monitoring unblocked (2026-08-27)
+
+User generated the Vercel "Protection Bypass for Automation" secret and
+created an UptimeRobot account. Verified `/api/health` end-to-end with the
+bypass header (read from a local `.env.local` entry the user added, never
+typed into chat): both `GET` and `HEAD` return `200 OK` with the correct
+no-store headers and the expected `{"status":"ok"}` body. External
+monitoring is no longer blocked — up to the user to finish configuring the
+UptimeRobot monitor itself (interval, alert contacts) if not already done.
