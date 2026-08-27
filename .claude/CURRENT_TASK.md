@@ -87,6 +87,29 @@ be represented as a provider-managed backup restore. The next material recovery
 step is still a real backup restored into a separate disposable Supabase
 project, which remains externally gated and unavailable here.
 
+## Claude — real restore drill blocked on plan tier, not project choice (2026-08-27)
+
+User asked to run the real backup-restore drill against the existing staging
+project instead of a new disposable one. Before touching anything: checked
+`ACTIVE_WORK.md` (Codex idle, no collision), confirmed the `restore_project`
+MCP tool only accepts a `project_id` (in-place restore of that exact
+project's own backup, not "restore into a different project" — so it would
+have overwritten staging's current data with no way to pick a restore point).
+
+Checked the org via `get_organization`: plan is **free**. Cross-checked
+against Supabase's own docs (`search_docs`): automated daily backups, and
+therefore the restore feature, are Pro/Team/Enterprise-only — free-tier
+projects are explicitly not restorable until upgraded. This applies to any
+project in this org, staging or a new one; it was never actually a
+staging-vs-disposable-project question.
+
+Presented three options; user chose to upgrade the Supabase org to Pro
+themselves, and asked to batch it with other pending provider upgrades
+(n8n, Twilio, Vapi) and let this agent know when ready to proceed with all
+of them together. No Supabase action was taken. **Paused, waiting on the
+user** — not an open task to pick up proactively next session; resume only
+when the user confirms the upgrade(s) are done.
+
 ## Recovery verification foundation
 
 - Added `npm run db:recovery:rehearse`, which accepts only a dedicated loopback
