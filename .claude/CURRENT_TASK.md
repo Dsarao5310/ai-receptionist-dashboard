@@ -319,3 +319,36 @@ afterward (exact free-tier limits not checked — did not go further into
 checkout). Flagged this to the user; they said it's working and declined
 further investigation for now. Purely informational for future reference,
 not an action item.
+
+## Claude — Pinecone API key rotated end-to-end (2026-08-27)
+
+Rotated the Pinecone key that had been accidentally exposed in chat earlier
+in this project. Split the work so the raw key value never passed through
+chat or this agent: user generated the new key in the Pinecone console
+(labeled `ai-receptionist-staging-v2`) and pasted it into `.env.local` and
+Vercel's `PINECONE_API_KEY` (Preview, scoped to `staging` only) themselves.
+
+Verified locally: `PINECONE_API_KEY`/`PINECONE_INDEX_HOST` confirmed
+non-empty in `.env.local` without printing values; typecheck clean.
+
+Found the currently-live staging deployment (`dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`,
+commit `64fa59a`) predated the key change — Vercel bakes env vars in at build
+time, so the new value wouldn't apply until a fresh build. Located the
+correct deployment (confirmed by matching commit/branch, not by row position
+in the list — an earlier attempt navigated to the wrong deployment) and
+redeployed it: new deployment `dpl_8SuiPxLYLawkfkZQu5KNgZQPMkKr` is READY,
+correctly aliased, no new runtime errors.
+
+Side investigation: two stray redeploy attempts on the `master`/production
+deployment (not staging) had failed — one CANCELED, one ERROR citing missing
+`AUTH_SECRET`/`AUTH_URL`/`DATABASE_URL`/Google OAuth vars. Checked the actual
+Vercel Environment Variables page directly: all production vars are present,
+correctly scoped, last updated Aug 21 — untouched. The failed redeploys
+simply weren't attached to the Production environment scope; the live
+production deployment was never affected. No fix needed, documenting so this
+isn't re-investigated as a mystery later.
+
+Confirmed the old exposed key deleted from the Pinecone console (three keys
+existed: two unrelated "Claude"-labeled MCP integration keys plus the app
+key; user identified and deleted the correct one themselves after I
+declined to guess). Full detail in `.claude/providers/knowledge.md`.

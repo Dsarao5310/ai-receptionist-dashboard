@@ -24,6 +24,15 @@ Status: **STAGING CRUD AND HISTORICAL RECONCILIATION LIVE-CERTIFIED; SCHEMA 19/1
 - Staging and production have migrations 18 and 19 applied and verified (19/19).
 - Only Preview branch `staging` has live Pinecone mode and its isolated secret/
   index host. Production and generic Preview remain fail-closed.
+- **Pinecone API key rotated (2026-08-27):** the key that had been accidentally
+  pasted into chat earlier in this project's history was rotated end-to-end —
+  new key created in the Pinecone console (labeled `ai-receptionist-staging-v2`),
+  set in local `.env.local` and in Vercel's `PINECONE_API_KEY` (Preview, scoped
+  to the `staging` branch only), staging redeployed (`dpl_8SuiPxLYLawkfkZQu5KNgZQPMkKr`,
+  READY, no new runtime errors), and the old exposed key deleted from the
+  Pinecone console. Neither this agent nor chat ever handled the raw key value
+  at any point in the rotation — the user pasted the new key into `.env.local`
+  and Vercel, and deleted the old key, directly in their own browser/editor.
 - Isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa` is READY at
   `64fa59a` and contains the protected reconciliation foundation. Production is
   READY at `4899725` (`dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N`) but has no Pinecone

@@ -230,3 +230,20 @@ stands by deliberate choice; this closes the item, it's not left open.
 Also found the account is on a "Solo 10" trial expiring in ~6 days
 (auto-renewal off), after which it downgrades to the free plan. Flagged to
 the user; they declined further investigation for now — informational only.
+
+## Claude — Pinecone API key rotated end-to-end (2026-08-27)
+
+Rotated the Pinecone key exposed earlier in this project's history, keeping
+the raw value out of chat entirely: user generated the new key
+(`ai-receptionist-staging-v2`) and pasted it into `.env.local` and Vercel's
+`PINECONE_API_KEY` (Preview, `staging`-scoped) themselves. Redeployed the
+`staging` deployment (it had predated the key change) —
+`dpl_8SuiPxLYLawkfkZQu5KNgZQPMkKr` is READY, no new runtime errors. User
+confirmed deleting the old exposed key from the Pinecone console.
+
+Side investigation, resolved clean: two failed `master`-branch redeploy
+attempts looked like a missing-production-env-vars incident, but checking
+Vercel's Environment Variables page directly showed all production vars
+present and untouched since Aug 21 — the redeploys just weren't scoped to
+Production, and live production was never affected. Full detail in
+`CURRENT_TASK.md` and `.claude/providers/knowledge.md`.

@@ -294,3 +294,21 @@ audit all pass. Pushed `origin/master`. Production
 `dpl_6Dvm3QuoVuif5ys63WQzDBv9WmvZ` is READY at `b24e51c`; runtime-error scan
 found nothing new (3 groups, all tied to older deployments). The
 calendar-Undo-sync fix is now live. Full detail in `CURRENT_TASK.md`.
+
+## Claude addendum — Pinecone key rotation, production env vars checked clean (2026-08-27)
+
+Rotated the previously-exposed Pinecone API key end-to-end without this
+agent ever handling the raw value: user generated and pasted the new key
+(`ai-receptionist-staging-v2`) into `.env.local` and Vercel themselves;
+found and redeployed the correct `staging` deployment after the old build
+predated the key change (`dpl_8SuiPxLYLawkfkZQu5KNgZQPMkKr`, READY, no new
+runtime errors); user deleted the old key from the Pinecone console.
+
+Along the way, investigated two failed `master`-branch redeploy attempts
+that looked like a missing-production-env-vars incident. Checked Vercel's
+Environment Variables page directly (Production filter): `AUTH_SECRET`,
+`AUTH_URL`, `DATABASE_URL`, Google OAuth, etc. are all present, correctly
+scoped, untouched since Aug 21. Nothing was actually broken — the failed
+redeploys just weren't attached to the Production environment scope, and
+the live production deployment was never affected. Full detail in
+`CURRENT_TASK.md` and `.claude/providers/knowledge.md`.
