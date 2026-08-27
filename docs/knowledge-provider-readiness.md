@@ -1,6 +1,6 @@
 # Business Knowledge Provider Readiness
 
-Updated: 2026-08-26
+Updated: 2026-08-27
 
 ## Decision
 
@@ -44,8 +44,8 @@ controlled reconciliation phase.
 
 ## Local operational hardening
 
-A protected manual reconciliation command is implemented locally but is not
-deployed or invoked:
+A protected manual reconciliation command is committed in `9a5b957` but is not
+wired into a dashboard control or schedule and has not been invoked live:
 
 - owner-level `business.edit` authorization on every Server Action call;
 - workspace derived only from the verified AuthContext;
@@ -59,15 +59,12 @@ deployed or invoked:
 
 ## Local verification
 
-- New reconciliation and action tests: 11/11 pass.
-- TypeScript and targeted ESLint: pass.
-- Production build, 56-artifact client-secret audit, and whitespace check pass.
-- The full gate passed typecheck and lint. Its test phase passed 34/42 files and
-  377 tests; 91 failed and 96 skipped after another process repeatedly rebuilt
-  shared `app_test`, causing missing fixtures/tables, stale schema shape, and one
-  tuple-concurrency error. All 11 new reconciliation/action tests passed inside
-  that run. A clean, uncontested database/full-suite run remains required before
-  release.
+- Accepted uncontested gate: 42/42 files and 564/564 tests pass, including all
+  reconciliation/action and database-backed tenant checks.
+- TypeScript, full ESLint, production build, client-secret audit, and whitespace
+  check pass.
+- Two deliberately overlapping schema-hardening processes both passed 3/3; the
+  second waited for the whole-run advisory lock before rebuilding `app_test`.
 - The local dashboard rendered its expected expired-session sign-in state with
   no browser console errors.
 

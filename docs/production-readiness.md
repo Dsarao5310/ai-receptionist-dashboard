@@ -1,6 +1,6 @@
 # Production readiness handoff
 
-Audit date: 2026-08-26 (America/Vancouver)
+Audit date: 2026-08-27 (America/Vancouver)
 
 ## Decision
 
@@ -25,14 +25,14 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 | Twilio | EXTERNALLY BLOCKED | Implementation and simulator tests pass; the account has no owned SMS-capable number and live callback certification is outstanding. |
 | Vapi | APPLICATION-READY + SIMULATOR VERIFIED | Authenticated status/end-report ingestion, trusted assistant/phone tenancy, durable idempotency, monotonic call lifecycle, transcript persistence, and client redaction pass. No account, credentials, registered webhook, model, or live call. See `vapi-readiness.md`. |
 | Gmail/email provider | APPLICATION-READY + SIMULATOR/DATABASE VERIFIED | Private mailbox/thread/message identity, trusted tenant mapping, shared inbound receipt/idempotency, outbound operation/sync-guard behavior, disabled/live fail-closed modes, and client boundary pass. Its schema is in the remote 17-file checkpoint and code is deployed. No Gmail OAuth/scopes, watch/Pub/Sub, public provider callback, live send/read, or certification. Auth.js email magic links remain separately disabled. See `email-provider-readiness.md`. |
-| Pinecone/knowledge provider | STAGING LIVE-CERTIFIED; HISTORICAL BACKLOG PENDING | Server-issued namespaces, durable reconciliation state, tombstones, monotonic versions, bounded contracts, deterministic simulation, local-authority hydration, and staging-only live policy pass. The real database-backed UI flow is certified end-to-end and migrations are 19/19 in both environments. Eight historical staging rows remain pending; protected dry-run/status/reconciliation operations are implemented locally but not deployed or executed. Production has no Pinecone credential. See `knowledge-provider-readiness.md`. |
+| Pinecone/knowledge provider | STAGING LIVE-CERTIFIED; HISTORICAL BACKLOG PENDING | Server-issued namespaces, durable reconciliation state, tombstones, monotonic versions, bounded contracts, deterministic simulation, local-authority hydration, and staging-only live policy pass. The real database-backed UI flow is certified end-to-end and migrations are 19/19 in both environments. Eight historical staging rows remain pending; protected dry-run/status/reconciliation operations are committed on `master` but are not UI-wired or live-executed, and their presence in staging is not yet confirmed. Production has no Pinecone credential. See `knowledge-provider-readiness.md`. |
 | Model provider | APPLICATION-READY + SIMULATOR VERIFIED | Server-only AI Gateway transport, approved cross-provider fallback, strict reply/analysis outputs, deterministic evals, prompt-injection handling, normalized errors, and time/token/cost guardrails pass. No gateway auth, live request, billed usage, latency/failover evidence, Vapi connection, or live certification. See `model-provider-readiness.md`. |
 | Call privacy lifecycle | APPLICATION-READY + DATABASE/ACTION-TEST VERIFIED | Fail-closed recording mode, minimal consent evidence, bounded retention, sensitive-access redaction, a disabled authenticated/leased purge scheduler, owner/operator policy UI, durable identity-gated erasure requests, and a sanitized read-only platform-operator health page pass. Its schema is in the verified remote 17-file checkpoint. The cron route is deployed but disabled; true reauthentication, legal approval, configured schedule secret, external alerting, provider recording ingestion, and live certification remain. See `privacy-readiness.md`. |
-| CI | COMPLETE FOR COMMITTED FOUNDATION; LOCAL RECONCILIATION UNDER VERIFICATION | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. Database-backed tests remain a protected staging release gate; the current uncommitted reconciliation work must complete that gate before release. |
+| CI | COMPLETE FOR CURRENT COMMITTED FOUNDATION | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. The committed reconciliation foundation passed the uncontested database-backed gate locally: 42/42 files and 564/564 tests. |
 | Monitoring | NOT STARTED | No production error tracker, trace/log drain, uptime monitor, or provider health dashboard with an owner. |
 | Alerting | NOT STARTED | No paging route, severity policy, acknowledgement target, or escalation schedule. |
 | Backups/recovery | PARTIAL | Forward-only and isolated restore procedures are documented; no isolated restore drill has been executed. |
-| Security | PARTIAL | Tenant hardening, private schemas, credential rotation, bounded webhooks, safe redirects, client-secret audits, and focused tests exist. Read-only `npm audit --omit=dev` currently reports three high entries through the existing Nodemailer/Auth.js chain (GHSA-p6gq-j5cr-w38f); AI SDK/Zod are not implicated. Compatibility-tested remediation, recurring scanning, and operational response remain. |
+| Security | PARTIAL | Tenant hardening, private schemas, credential rotation, bounded webhooks, safe redirects, client-secret audits, and focused tests exist. Nodemailer was updated to 9.0.5 in `42e8bad`; `b91524c` adds the override needed for strict clean installs. Claude verified zero audit vulnerabilities. Recurring scanning and operational response remain. |
 | Performance | NOT STARTED | No production load, concurrency, latency-budget, or capacity certification exists. |
 | UI/mobile/accessibility | PARTIAL | Core hosted role flows passed, but comprehensive mobile, keyboard, screen-reader, loading, failure, and retry QA is incomplete. |
 | Privacy/compliance | PARTIAL | Technical consent, retention, sensitive-access, erasure controls, and remote schema parity are verified. Consent wording/retention approval, privacy terms, regulatory review, true request identity verification, scheduled purge operations, and live certification remain. |
@@ -89,23 +89,20 @@ not deploy and does not receive production or provider credentials.
 
 ## Verification for this pass
 
-- Current local Knowledge reconciliation hardening: 11/11 new unit/action tests,
-  TypeScript, full lint, production build, and the 56-artifact client-secret
-  audit pass. The consolidated database phase is not green because concurrent
-  `app_test` rebuilds produced missing fixtures/tables and tuple-concurrency
-  failures: 34/42 files and 377 tests passed; 91 failed and 96 skipped. Rerun
-  with one schema owner before release. No live reconciliation was executed.
+- Current committed Knowledge reconciliation hardening: accepted uncontested
+  verification passed 42/42 files and 564/564 tests, plus TypeScript, full lint,
+  production build, and the client-secret audit. Two overlapping focused runs
+  also proved the whole-run advisory lock serializes shared `app_test` ownership.
+  No live reconciliation was executed.
 
 - Email foundation verification passed 40/40 focused checks, including 10/10
   database-backed email contract, tenant-smuggling, replay/concurrency,
   outbound-idempotency, disabled-mode, and runtime-grant cases. Typecheck, lint,
   optimized build, and the 49-artifact client-secret audit passed. No public
   email route was added.
-- A consolidated post-email suite count is not claimed because Claude's
-  separately documented background check rebuilt the same `app_test` schema
-  during Codex's attempts, causing unrelated missing-table failures. The email
-  suite itself rebuilt the full migration chain and passed before that overlap;
-  rerun the consolidated gate with one schema owner before release.
+- Email coverage is included in the current uncontested 564/564 consolidated
+  result; the earlier shared-schema collision is superseded by the whole-run
+  advisory lock and successful serialized gate.
 - 12 privacy policy/database/scheduler/request tests, 6 cron route/auth tests,
   and the focused policy/request action/input/tab gate passed 31/31,
   including fail-closed scheduling, overlap prevention, sanitized history,
@@ -136,9 +133,8 @@ not deploy and does not receive production or provider credentials.
   in-app Browser safety boundary remained in effect and was not bypassed.
 - The generated-client audit passed across 49 artifacts without printing secret
   values.
-- The prior read-only production dependency audit remains unchanged: three high
-  entries through the pre-existing Nodemailer/Auth.js dependency chain. It was
-  not rerun or remediated in this privacy phase.
+- The Nodemailer/Auth.js dependency finding was remediated in `42e8bad` with the
+  clean-install override in `b91524c`; Claude verified zero audit vulnerabilities.
 - The Supabase CLI generated the local privacy/email migrations and the isolated
   `app_test` schema was rebuilt from them. No remote migration, provider
   account/configuration, credential, environment mutation, live call, scheduled

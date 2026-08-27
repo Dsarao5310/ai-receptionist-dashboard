@@ -1,6 +1,6 @@
 # Business Knowledge
 
-Status: **STAGING LIVE-CERTIFIED; SCHEMA 19/19 IN STAGING AND PRODUCTION; LOCAL RECONCILIATION OPERATIONS ADDED BUT NOT DEPLOYED OR EXECUTED**.
+Status: **STAGING CRUD LIVE-CERTIFIED; SCHEMA 19/19 IN STAGING AND PRODUCTION; RECONCILIATION COMMITTED BUT NOT LIVE-EXECUTED**.
 
 ## Permanent boundaries
 
@@ -33,7 +33,7 @@ Status: **STAGING LIVE-CERTIFIED; SCHEMA 19/19 IN STAGING AND PRODUCTION; LOCAL 
   backfill. They were not part of the certification entry and have not been
   reconciled live.
 
-## Local reconciliation operations
+## Reconciliation operations
 
 - `KnowledgeSyncRepository.syncStatus()` returns content-free counts for
   `pending`, `error`, `sync_required`, and `synced`, retryable total, and oldest
@@ -49,20 +49,19 @@ Status: **STAGING LIVE-CERTIFIED; SCHEMA 19/19 IN STAGING AND PRODUCTION; LOCAL 
 - Preview/start/completion/failure audit events contain counts and safe outcome
   totals only. A completion-audit failure returns a warning rather than inviting
   replay after provider settlement.
-- No dashboard control or schedule invokes this mechanism. It is local-only and
-  has not contacted Pinecone.
+- The mechanism is committed in `9a5b957`. No dashboard control or schedule
+  invokes it, and it has not contacted Pinecone through reconciliation.
+- Vitest holds a bounded session advisory lock across the complete run so two
+  processes cannot rebuild shared `app_test` concurrently.
 
 ## Verification
 
-- Reconciliation/action unit tests: 11/11 pass.
-- TypeScript: pass.
-- Targeted ESLint: pass.
-- Production build, 56-artifact client-secret audit, and `git diff --check` pass.
-- The consolidated test run passed 34/42 files and 377 tests, with 91 failures
-  and 96 skips caused by concurrent shared `app_test` rebuilds (missing fixtures/
-  tables, stale schema shape, and one tuple-concurrency error). The 11 new
-  reconciliation/action tests passed in that same run. Rerun database suites
-  uncontested before release; this is not provider certification evidence.
+- Accepted uncontested suite: 42/42 files and 564/564 tests pass, including all
+  reconciliation/action and database-backed tenant tests.
+- TypeScript, full lint, production build, and client-secret audit pass.
+- Two overlapping schema-hardening processes both passed 3/3; the second waited
+  for the first lock holder, proving whole-run `app_test` serialization.
+- These are repository/test results, not live provider certification evidence.
 
 ## Next live gate
 
