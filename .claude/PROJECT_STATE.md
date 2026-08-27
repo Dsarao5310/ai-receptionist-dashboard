@@ -77,9 +77,18 @@ Updated: 2026-08-27
   never have detected a real bypass-secret expiry/revocation. Fixed by
   removing `3xx` from accepted status codes and disabling "Follow
   redirections"; the drill only produced a real Down after this fix.
-- **Still open:** SMS/voice/push and all third-party integrations (Slack,
-  Teams, webhooks) are unconfigured, so there is no backup/escalation channel
-  beyond one email address. No error/log drain exists.
+- **Backup channel — deliberately declined (2026-08-27):** attempted adding a
+  second notify-only email contact; UptimeRobot requires a purchased seat for
+  this (0 of 0 notify-only seats on the current plan), so the invite could not
+  be sent and no account changes were made. User decided it's not worth
+  paying for on a solo project — single email owner remains the only alert
+  channel by choice, not by unfinished work. No error/log drain exists.
+- **Separately noted:** the UptimeRobot account is on a "Solo 10" trial (10
+  monitors, 60s interval) expiring in ~6 days from 2026-08-27 with
+  auto-renewal disabled; it will downgrade to the free plan afterward. User
+  chose not to investigate free-plan limits now ("it's working, no need to
+  test") — this is informational only, not an action item, unless it becomes
+  relevant later.
 
 ## Recovery verification
 
@@ -169,7 +178,9 @@ Updated: 2026-08-27
 1. UptimeRobot monitor, owner, email alert delivery, AND a real controlled
    down/recovery incident are all live-verified (2026-08-27), including a
    real misconfiguration (3xx/redirects counted as "Up") found and fixed
-   along the way. Remaining: a backup/escalation channel beyond one email.
+   along the way. Backup/escalation channel beyond one email was considered
+   and deliberately declined (paid-seat requirement, not worth it for a solo
+   project) — this line item is closed, not pending.
 2. Restore a real backup into a separate disposable project, run the new
    read-only verifier, prove application compatibility through an isolated
    Preview, and clean up only after confirming no deployment points at it.
@@ -256,6 +267,21 @@ recovered, real "Monitor is UP" email at 19:02:25Z, one closed incident
 (1m 20s down) recorded on the dashboard. Full closed-loop proof, independently
 confirmed via Gmail at every step, not simulator output. Full detail in
 `CURRENT_TASK.md`.
+
+## Claude addendum — backup alert channel declined, trial-expiry noted (2026-08-27)
+
+Attempted to add `dsarao47@gmail.com` as a second notify-only alert contact
+per user request. UptimeRobot requires a purchased seat for any notify-only
+contact beyond the account owner (0 of 0 seats on the current plan) — the
+invite failed server-side ("Resource not found") and nothing was created or
+charged. Presented the cost tradeoff; user decided it's not worth paying for
+on a solo project, so the single-email setup stands by deliberate choice.
+
+While checking seat pricing, found the account is on a "Solo 10" trial (10
+monitors, 60s interval) expiring in ~6 days with auto-renewal off — it will
+downgrade to the free plan afterward. Flagged this to the user; they chose
+not to investigate free-plan limits now. Purely informational, not an action
+item unless raised again.
 
 ## Claude addendum — PR #4 (calendar-Undo fix) merged (2026-08-27)
 

@@ -272,5 +272,27 @@ Verified via Gmail: real "Monitor is UP: AI Receptionist — liveness" at
 This is genuine, independently-confirmed down-detection → alert →
 recovery-alert proof — not a manual test-send, not simulator output. This
 agent never typed the bypass secret at any point; both the corruption and
-the restoration were done by the user directly. Remaining, explicitly not
-done: a backup/escalation alert channel beyond the one email address.
+the restoration were done by the user directly.
+
+## Claude — backup alert channel declined, trial-expiry noted (2026-08-27)
+
+User asked to add a backup alert channel and provided a second email
+(`dsarao47@gmail.com`). Attempted adding it as a notify-only contact via
+UptimeRobot's Team Members > Invite flow (role "Notify-only (without
+login)", no account access). The invite failed: "Unable to invite user —
+Resource you were trying to access is not found." Checked Team Members
+directly: "Currently using 0 of 0 notify-only seats" — this requires a
+purchased seat on this plan, it is not a free feature. No invite was sent,
+no account or billing change occurred.
+
+Presented the cost tradeoff to the user; they decided it's not worth paying
+for on a solo project. The single-email alert contact remains by deliberate
+choice — this closes the backup-channel item, it is not left open.
+
+Separately, while checking seat/billing pages, found the account is running
+a "Solo 10" trial (10 monitors, 60-second interval) that expires in ~6 days
+with auto-renewal disabled; it will silently downgrade to the free plan
+afterward (exact free-tier limits not checked — did not go further into
+checkout). Flagged this to the user; they said it's working and declined
+further investigation for now. Purely informational for future reference,
+not an action item.

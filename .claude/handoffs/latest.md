@@ -216,4 +216,17 @@ restored the real secret: monitor recovered, real "Monitor is UP" email at
 19:02:25Z. One closed incident, 1m 20s down, recorded on the dashboard. This
 agent never typed the bypass secret; both edits were made by the user.
 
-Still open: no backup/escalation channel beyond one email address.
+Still open at that point: no backup/escalation channel beyond one email
+address.
+
+## Claude — backup alert channel declined, trial-expiry noted (2026-08-27)
+
+Attempted to add `dsarao47@gmail.com` as a notify-only backup contact per
+user request; UptimeRobot requires a purchased seat for this (0 of 0
+available) and the invite failed server-side. No account or billing change
+occurred. User decided it's not worth paying for — single-email alerting
+stands by deliberate choice; this closes the item, it's not left open.
+
+Also found the account is on a "Solo 10" trial expiring in ~6 days
+(auto-renewal off), after which it downgrades to the free plan. Flagged to
+the user; they declined further investigation for now — informational only.
