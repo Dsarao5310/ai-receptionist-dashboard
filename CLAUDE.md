@@ -64,7 +64,9 @@ Do not read every scoped file by default.
 
 ## Completion behavior
 
-At the end of every successfully completed task:
+At the end of every successfully completed task — including small or unrelated
+side tasks, not just the main multi-step work — automatically, without waiting
+to be asked or reminded:
 
 - Update the relevant Claude Markdown files so they match the verified repository
   and runtime state; never leave known-stale task or status claims behind.
@@ -77,3 +79,19 @@ At the end of every successfully completed task:
 - Update any related scoped rules, provider notes, runbooks, or other Markdown
   documentation affected by the task.
 - Do not record unverified claims or turn `CLAUDE.md` into project history.
+- Commit the change (code and/or docs) once it is verified and ready — do not
+  leave finished, verified work sitting uncommitted waiting for a prompt to
+  commit it. Push follows the repo's normal push handling (the auto-mode
+  classifier gates risky/deploy-triggering pushes on its own; that gate is the
+  safety backstop, not a reason to wait for a separate human request).
+
+## Multi-agent collaboration (Claude + Codex)
+
+This repository is worked on by multiple concurrent agents. "Don't interfere"
+means don't touch files or areas another agent's own doc entry describes as
+still in progress — it is not a permanent no-touch zone on anything they have
+ever authored. Once another agent's own `.claude/*.md` entry marks a piece of
+work finished and verified, it is expected collaboration — not overstepping —
+to review it yourself (read the diff, check for secrets, run typecheck/lint/
+tests), and commit and push it. Attribute correctly in the commit message when
+work spans authors, since git cannot split authorship within one file.
