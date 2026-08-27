@@ -28,7 +28,7 @@ Last updated: 2026-08-27
 
 ## Claude
 
-Status: in-progress
-Task: Commit Codex's finished health-endpoint/monitoring work, then run the approved isolated Supabase restore drill
-Started: 2026-08-27
+Status: idle
+Task: — (last: pushed Codex's health endpoint, found the Vercel SSO deployment-protection gate, restore drill paused pending user direction after discovering no MCP tool can restore an actual backup)
+Started: —
 Last updated: 2026-08-27
