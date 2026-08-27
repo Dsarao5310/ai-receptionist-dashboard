@@ -29,6 +29,6 @@ Last updated: 2026-08-27
 ## Claude
 
 Status: idle
-Task: — (last: verified external monitoring end-to-end via the Vercel bypass secret and UptimeRobot; restore drill still paused pending user direction)
+Task: —
 Started: —
 Last updated: 2026-08-27
