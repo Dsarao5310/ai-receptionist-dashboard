@@ -21,14 +21,14 @@ already mandatory. There is no live polling.
 
 ## Codex
 
-Status: idle
-Task: — (last: locally verified liveness endpoint; Production push remains explicitly gated)
-Started: —
+Status: in-progress
+Task: Reconcile stale monitoring state and prepare the safe migration-based restore rehearsal
+Started: 2026-08-27
 Last updated: 2026-08-27
 
 ## Claude
 
-Status: idle
-Task: —
-Started: —
+Status: in-progress
+Task: Continue UI/accessibility QA pass on remaining pages (Calls, Analytics, AI Receptionist, Business Profile, Connections) and recheck npm audit
+Started: 2026-08-27
 Last updated: 2026-08-27
