@@ -1,11 +1,12 @@
 # Latest Handoff
 
 Updated: 2026-08-27
-Status: PRODUCTION LIVENESS LIVE-VERIFIED; EXTERNAL MONITOR CONFIG UNVERIFIED
+Status: READ-ONLY RECOVERY VERIFIER READY; TRUE BACKUP RESTORE UNPERFORMED
 
 ## Repository checkpoint
 
-- Local `master` and `origin/master`: `f2d725c`. Health route `d1b2d84` and proxy
+- Base before the recovery change: local `master` and `origin/master` at
+  `cf8ae0b`. Health route `d1b2d84` and proxy
   fix `bf8774b` are deployed ancestors.
 - `origin/staging` remains `64fa59a`.
 - Preserve and exclude the pre-existing untracked `.claude/worktrees/`.
@@ -21,16 +22,22 @@ Status: PRODUCTION LIVENESS LIVE-VERIFIED; EXTERNAL MONITOR CONFIG UNVERIFIED
 - Added monitoring readiness and operations-runbook guidance.
 - Added `/api/health` to the proxy's public allowlist without opening any
   business route.
+- Added `npm run db:recovery:verify`, a content-free, read-only verifier for a
+  backup already restored into a separate disposable Supabase project.
+- It refuses known staging/Production refs, mismatched projects/roles, and an
+  incorrect project-bound confirmation before connecting.
 
 ## Verification
 
 - Focused health tests: 2/2 passed.
-- Full gate: typecheck, lint, 44/44 files and 572/572 tests passed.
+- Full gate: typecheck, lint, 45/45 files and 577/577 tests passed.
 - Optimized Next.js production build passed with `/api/health` dynamic.
 - Client-secret audit passed across 56 artifacts without printing values.
 - Focused route/proxy tests passed 6/6 after the proxy fix.
 - Rebuilt production server passed unauthenticated local GET/HEAD through the
   real proxy: 200, minimal/body-free responses, and expected no-store headers.
+- Recovery guards passed 5/5; the staging-ref command failed closed before any
+  database connection. Client-secret audit passed across 56 artifacts.
 
 ## Remaining boundary
 
@@ -43,9 +50,9 @@ Status: PRODUCTION LIVENESS LIVE-VERIFIED; EXTERNAL MONITOR CONFIG UNVERIFIED
   synchronized, with no retryable or `sync_required` rows. Production Pinecone
   remains fail-closed.
 - n8n, Twilio, Vapi/model live certification, privacy operations, external
-  monitoring ownership, and a true backup restore remain pilot blockers. A
-  migration-only disposable-schema rehearsal is the next safe local substitute
-  and must not be called backup-restore certification.
+  monitoring ownership, and a true backup restore remain pilot blockers. The
+  verifier is ready, but restored-target execution, isolated Preview proof, and
+  cleanup evidence need a real disposable restored project.
 
 ## Claude — health endpoint pushed; found platform-level SSO gate (2026-08-27)
 

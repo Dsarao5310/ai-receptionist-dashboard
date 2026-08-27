@@ -159,3 +159,22 @@ backup there, and verify:
 Destroy the disposable target only after the evidence is recorded and an
 operator has confirmed no active deployment points to it. Until this drill is
 performed, recovery remains **PARTIAL**, not live verified.
+
+### Read-only restored-target verification
+
+After an operator restores a real backup into a separate disposable Supabase
+project and provisions its `app_runtime`/`app_migrator` roles, verify it with:
+
+```text
+RECOVERY_DATABASE_URL=<disposable app_runtime URL>
+RECOVERY_MIGRATION_DATABASE_URL=<disposable app_migrator URL>
+npm run db:recovery:verify -- --expected-project-ref <disposable-ref> --confirm "VERIFY DISPOSABLE RESTORE <disposable-ref>"
+```
+
+The verifier refuses the known staging and Production refs, requires both URLs
+to match the explicitly confirmed disposable ref and expected roles, opens only
+read-only transactions, and prints content-free migration, schema, role/grant,
+constraint, and aggregate row-count evidence. It never creates, drops, migrates,
+seeds, or calls providers. A successful run verifies the restored database
+shape; application Preview compatibility and operator-confirmed cleanup remain
+separate required steps.

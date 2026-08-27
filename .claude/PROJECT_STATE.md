@@ -4,7 +4,8 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; local `HEAD` and `origin/master` are `f2d725c`. Monitoring
+- Branch: `master`; local `HEAD` and `origin/master` were `cf8ae0b` before the
+  recovery-verifier change. Monitoring
   implementation commits `d1b2d84` and `bf8774b` are deployed ancestors;
   `origin/staging` remains `64fa59a`.
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
@@ -45,6 +46,21 @@ Updated: 2026-08-27
   UptimeRobot account exists. Monitor creation, thresholds, alert contacts,
   named owner/backup, acknowledgement target, escalation path, and controlled
   alert/recovery proof remain unverified. No error/log drain exists.
+
+## Recovery verification
+
+- `npm run db:recovery:verify` is a read-only verifier for a real backup already
+  restored into a separate disposable Supabase project.
+- Target guards require recovery-only `app_runtime`/`app_migrator` URLs, an exact
+  project ref and project-bound confirmation, and refuse the known staging and
+  Production refs before database access.
+- Evidence is content-free: migration completeness/checksums, required tables,
+  composite tenant constraints, role/grant boundaries, and aggregate row counts.
+- The verifier performs no create/drop/migrate/seed/provider action. Five target-
+  guard tests pass, and the known staging-ref command blocked before connecting.
+- True backup restore, restored-target execution, Preview compatibility, and
+  operator-confirmed cleanup remain unperformed because no disposable restored
+  project or backup-restore tool is available.
 
 ## Business Knowledge and Pinecone
 
@@ -89,13 +105,15 @@ Updated: 2026-08-27
 
 ## Current verification
 
-- Accepted uncontested gate: **44/44 files; 572/572 tests passed**.
+- Accepted uncontested gate: **45/45 files; 577/577 tests passed**.
 - TypeScript, full lint, production build, and client-secret audit passed.
 - Focused health-route verification passed 2/2; the build lists `/api/health`
   as dynamic and the client-secret audit covered 56 artifacts.
 - Focused route/proxy regression verification passed 6/6 after adding the
   health path to the narrow public allowlist. Local production GET and HEAD both
   returned 200 with the expected minimal body/body-free response and headers.
+- Recovery target guards passed 5/5, the known staging ref failed closed before
+  database access, and the client-secret audit passed across 56 artifacts.
 - The lock was independently exercised with two overlapping schema-hardening
   runs: both passed 3/3, and the second waited for the first to release ownership.
 - Live staging reconciliation: 8/8 attempted and synchronized across two
@@ -107,9 +125,9 @@ Updated: 2026-08-27
 
 1. Finish and verify the UptimeRobot monitor, named owners, thresholds,
    notification/escalation path, and one controlled failure/recovery alert.
-2. Run a migration-based disposable-schema recovery rehearsal without touching
-   staging or production; keep true backup-restore certification blocked until
-   Supabase dashboard restore access is available.
+2. Restore a real backup into a separate disposable project, run the new
+   read-only verifier, prove application compatibility through an isolated
+   Preview, and clean up only after confirming no deployment points at it.
 3. Enable Production Pinecone only as a separate approved data-policy,
    credential, cost, monitoring, deployment, and certification phase.
 4. Environment changes, Vercel project removal, remote migrations, and provider

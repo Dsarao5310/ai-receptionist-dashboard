@@ -19,6 +19,7 @@
     "db:reset": "node scripts/db.mjs reset",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:staging": "tsx scripts/seed-staging.ts",
+    "db:recovery:verify": "tsx scripts/recovery-verify.ts",
     "calendar:preflight": "node scripts/calendar-preflight.mjs",
     "n8n:preflight": "tsx scripts/n8n-preflight.ts",
     "privacy:preflight": "tsx scripts/privacy-preflight.ts",

@@ -21,9 +21,9 @@ already mandatory. There is no live polling.
 
 ## Codex
 
-Status: in-progress
-Task: Reconcile stale monitoring state and prepare the safe migration-based restore rehearsal
-Started: 2026-08-27
+Status: idle
+Task: — (last: read-only restored-target verifier implemented and verified)
+Started: —
 Last updated: 2026-08-27
 
 ## Claude

@@ -1,12 +1,13 @@
 # Current Task
 
-Phase: **Monitoring and alerting foundation**
+Phase: **Recovery verification foundation**
 
-Status: **PRODUCTION LIVENESS LIVE-VERIFIED VIA VERCEL BYPASS — EXTERNAL MONITOR CONFIGURATION UNVERIFIED — 2026-08-27**
+Status: **READ-ONLY RESTORED-TARGET VERIFIER READY — TRUE BACKUP RESTORE STILL BLOCKED — 2026-08-27**
 
 ## Authoritative checkpoint
 
-- Local `master` and `origin/master` are at `f2d725c`; the health route and proxy
+- Local `master` and `origin/master` were at Claude's completed QA checkpoint
+  `cf8ae0b` before the recovery-verifier change; the health route and proxy
   fix are committed ancestors `d1b2d84` and `bf8774b`.
   `origin/staging` remains isolated at `64fa59a`.
 - The working tree is clean except the live coordination update and the
@@ -42,6 +43,9 @@ Status: **PRODUCTION LIVENESS LIVE-VERIFIED VIA VERCEL BYPASS — EXTERNAL MONIT
 - The rebuilt production server was exercised locally through the real proxy:
   GET and HEAD returned 200, GET returned only `{ "status": "ok" }`, HEAD had
   no body, and all no-store/nosniff headers were present.
+- Recovery target guards passed **5/5**. The complete post-change gate passed
+  typecheck, full lint, **45/45 test files and 577/577 tests**, plus the
+  56-artifact client-secret audit.
 
 ## Runtime boundary and next action
 
@@ -59,6 +63,23 @@ The next safe implementation work is a migration-based disposable-schema
 recovery rehearsal. It can verify migration replay and invariant checks, but it
 must not be represented as a provider-managed backup restore. A true backup
 restore remains blocked on Supabase dashboard restore access.
+
+## Recovery verification foundation
+
+- Added `npm run db:recovery:verify` for a real backup already restored into a
+  separate disposable Supabase project.
+- It requires recovery-only runtime/migrator URLs, an exact expected project ref,
+  and the project-bound phrase `VERIFY DISPOSABLE RESTORE <ref>`.
+- It refuses the known staging and Production refs before opening a connection.
+- Every database inspection runs in a read-only transaction and reports only
+  migration totals/drift, schema-object and composite-constraint counts,
+  role/grant booleans, and aggregate restored-row counts.
+- It never creates, drops, migrates, seeds, exposes secret values, or calls a
+  provider. The known staging-ref command was exercised and blocked before any
+  database connection.
+- No Docker, local Postgres, disposable restored project, or Supabase backup
+  restore API/tool is available in this environment, so the actual restore drill
+  and Preview compatibility proof remain unperformed.
 
 ## Claude — pushed health endpoint, found it's SSO-gated, restore drill next (2026-08-27)
 

@@ -28,10 +28,10 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 | Pinecone/knowledge provider | STAGING LIVE-CERTIFIED; HISTORICAL BACKLOG COMPLETE | Server-issued namespaces, durable reconciliation state, tombstones, monotonic versions, bounded contracts, deterministic simulation, local-authority hydration, and staging-only live policy pass. The database-backed UI flow is certified end-to-end and migrations are 19/19 in both environments. After provider-free previews, an explicitly approved bounded execution synchronized all eight historical rows across two authorized workspaces with zero adverse outcomes or `sync_required`; final status is Coastal 5/5 and Harbour 4/4 synced. Production has no Pinecone credential. See `knowledge-provider-readiness.md`. |
 | Model provider | APPLICATION-READY + SIMULATOR VERIFIED | Server-only AI Gateway transport, approved cross-provider fallback, strict reply/analysis outputs, deterministic evals, prompt-injection handling, normalized errors, and time/token/cost guardrails pass. No gateway auth, live request, billed usage, latency/failover evidence, Vapi connection, or live certification. See `model-provider-readiness.md`. |
 | Call privacy lifecycle | APPLICATION-READY + DATABASE/ACTION-TEST VERIFIED | Fail-closed recording mode, minimal consent evidence, bounded retention, sensitive-access redaction, a disabled authenticated/leased purge scheduler, owner/operator policy UI, durable identity-gated erasure requests, and a sanitized read-only platform-operator health page pass. Its schema is in the verified remote 17-file checkpoint. The cron route is deployed but disabled; true reauthentication, legal approval, configured schedule secret, external alerting, provider recording ingestion, and live certification remain. See `privacy-readiness.md`. |
-| CI | COMPLETE FOR CURRENT COMMITTED FOUNDATION | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. The current local monitoring foundation passed the uncontested database-backed gate: 44/44 files and 572/572 tests. |
-| Monitoring | LOCAL END-TO-END LIVENESS; EXTERNAL BLOCKER | Dynamic, content-free, no-store `GET`/`HEAD /api/health` is locally verified through the production server and auth proxy without database/provider probes. Production push/HTTPS proof and all external monitoring remain. No production error tracker, trace/log drain, external uptime monitor, or provider health dashboard with an owner exists yet. See `monitoring-readiness.md`. |
+| CI | COMPLETE FOR CURRENT COMMITTED FOUNDATION | GitHub Actions installs on pinned Node 20, runs `next typegen`, then typecheck, lint, credential-free tests, fail-closed build, and client-secret audit. The current recovery-verification foundation passed the uncontested database-backed gate: 45/45 files and 577/577 tests. |
+| Monitoring | PRODUCTION LIVENESS LIVE-VERIFIED; OPERATIONS INCOMPLETE | Dynamic, content-free, no-store `GET`/`HEAD /api/health` is deployed and passed live HTTPS verification through Vercel protection using the locally held automation bypass. An UptimeRobot account exists, but monitor configuration, thresholds, contacts, owners, controlled alert/recovery proof, and error/log draining remain unverified. See `monitoring-readiness.md`. |
 | Alerting | NOT STARTED | No paging route, severity policy, acknowledgement target, or escalation schedule. |
-| Backups/recovery | PARTIAL | Forward-only and isolated restore procedures are documented; no isolated restore drill has been executed. |
+| Backups/recovery | PARTIAL; READ-ONLY VERIFIER READY | Forward-only and isolated restore procedures are documented. A fail-closed read-only verifier now checks a separately restored disposable project's migration ledger, schema, tenant constraints, roles/grants, and aggregate rows while refusing known staging/Production refs. No real backup restore, restored-target verification, Preview compatibility proof, or cleanup has been executed. |
 | Security | PARTIAL | Tenant hardening, private schemas, credential rotation, bounded webhooks, safe redirects, client-secret audits, and focused tests exist. Nodemailer was updated to 9.0.5 in `42e8bad`; `b91524c` adds the override needed for strict clean installs. Claude verified zero audit vulnerabilities. Recurring scanning and operational response remain. |
 | Performance | NOT STARTED | No production load, concurrency, latency-budget, or capacity certification exists. |
 | UI/mobile/accessibility | PARTIAL | Core hosted role flows passed, but comprehensive mobile, keyboard, screen-reader, loading, failure, and retry QA is incomplete. |
@@ -48,9 +48,9 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
   earlier complete Knowledge add/search/delete certification remains applicable;
   this phase added provider-free, audited dry-run evidence only.
 - Production origin: `https://ai-receptionist-dashboard-jade.vercel.app`
-- Current Production deployment: `dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N`, commit
-  `4899725`, READY. Vercel reported no Production runtime error clusters in the
-  subsequent one-hour inspection window.
+- Live-verified monitoring deployment: `dpl_DzM2nQB42EGDVccnDdupih8zQf6j`, commit
+  `f2d725c`, READY. The current two-hour runtime scan found no health-route error
+  cluster; reported Auth.js `AccessDenied` events belong to an older deployment.
 - Production has the merged Business Knowledge code. Pinecone remains disabled
   there because no Production credential is configured; no Production provider
   certification is claimed.
@@ -93,14 +93,19 @@ not deploy and does not receive production or provider credentials.
 
 ## Verification for this pass
 
+- Recovery-verifier target guards passed 5/5. The command refused the known
+  staging ref before any database connection. The consolidated gate passed
+  typecheck, full lint, 45/45 test files and 577/577 tests; the client-secret
+  audit passed across 56 artifacts. No backup restore or remote mutation ran.
 - Monitoring liveness verification passed focused route tests 2/2, full
   typecheck and lint, 44/44 test files and 572/572 tests, the optimized
   production build, and the 56-artifact client-secret audit. The build lists
   `/api/health` as a dynamic route. Focused route/proxy tests passed 6/6, and a
   rebuilt production server returned the expected unauthenticated 200 GET/HEAD,
   minimal/body-free responses, and no-store headers locally. The
-  Production-triggering push and HTTPS verification are still pending; no
-  external uptime or alerting system is claimed.
+  Production deployment and HTTPS GET/HEAD verification passed with the locally
+  held Vercel automation bypass. The UptimeRobot monitor and alerting policy are
+  not yet claimed as configured or tested.
 - Current committed Knowledge reconciliation hardening: accepted uncontested
   verification passed 42/42 files and 564/564 tests, plus TypeScript, full lint,
   production build, and the client-secret audit. Two overlapping focused runs

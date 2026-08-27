@@ -4,8 +4,8 @@ Updated: 2026-08-27
 
 ## Decision
 
-**LOCAL END-TO-END LIVENESS READY. PRODUCTION PUSH, EXTERNAL MONITORING, AND
-ALERT OWNERSHIP NOT CONFIGURED.**
+**PRODUCTION LIVENESS LIVE-VERIFIED VIA VERCEL AUTOMATION BYPASS. EXTERNAL
+MONITOR CONFIGURATION AND ALERT OWNERSHIP UNVERIFIED.**
 
 The application exposes a deliberately minimal `GET`/`HEAD` `/api/health`
 liveness route. It proves that the deployed Next.js route handler can execute;
@@ -37,12 +37,14 @@ is healthy.
 - A rebuilt production server passed unauthenticated GET and HEAD locally
   through the real proxy with HTTP 200, the minimal/body-free responses, and
   every expected no-store/nosniff header.
-- Deployed HTTPS verification remains required before the endpoint is called
-  production-ready.
+- Production deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY. GET and
+  HEAD passed live HTTPS verification with the locally held Vercel automation
+  bypass; the secret was neither printed nor committed.
 
 ## External work still required
 
-1. Select an uptime service and point it at the Production `/api/health` URL.
+1. Finish configuring the existing UptimeRobot account to probe the Production
+   `/api/health` URL with the Vercel automation bypass.
 2. Choose the probe interval, consecutive-failure threshold, recovery threshold,
    and maintenance-window procedure.
 3. Assign a named primary owner, backup owner, notification route,
