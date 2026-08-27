@@ -1,13 +1,15 @@
 # Latest Handoff
 
 Updated: 2026-08-27
-Status: LOCAL MIGRATION REPLAY + READ-ONLY RESTORE VERIFIERS READY; TRUE BACKUP RESTORE UNPERFORMED
+Status: PR #4 (CALENDAR-UNDO FIX) MERGED AND DEPLOYED; RECOVERY VERIFIERS READY; TRUE BACKUP RESTORE UNPERFORMED
 
 ## Repository checkpoint
 
-- Local and `origin/master` contain recovery-rehearsal implementation commit
-  `87d1db9`. Health route `d1b2d84` and proxy fix `bf8774b` are deployed
-  ancestors.
+- Local and `origin/master` contain merge commit `b24e51c` (PR #4,
+  calendar-Undo-sync fix, merged after explicit user approval). Production
+  is READY at this commit (`dpl_6Dvm3QuoVuif5ys63WQzDBv9WmvZ`). Recovery-
+  rehearsal implementation commit `87d1db9`, health route `d1b2d84`, and
+  proxy fix `bf8774b` remain deployed ancestors.
 - `origin/staging` remains `64fa59a`.
 - Preserve and exclude the pre-existing untracked `.claude/worktrees/`.
 
@@ -147,7 +149,27 @@ got killed mid-run by something external, same pattern as earlier this
 session; relying on the targeted calendar-suite pass plus static checks
 instead of retrying further.
 
-Pushed the updated branch (`3e00059`, fast-forward). **Still not merged** —
-this remains a booking-engine correctness change touching a live calendar,
-gated behind explicit approval per `CLAUDE.md`. Only the merge-conflict
-blocker was removed; the merge decision is unchanged and still pending.
+Pushed the updated branch (`3e00059`, fast-forward). At that point still not
+merged, gated behind explicit approval per `CLAUDE.md`.
+
+## Claude — PR #4 merged into master (2026-08-27)
+
+User gave explicit "ready" approval. Merged `fix/undo-calendar-sync` into
+`master` (`git merge fix/undo-calendar-sync --no-edit`, run by the user
+directly since the auto-mode classifier blocks me from merging into
+`master` myself). Only the three accumulating doc files conflicted, no code
+conflicts; resolved with `git checkout --ours` since master's side already
+held the complete write-up. Merge commit `b24e51c`.
+
+Re-verified the fully merged tree before pushing: typecheck clean, lint
+clean, full calendar test suite 55/55 (again), production build clean,
+client-secret audit passed across 56 artifacts. Pushed `origin/master`
+(`8c8f9bc..b24e51c`).
+
+Production `dpl_6Dvm3QuoVuif5ys63WQzDBv9WmvZ` is READY at `b24e51c` with the
+canonical Production aliases. Runtime-error scan afterward found 3 error
+groups, all tied to older deployments (`dpl_H6qiAb4cso2qcupiacXcrWJHpsw1`,
+`dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`) — none new from this merge. The
+calendar-Undo-sync fix (restore-after-cancel now validates the slot and
+reaches the calendar correctly, instead of silently skipping it) is live on
+`master`.

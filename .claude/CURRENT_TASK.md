@@ -6,9 +6,10 @@ Status: **LOCAL MIGRATION REPLAY + READ-ONLY RESTORE VERIFIERS READY — TRUE BA
 
 ## Authoritative checkpoint
 
-- Local and `origin/master` contain recovery-rehearsal implementation commit
-  `87d1db9`; the health route and proxy fix are committed ancestors `d1b2d84`
-  and `bf8774b`.
+- Local and `origin/master` contain merge commit `b24e51c` (PR #4,
+  calendar-Undo-sync fix, merged into master). Recovery-rehearsal commit
+  `87d1db9` and the health route/proxy fix `d1b2d84`/`bf8774b` remain
+  ancestors.
   `origin/staging` remains isolated at `64fa59a`.
 - The pre-existing untracked `.claude/worktrees/` is not part of the task and
   must remain untouched.
@@ -182,7 +183,27 @@ caused by this change); relying on the targeted calendar-suite pass plus
 static checks instead of retrying further.
 
 Pushed the updated branch (`3e00059`, fast-forward, no history rewritten).
-**Still not merged** — this remains a booking-engine correctness change
-touching a live calendar, which `CLAUDE.md` explicitly gates behind explicit
-approval. This work only removed the merge-conflict blocker; the merge
-decision itself is unchanged and still pending.
+At that point still not merged — the merge decision itself was gated behind
+explicit approval per `CLAUDE.md`.
+
+## Claude — PR #4 (calendar-Undo fix) merged into master (2026-08-27)
+
+User gave explicit "ready" approval for the merge. Merged
+`fix/undo-calendar-sync` into `master` in the branch's existing worktree
+(`git merge fix/undo-calendar-sync --no-edit`, run by the user directly
+after the auto-mode classifier blocked me from running it). Only the three
+accumulating doc files conflicted (no code conflicts), resolved with
+`git checkout --ours` since master's side already held the complete,
+current write-up. Merge commit `b24e51c`.
+
+Re-verified the fully merged tree before pushing: typecheck clean, lint
+clean, the full calendar test suite 55/55 passed again, production build
+clean, and the client-secret audit passed across 56 artifacts. Pushed
+`origin/master` (`8c8f9bc..b24e51c`).
+
+Production deployment `dpl_6Dvm3QuoVuif5ys63WQzDBv9WmvZ` is READY at
+`b24e51c` with the canonical Production aliases attached. A runtime-error
+scan afterward found 3 error groups, all tied to older deployments
+(`dpl_H6qiAb4cso2qcupiacXcrWJHpsw1`, `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`), not
+this merge — no new errors from the merge deploy. The calendar-Undo-sync fix
+is now live on `master`.

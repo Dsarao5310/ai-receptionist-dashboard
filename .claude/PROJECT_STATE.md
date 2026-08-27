@@ -4,9 +4,10 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; local and `origin/master` contain recovery-rehearsal
-  implementation commit `87d1db9`. Monitoring implementation commits `d1b2d84`
-  and `bf8774b` are deployed ancestors;
+- Branch: `master`; local and `origin/master` contain merge commit `b24e51c`
+  (PR #4, calendar-Undo-sync fix, merged after explicit user approval).
+  Recovery-rehearsal commit `87d1db9` and monitoring commits `d1b2d84`/
+  `bf8774b` are deployed ancestors;
   `origin/staging` remains `64fa59a`.
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
   their tests, current documentation, and whole-run `app_test` advisory lock.
@@ -198,11 +199,14 @@ apparently-unlabeled elements and confirmed each is a `read_page` tool
 display quirk (multi-span text or placeholder-vs-label), not a real code
 defect. No code changes.
 
-## Claude addendum — PR #4 (calendar-Undo fix) brought up to date (2026-08-27)
+## Claude addendum — PR #4 (calendar-Undo fix) merged (2026-08-27)
 
-`fix/undo-calendar-sync` (`e59cc7c`) merged with current `master` to stay
-conflict-free (doc files only, no code conflicts). Re-verified against the
-updated tree: typecheck, lint, full calendar suite (55/55, twice), and
-production build all pass. Pushed as `3e00059`, fast-forward. Still
-unmerged — booking-engine approval gate unchanged. Full detail in
-`CURRENT_TASK.md`.
+`fix/undo-calendar-sync` (`e59cc7c`) was first brought up to date with
+`master` (`3e00059`), then, after explicit user "ready" approval, merged
+into `master` as `b24e51c` (doc-file conflicts only, resolved via
+`git checkout --ours`). Re-verified the merged tree: typecheck, lint, full
+calendar suite (55/55), production build, and the 56-artifact client-secret
+audit all pass. Pushed `origin/master`. Production
+`dpl_6Dvm3QuoVuif5ys63WQzDBv9WmvZ` is READY at `b24e51c`; runtime-error scan
+found nothing new (3 groups, all tied to older deployments). The
+calendar-Undo-sync fix is now live. Full detail in `CURRENT_TASK.md`.
