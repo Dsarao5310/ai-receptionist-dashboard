@@ -27,8 +27,9 @@ Updated: 2026-08-27
   `dpl_6d3RbTTQ8BVPZorSGLY7sLy5SLC9` is READY in Production at `43c7d91`; its
   fresh one-hour runtime-error scan is clean. The live-verified monitoring
   deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` remains READY at `f2d725c`.
-  Isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`
-  remains READY at `64fa59a`. The one-hour Production runtime-error scan is
+  Isolated staging deployment `dpl_8SuiPxLYLawkfkZQu5KNgZQPMkKr`
+  is READY at `64fa59a` (redeployed 2026-08-27 to pick up the rotated
+  Pinecone key). The one-hour Production runtime-error scan is
   clean. Generic Preview remains fail-closed. The duplicate
   `ai-receptionist-dashboard-dsarao` project remains approval-gated cleanup debt.
 - Recovery-rehearsal implementation deployment
