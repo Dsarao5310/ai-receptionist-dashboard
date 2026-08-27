@@ -4,16 +4,17 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; local `HEAD` and `origin/master` were `cf8ae0b` before the
-  recovery-verifier change. Monitoring
-  implementation commits `d1b2d84` and `bf8774b` are deployed ancestors;
+- Branch: `master`; local `HEAD` contains the committed local-rehearsal
+  foundation and is one commit ahead of `origin/master` at deployed
+  recovery-verifier implementation `43c7d91`. Monitoring implementation commits
+  `d1b2d84` and `bf8774b` are deployed ancestors;
   `origin/staging` remains `64fa59a`.
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
   their tests, current documentation, and whole-run `app_test` advisory lock.
 - `42e8bad` updates Nodemailer to 9.0.5; `b91524c` adds the npm override needed
   for strict clean-environment dependency resolution.
-- Working tree: the live coordination update plus the pre-existing untracked
-  `.claude/worktrees/`.
+- Working tree: only the pre-existing untracked `.claude/worktrees/` after the
+  local-rehearsal commit.
 
 ## Live platform status
 
@@ -22,8 +23,11 @@ Updated: 2026-08-27
 - Authentication and tenancy: Auth.js is authoritative. Hosted staging OAuth,
   RBAC, and tenant checks are live-verified; cross-tenant leakage remains a
   release blocker.
-- Vercel: Production deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY at
-  `f2d725c`; isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`
+- Vercel: Recovery-verifier implementation deployment
+  `dpl_6d3RbTTQ8BVPZorSGLY7sLy5SLC9` is READY in Production at `43c7d91`; its
+  fresh one-hour runtime-error scan is clean. The live-verified monitoring
+  deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` remains READY at `f2d725c`.
+  Isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`
   remains READY at `64fa59a`. The one-hour Production runtime-error scan is
   clean. Generic Preview remains fail-closed. The duplicate
   `ai-receptionist-dashboard-dsarao` project remains approval-gated cleanup debt.
@@ -49,6 +53,15 @@ Updated: 2026-08-27
 
 ## Recovery verification
 
+- `npm run db:recovery:rehearse` provides a local-only migration replay in a
+  generated disposable schema. It never loads `.env.local`, refuses Production
+  and non-loopback hosts, verifies content-free migration/schema invariants, and
+  cleans up only its generated schema.
+- Seven rehearsal guards and all five restored-target guards pass; typecheck,
+  repository lint, and the 51-artifact client-secret audit pass. Missing-URL and
+  hosted-target commands blocked before connection. Actual replay remains
+  unexecuted because Docker, `psql`, the Supabase CLI, and loopback Postgres are
+  unavailable; it would not count as backup restore evidence even if run.
 - `npm run db:recovery:verify` is a read-only verifier for a real backup already
   restored into a separate disposable Supabase project.
 - Target guards require recovery-only `app_runtime`/`app_migrator` URLs, an exact

@@ -2,16 +2,16 @@
 
 Phase: **Recovery verification foundation**
 
-Status: **READ-ONLY RESTORED-TARGET VERIFIER READY — TRUE BACKUP RESTORE STILL BLOCKED — 2026-08-27**
+Status: **LOCAL MIGRATION REPLAY + READ-ONLY RESTORE VERIFIERS READY — TRUE BACKUP RESTORE STILL BLOCKED — 2026-08-27**
 
 ## Authoritative checkpoint
 
-- Local `master` and `origin/master` were at Claude's completed QA checkpoint
-  `cf8ae0b` before the recovery-verifier change; the health route and proxy
-  fix are committed ancestors `d1b2d84` and `bf8774b`.
+- Local `master` contains the committed local-rehearsal foundation and is one
+  commit ahead of `origin/master` at deployed recovery-verifier commit
+  `43c7d91`; the health route and proxy fix are committed ancestors `d1b2d84`
+  and `bf8774b`.
   `origin/staging` remains isolated at `64fa59a`.
-- The working tree is clean except the live coordination update and the
-  pre-existing untracked `.claude/worktrees/`, which is not part of the task and
+- The pre-existing untracked `.claude/worktrees/` is not part of the task and
   must remain untouched.
 - Claude's concurrent `7cad923` coordination change is understood and does not
   overlap this route or documentation work.
@@ -46,8 +46,19 @@ Status: **READ-ONLY RESTORED-TARGET VERIFIER READY — TRUE BACKUP RESTORE STILL
 - Recovery target guards passed **5/5**. The complete post-change gate passed
   typecheck, full lint, **45/45 test files and 577/577 tests**, plus the
   56-artifact client-secret audit.
+- Local rehearsal guards passed **7/7**. Typecheck and repository lint passed;
+  lint now ignores separate `.claude/worktrees/` checkouts and their generated
+  artifacts. The combined recovery guard suite passed **12/12**, the current
+  client-secret audit passed across **51 artifacts**, and both missing-URL and
+  hosted-target commands failed closed before database access.
 
 ## Runtime boundary and next action
+
+Recovery-verifier implementation deployment
+`dpl_6d3RbTTQ8BVPZorSGLY7sLy5SLC9` is READY in Production at `43c7d91` and
+serves the intended Production aliases. The fresh one-hour Vercel runtime-error
+scan found no errors. This deploy evidence does not claim that a backup restore
+or restored-target verification was performed.
 
 Production deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY at
 `f2d725c`. GET and HEAD were live-verified with the Vercel automation bypass and
@@ -59,12 +70,23 @@ and recovery thresholds, alert contacts, acknowledgement target, escalation
 path, and controlled alert/recovery evidence have not been verified. No error
 tracker or log/trace drain has been configured.
 
-The next safe implementation work is a migration-based disposable-schema
-recovery rehearsal. It can verify migration replay and invariant checks, but it
-must not be represented as a provider-managed backup restore. A true backup
-restore remains blocked on Supabase dashboard restore access.
+The local migration-replay rehearsal command is implemented but could not be
+executed because this environment has no loopback Postgres instance. It must not
+be represented as a provider-managed backup restore. The next material recovery
+step is still a real backup restored into a separate disposable Supabase
+project, which remains externally gated and unavailable here.
 
 ## Recovery verification foundation
+
+- Added `npm run db:recovery:rehearse`, which accepts only a dedicated loopback
+  Postgres URL and never loads `.env.local`.
+- It refuses Production mode and all non-loopback hosts, creates a unique
+  `recovery_rehearsal_*` schema, replays every source migration, verifies the
+  ledger/checksums, required tables, and composite tenant foreign keys, then
+  drops only that generated schema in `finally`.
+- This command is a source-reproducibility check, not backup-restore evidence.
+  It remains unexecuted because Docker, `psql`, the Supabase CLI, and a loopback
+  Postgres instance are unavailable in this environment.
 
 - Added `npm run db:recovery:verify` for a real backup already restored into a
   separate disposable Supabase project.

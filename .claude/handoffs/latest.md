@@ -1,13 +1,14 @@
 # Latest Handoff
 
 Updated: 2026-08-27
-Status: READ-ONLY RECOVERY VERIFIER READY; TRUE BACKUP RESTORE UNPERFORMED
+Status: LOCAL MIGRATION REPLAY + READ-ONLY RESTORE VERIFIERS READY; TRUE BACKUP RESTORE UNPERFORMED
 
 ## Repository checkpoint
 
-- Base before the recovery change: local `master` and `origin/master` at
-  `cf8ae0b`. Health route `d1b2d84` and proxy
-  fix `bf8774b` are deployed ancestors.
+- Local `master` contains the committed local-rehearsal foundation and is one
+  commit ahead of `origin/master` at deployed recovery-verifier commit
+  `43c7d91`. Health route `d1b2d84` and proxy fix `bf8774b` are deployed
+  ancestors.
 - `origin/staging` remains `64fa59a`.
 - Preserve and exclude the pre-existing untracked `.claude/worktrees/`.
 
@@ -26,6 +27,9 @@ Status: READ-ONLY RECOVERY VERIFIER READY; TRUE BACKUP RESTORE UNPERFORMED
   backup already restored into a separate disposable Supabase project.
 - It refuses known staging/Production refs, mismatched projects/roles, and an
   incorrect project-bound confirmation before connecting.
+- Added `npm run db:recovery:rehearse`, a loopback-only source-migration replay
+  using a generated schema that is removed in `finally`. It never loads
+  `.env.local` and refuses Production or any non-loopback host.
 
 ## Verification
 
@@ -38,8 +42,19 @@ Status: READ-ONLY RECOVERY VERIFIER READY; TRUE BACKUP RESTORE UNPERFORMED
   real proxy: 200, minimal/body-free responses, and expected no-store headers.
 - Recovery guards passed 5/5; the staging-ref command failed closed before any
   database connection. Client-secret audit passed across 56 artifacts.
+- Local rehearsal guards passed 7/7 and the combined recovery suite passed
+  12/12; typecheck, repository lint, and the 51-artifact client-secret audit
+  passed. Missing-URL and hosted-target commands failed closed before
+  connection. Docker, `psql`, the Supabase CLI, and loopback Postgres are
+  unavailable, so the actual migration replay was not run.
 
 ## Remaining boundary
+
+- Recovery-verifier implementation deployment
+  `dpl_6d3RbTTQ8BVPZorSGLY7sLy5SLC9` is READY in Production at `43c7d91`, with
+  the intended Production aliases attached. A fresh one-hour Vercel
+  runtime-error scan found no errors. This is deployment evidence only; no
+  restored database was contacted.
 
 - Production `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY. GET/HEAD passed live
   HTTPS verification with the locally held Vercel bypass; no secret was printed.
@@ -53,6 +68,8 @@ Status: READ-ONLY RECOVERY VERIFIER READY; TRUE BACKUP RESTORE UNPERFORMED
   monitoring ownership, and a true backup restore remain pilot blockers. The
   verifier is ready, but restored-target execution, isolated Preview proof, and
   cleanup evidence need a real disposable restored project.
+- The local rehearsal can be run later against loopback Postgres for source
+  reproducibility, but it must never be counted as backup-restore certification.
 
 ## Claude — health endpoint pushed; found platform-level SSO gate (2026-08-27)
 

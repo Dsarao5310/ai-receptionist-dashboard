@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local coordination worktrees are separate checkouts with their own
+    // generated artifacts and must be linted from their own roots.
+    ".claude/worktrees/**",
   ]),
 ]);
 

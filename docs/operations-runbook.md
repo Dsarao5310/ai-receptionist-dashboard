@@ -160,6 +160,26 @@ Destroy the disposable target only after the evidence is recorded and an
 operator has confirmed no active deployment points to it. Until this drill is
 performed, recovery remains **PARTIAL**, not live verified.
 
+### Local migration replay rehearsal (not a backup restore)
+
+When a loopback Postgres instance is available, the source migrations can be
+replayed in a one-use random schema without touching `app`, `app_test`, staging,
+or Production:
+
+```text
+RECOVERY_REHEARSAL_DATABASE_URL=<loopback Postgres URL>
+npm run db:recovery:rehearse -- --confirm "REHEARSE LOCAL MIGRATIONS <database-name>"
+```
+
+The command does not load `.env.local`, refuses Production mode and every
+non-loopback hostname, creates only a generated `recovery_rehearsal_*` schema,
+verifies migration checksums, required tables, and composite tenant foreign
+keys, and drops that exact generated schema in `finally`. It prints no row data
+or credential values. A migration replay proves source reproducibility only; it
+does not prove that Supabase backups contain the required data, custom-role
+password recovery, hosted settings, application Preview compatibility, or
+restore-time objectives.
+
 ### Read-only restored-target verification
 
 After an operator restores a real backup into a separate disposable Supabase
