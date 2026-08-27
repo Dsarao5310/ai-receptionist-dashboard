@@ -50,10 +50,22 @@ Updated: 2026-08-27
   only a bounded structured completion log.
 - This is deployment liveness only, not database, provider, workflow, tenant, or
   business-semantic health.
-- The Production route is reachable with the Vercel automation bypass, and an
-  UptimeRobot account exists. Monitor creation, thresholds, alert contacts,
-  named owner/backup, acknowledgement target, escalation path, and controlled
-  alert/recovery proof remain unverified. No error/log drain exists.
+- **Live-verified (2026-08-27):** an UptimeRobot monitor ("AI Receptionist —
+  liveness") is active against `/api/health`, checked every 1 minute, with the
+  `x-vercel-protection-bypass` header correctly configured — 100% uptime over
+  7/30/365 days, confirmed on the live dashboard, not just deployment evidence.
+  Alert contact is a single named owner (Dilpreet Singh, email), no delay/no
+  repeat. A UI-triggered test notification was sent and independently confirmed
+  delivered to the owner's real inbox (`alert@uptimerobot.com` →
+  `dsarao5310@gmail.com`, "TEST: Monitor is DOWN", received immediately) — the
+  alert-delivery channel is proven working end-to-end.
+- **Still open:** SMS/voice/push and all third-party integrations (Slack,
+  Teams, webhooks) are unconfigured, so there is no backup/escalation channel
+  beyond one email address. Zero real incidents have ever been recorded, so
+  the actual down-detection → alert → recovery-alert pipeline (as opposed to
+  the manual test-send) remains unexercised — proving it requires either a
+  real outage or a user-run drill that touches the bypass secret directly (not
+  something this agent will type). No error/log drain exists.
 
 ## Recovery verification
 
@@ -140,8 +152,10 @@ Updated: 2026-08-27
 
 ## Next phases
 
-1. Finish and verify the UptimeRobot monitor, named owners, thresholds,
-   notification/escalation path, and one controlled failure/recovery alert.
+1. UptimeRobot monitor, owner, and email alert delivery are live-verified
+   (2026-08-27). Remaining: a backup/escalation channel beyond one email, and
+   a real (not manual-test) down/recovery incident proof — needs a
+   user-run drill against the bypass secret.
 2. Restore a real backup into a separate disposable project, run the new
    read-only verifier, prove application compatibility through an isolated
    Preview, and clean up only after confirming no deployment points at it.
@@ -198,6 +212,25 @@ toggle switches and form labels all correct. Investigated four
 apparently-unlabeled elements and confirmed each is a `read_page` tool
 display quirk (multi-span text or placeholder-vs-label), not a real code
 defect. No code changes.
+
+## Claude addendum — UptimeRobot monitor completion (2026-08-27)
+
+Logged into the user's existing UptimeRobot account (in-browser, user signed
+in themselves) and reviewed the live dashboard rather than relying on prior
+deployment-evidence-only claims. Found a working monitor already configured:
+"AI Receptionist — liveness" against `/api/health`, 1-minute interval, correct
+bypass header, 100% uptime 7/30/365d. Owner is a single email contact
+(Dilpreet Singh); no SMS/voice/push, no Slack/Teams/webhook integrations, zero
+incidents ever recorded.
+
+Per user's choice among three options, triggered UptimeRobot's built-in "Test
+Notification" (a reversible, no-field-edit action) rather than editing the
+live bypass-secret header myself. Independently confirmed real delivery via
+Gmail search: `alert@uptimerobot.com` → `dsarao5310@gmail.com`, "TEST: Monitor
+is DOWN: AI Receptionist — liveness", timestamp matching the click. This is
+live evidence of the alert-delivery channel, not simulator output. Did not
+touch the stored bypass secret value at any point. Full detail in
+`CURRENT_TASK.md`.
 
 ## Claude addendum — PR #4 (calendar-Undo fix) merged (2026-08-27)
 

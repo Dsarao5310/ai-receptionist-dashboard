@@ -65,9 +65,13 @@ Status: PR #4 (CALENDAR-UNDO FIX) MERGED AND DEPLOYED; RECOVERY VERIFIERS READY;
 
 - Production `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY. GET/HEAD passed live
   HTTPS verification with the locally held Vercel bypass; no secret was printed.
-- An UptimeRobot account exists, but monitor creation, alert contacts, owners,
-  thresholds, escalation schedule, and controlled alert/recovery proof remain
-  unverified. No error/log drain exists.
+- **Live-verified (2026-08-27):** the UptimeRobot monitor ("AI Receptionist —
+  liveness") is active, checked every minute, correctly bypasses Vercel SSO,
+  100% uptime 7/30/365d, single named email owner. A test notification was
+  triggered and independently confirmed delivered via Gmail search. Still
+  open: no SMS/voice/push or third-party backup channel, and zero real
+  incidents recorded — the actual down-detection pipeline is unproven. No
+  error/log drain exists.
 - Knowledge staging backlog remains complete: Coastal 5/5 and Harbour 4/4
   synchronized, with no retryable or `sync_required` rows. Production Pinecone
   remains fail-closed.
@@ -173,3 +177,21 @@ groups, all tied to older deployments (`dpl_H6qiAb4cso2qcupiacXcrWJHpsw1`,
 calendar-Undo-sync fix (restore-after-cancel now validates the slot and
 reaches the calendar correctly, instead of silently skipping it) is live on
 `master`.
+
+## Claude — UptimeRobot monitor completion (2026-08-27)
+
+Logged into the user's UptimeRobot account (user signed in) and found the
+monitor already further along than prior docs claimed: "AI Receptionist —
+liveness" against `/api/health`, 1-minute interval, correct bypass header,
+100% uptime 7/30/365d — confirmed live, not deployment evidence. Single email
+owner, no SMS/voice/push, no integrations, zero incidents ever recorded.
+
+Per the user's chosen option, triggered UptimeRobot's built-in "Test
+Notification" rather than editing the live bypass-secret header myself.
+Independently confirmed real delivery via Gmail search: `alert@uptimerobot.com`
+→ `dsarao5310@gmail.com`, "TEST: Monitor is DOWN: AI Receptionist — liveness",
+timestamp matching the click. Did not touch the stored secret value.
+
+Still open: no backup/escalation channel beyond one email, and no real
+down/recovery incident has ever fired — that proof needs either a genuine
+outage or a user-run drill against the bypass secret.

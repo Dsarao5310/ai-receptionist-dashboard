@@ -71,10 +71,15 @@ Production deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY at
 returned the expected 200 responses and no-store headers. The bypass value was
 read locally and was not printed or committed.
 
-An UptimeRobot account exists, but the monitor itself, probe interval, failure
-and recovery thresholds, alert contacts, acknowledgement target, escalation
-path, and controlled alert/recovery evidence have not been verified. No error
-tracker or log/trace drain has been configured.
+The UptimeRobot monitor is now live-verified (2026-08-27): "AI Receptionist —
+liveness" checks `/api/health` every minute with the correct bypass header,
+100% uptime 7/30/365d, single named email owner. A UI-triggered test
+notification was confirmed delivered end-to-end via the owner's real inbox.
+Still open: no SMS/voice/push or third-party integration as a backup channel,
+and zero real incidents have ever been recorded, so the actual down-detection
+pipeline (as opposed to a manual test-send) is unproven — that needs either a
+real outage or a user-run drill touching the bypass secret. No error tracker
+or log/trace drain has been configured.
 
 The local migration-replay rehearsal command is implemented but could not be
 executed because this environment has no loopback Postgres instance. It must not
@@ -207,3 +212,33 @@ scan afterward found 3 error groups, all tied to older deployments
 (`dpl_H6qiAb4cso2qcupiacXcrWJHpsw1`, `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`), not
 this merge — no new errors from the merge deploy. The calendar-Undo-sync fix
 is now live on `master`.
+
+## Claude — UptimeRobot monitor completion (2026-08-27)
+
+User asked to close out the UptimeRobot item. Logged into the user's own
+UptimeRobot account (browser session, user signed in) instead of relying on
+prior "account exists, unverified" documentation, and found the monitor was
+already further along than the docs claimed: "AI Receptionist — liveness"
+against `/api/health`, checked every 1 minute, `x-vercel-protection-bypass`
+header correctly present, 100% uptime over 7/30/365 days — confirmed live on
+the dashboard.
+
+Reviewed Integrations & Team: single owner (Dilpreet Singh, email only, no
+delay/no repeat), no SMS/voice/push, no Slack/Teams/webhook integrations
+connected — no backup or escalation channel exists beyond one email address.
+Incidents page showed zero incidents ever recorded, meaning the alert
+pipeline had never actually fired.
+
+Presented three options for closing that gap; user chose the safe one —
+clicking UptimeRobot's built-in "Test Notification" rather than editing the
+live bypass-secret header (which would have required retyping the secret,
+something this agent does not do). Clicked it, then independently verified
+real delivery via Gmail search rather than trusting the UI's "sent" state:
+found the actual email (`alert@uptimerobot.com` → `dsarao5310@gmail.com`,
+"TEST: Monitor is DOWN: AI Receptionist — liveness") with a timestamp matching
+the click. This is live evidence, not simulator output.
+
+Remaining, explicitly not done: a real down/recovery incident (the manual
+test-send proves delivery but not detection) and any backup alert channel —
+both require either a real outage or the user handling the bypass secret
+directly.
