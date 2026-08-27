@@ -279,3 +279,40 @@ decision with the user rather than making it. Full detail in
   occurred. The next action is still explicitly gated: decide whether to commit
   and push the large combined uncommitted tree so staging can receive matching
   Knowledge code, then redeploy and hand authenticated certification to Claude.
+
+## Independent side task: Undo/calendar-sync fix (2026-08-26)
+
+While this phase's Knowledge/Pinecone work continued elsewhere, a separate
+background session picked up the real bug recorded in `handoffs/latest.md`
+under "Claude — real bug: Undo on cancel/reschedule never touches the
+calendar" and fixed it, isolated in its own worktree and branch. Did not
+touch Knowledge, Pinecone, or any file this phase owns.
+
+- Root cause confirmed: `restoreAppointmentAction` wrote status/date/time
+  straight to the database with no calendar call at all, so undoing a
+  cancellation or reschedule left a connected calendar and the dashboard
+  disagreeing.
+- Fix reused existing, previously-unwired plumbing: the `appointment.book`
+  operation kind and `createExecutor` were already defined and directly unit
+  tested in `calendar.test.ts` but had no call site anywhere in the app. Added
+  `requestAppointmentBooking` in `workflows.ts`, mirroring
+  `requestAppointmentReschedule`/`requestAppointmentCancellation` exactly, and
+  wired `restoreAppointmentAction` through the same validate → workflow →
+  `commitWithSyncGuard` sequence those two mutations already use: undo-of-
+  cancel re-books the event, undo-of-reschedule moves it back, and a plain
+  status/notes change with no time movement stays database-only as before.
+  Also closed a related gap: both calendar-touching undo paths now get the
+  same slot/business-hours validation reschedule already had, which undo-of-
+  cancel previously skipped entirely.
+- Added hosted-DB regression coverage in `calendar.test.ts` mirroring the
+  existing reschedule/cancel suite: creates a fresh event for a previously
+  cancelled appointment (old event stays a tombstone), is idempotent under
+  retry, and records the mapping and sync state correctly.
+- Verification: `npm run typecheck` clean, full `npm run lint` clean, full
+  `npm test` passes 40/40 test files and 555/555 tests (552 baseline + 3 new).
+- Committed and pushed to branch `fix/undo-calendar-sync` (commit `e59cc7c`);
+  opened as draft **PR #4**. Not merged — this is a booking-engine correctness
+  change touching a live calendar, which `CLAUDE.md` and the handoff note that
+  first flagged the bug both mark as needing explicit approval before merge.
+  No staging/production system, environment variable, or deployment was
+  touched.

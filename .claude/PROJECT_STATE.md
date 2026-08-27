@@ -372,3 +372,34 @@ No remote configuration, database migration, provider traffic, commit, push, or
 deployment occurred. Because the releasable state spans a large shared
 uncommitted tree rather than an isolated Knowledge patch, committing/pushing and
 deploying it remains a separate explicit-approval boundary.
+
+## Undo/calendar-sync fix (2026-08-26)
+
+A background session fixed the real bug this file and `handoffs/latest.md`
+previously only recorded as found: `restoreAppointmentAction` (the Undo behind
+a cancel/reschedule toast) wrote status/date/time straight to the database and
+never called the calendar, so a workspace with a live calendar connected could
+end up with the dashboard and the calendar silently disagreeing after an undo.
+
+- The fix needed no new architecture: `appointment.book` and `createExecutor`
+  already existed in `calendar-sync.ts`, fully implemented and directly unit
+  tested, but nothing in the app called them. Added `requestAppointmentBooking`
+  in `workflows.ts` (mirrors the existing reschedule/cancel functions) and
+  wired `restoreAppointmentAction` through the same validate → workflow →
+  `commitWithSyncGuard` sequence reschedule/cancel already use. Undo-of-cancel
+  now re-books the event; undo-of-reschedule now moves it back; a plain
+  status/notes-only undo stays database-only, unchanged. Also added the
+  slot/business-hours validation undo-of-cancel was missing entirely before.
+- New hosted-DB regression tests in `calendar.test.ts`, mirroring the existing
+  reschedule/cancel suite structure: fresh-event creation on undo-of-cancel,
+  idempotency under retry, and correct mapping/sync-state recording.
+- Verification: TypeScript, full ESLint, and the full suite are all green —
+  40/40 test files, 555/555 tests (552 baseline + 3 new).
+- Isolated to its own worktree and branch; touched only
+  `src/server/actions/appointments.ts`, `src/server/integrations/workflows.ts`,
+  and the calendar test file. No Knowledge, Pinecone, UI, migration, or shared
+  credential file was touched.
+- Committed (`e59cc7c`) and pushed to `fix/undo-calendar-sync`; opened as draft
+  **PR #4**. Not merged — booking-engine correctness changes touching a live
+  calendar require explicit approval per `CLAUDE.md`, same boundary this file
+  already applies to Knowledge/Pinecone and migration work.

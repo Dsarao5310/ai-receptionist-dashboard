@@ -1,5 +1,62 @@
 # Latest Handoff
 
+## Claude (background session) — fixed the Undo/calendar-sync bug (2026-08-26)
+
+Picked up the bug this same log recorded below under "Claude — real bug: Undo
+on cancel/reschedule never touches the calendar" as an independent side task,
+isolated in its own worktree/branch so it could not collide with the
+concurrent Knowledge/Pinecone work above. Did not touch Knowledge, Pinecone,
+UI, migrations, or any shared credential file.
+
+**Root cause, confirmed by reading the code**: `restoreAppointmentAction`
+(the Undo behind a cancel/reschedule toast) wrote the appointment's
+status/date/time straight to the database and never called the calendar at
+all — unlike `rescheduleAppointmentAction`/`cancelAppointmentAction`, which
+both go through `requestAppointment*` → `commitWithSyncGuard`. On a
+workspace with a live calendar connected, undoing a cancellation left the
+real event deleted while the dashboard said "confirmed" again; undoing a
+reschedule left the event at the moved time while the dashboard said it had
+moved back.
+
+**The fix needed no new architecture.** `appointment.book` (a
+`WorkflowOperation`) and `createExecutor` already existed in
+`calendar-sync.ts` — fully implemented and directly unit-tested in
+`calendar.test.ts` — but had no call site anywhere in the application. Added
+`requestAppointmentBooking` to `workflows.ts`, mirroring
+`requestAppointmentReschedule`/`requestAppointmentCancellation` exactly (same
+idempotency spine, same `commitWithSyncGuard`), and wired
+`restoreAppointmentAction` through the same validate → workflow → database
+sequence the other two mutations already follow:
+- Undoing a **cancellation** now calls `requestAppointmentBooking` to
+  re-create the calendar event (the old event stays a tombstone, matching how
+  `rescheduleExecutor` already treats a stale/cancelled mapped event
+  elsewhere in this file).
+- Undoing a **reschedule** now calls `requestAppointmentReschedule` to move
+  the calendar event back.
+- A plain status/notes change with no time movement stays database-only,
+  same as before.
+- Also closed a related gap found while fixing this: undo-of-cancel
+  previously had *no* slot validation at all, so it could restore an
+  appointment to a time that had already passed. Both calendar-touching undo
+  paths now get the same `checkRescheduleSlot` check reschedule already had.
+
+**Verification**: `npm run typecheck` clean, full `npm run lint` clean, full
+`npm test` — 40/40 test files, 555/555 tests pass (552 baseline + 3 new
+hosted-DB regressions added to `calendar.test.ts`, mirroring the existing
+reschedule/cancel suite: fresh-event creation on undo-of-cancel, idempotency
+under retry, and correct mapping/sync-state recording).
+
+**Not merged.** Committed (`e59cc7c`) and pushed to branch
+`fix/undo-calendar-sync`; opened as draft
+[PR #4](https://github.com/Dsarao5310/ai-receptionist-dashboard/pull/4). This
+touches booking-engine correctness against a live calendar for real customer
+appointments, which `CLAUDE.md` and this same handoff entry's own original
+bug report mark as needing explicit approval before anyone merges it. No
+staging/production system, environment variable, or deployment was touched.
+Authenticated staging UI verification (undo a real cancel/reschedule against
+a connected calendar end-to-end) was not run — left for the same explicit
+review gate as the merge decision.
+
 ## Claude — live Knowledge/Pinecone flow CERTIFIED end-to-end through the real UI (2026-08-26)
 
 Re-ran the authenticated staging test that originally surfaced the
