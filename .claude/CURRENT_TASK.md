@@ -2,17 +2,16 @@
 
 Phase: **Monitoring and alerting foundation**
 
-Status: **LOCAL END-TO-END LIVENESS VERIFIED — PRODUCTION PUSH EXPLICITLY GATED — 2026-08-27**
+Status: **PRODUCTION LIVENESS LIVE-VERIFIED VIA VERCEL BYPASS — EXTERNAL MONITOR CONFIGURATION UNVERIFIED — 2026-08-27**
 
 ## Authoritative checkpoint
 
-- Local `master` is at monitoring commit `d1b2d84`; `origin/master` remains
-  `7cad923` because the Production-triggering push was rejected by the safety
-  gate pending explicit approval for that exact action.
+- Local `master` and `origin/master` are at `f2d725c`; the health route and proxy
+  fix are committed ancestors `d1b2d84` and `bf8774b`.
   `origin/staging` remains isolated at `64fa59a`.
-- The working tree contains the new health route, its tests, monitoring docs,
-  and this state update. The pre-existing untracked `.claude/worktrees/` is not
-  part of the task and must remain untouched.
+- The working tree is clean except the live coordination update and the
+  pre-existing untracked `.claude/worktrees/`, which is not part of the task and
+  must remain untouched.
 - Claude's concurrent `7cad923` coordination change is understood and does not
   overlap this route or documentation work.
 
@@ -46,17 +45,20 @@ Status: **LOCAL END-TO-END LIVENESS VERIFIED — PRODUCTION PUSH EXPLICITLY GATE
 
 ## Runtime boundary and next action
 
-The local endpoint is ready to deploy and verify over Production HTTPS. Pushing
-`master` triggers a Production release and is waiting for explicit approval for
-that exact push. External
-monitoring is not complete: no uptime vendor, error/log drain, named primary or
-backup owner, paging route, thresholds, acknowledgement target, escalation path,
-or controlled alert/recovery test has been configured.
+Production deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY at
+`f2d725c`. GET and HEAD were live-verified with the Vercel automation bypass and
+returned the expected 200 responses and no-store headers. The bypass value was
+read locally and was not printed or committed.
 
-After explicit push approval and deployed HTTPS verification, the next safe implementation work is the
-isolated restore-drill preparation. Actually configuring a monitoring vendor,
-running a restore drill against remote data, or enabling provider traffic needs
-the relevant external access and approval.
+An UptimeRobot account exists, but the monitor itself, probe interval, failure
+and recovery thresholds, alert contacts, acknowledgement target, escalation
+path, and controlled alert/recovery evidence have not been verified. No error
+tracker or log/trace drain has been configured.
+
+The next safe implementation work is a migration-based disposable-schema
+recovery rehearsal. It can verify migration replay and invariant checks, but it
+must not be represented as a provider-managed backup restore. A true backup
+restore remains blocked on Supabase dashboard restore access.
 
 ## Claude — pushed health endpoint, found it's SSO-gated, restore drill next (2026-08-27)
 
@@ -90,3 +92,24 @@ typed into chat): both `GET` and `HEAD` return `200 OK` with the correct
 no-store headers and the expected `{"status":"ok"}` body. External
 monitoring is no longer blocked — up to the user to finish configuring the
 UptimeRobot monitor itself (interval, alert contacts) if not already done.
+
+## Claude — QA pass finished on remaining pages (2026-08-27)
+
+Completed the accessibility/console QA pass: Calls, Analytics, AI
+Receptionist, Business Profile, Connections. No console errors on any page.
+`npm audit` rechecked clean (0 vulnerabilities).
+
+AI Receptionist page: toggle switches use proper `role="switch"` with
+descriptive accessible names (e.g. "Voice channel — Phone calls answered by
+your receptionist"), textarea properly labeled. No issues.
+
+Investigated several apparently-unlabeled elements (KPI card drill-through
+links on Analytics, the setup checklist buttons on Business Profile, the
+capability jump-links on Connections, the business-name input showing its
+placeholder instead of its label in the accessibility snapshot). Verified
+each against source: all have correct, real text content or a properly
+`htmlFor`/`id`-linked `<label>` — no code defects. This is a consistent
+`read_page`/`find` tool display limitation for multi-span or
+placeholder-vs-label accessible names, confirmed across four separate
+instances, not an application bug. No fixes needed on this pass; no code
+changes.

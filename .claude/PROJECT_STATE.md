@@ -4,16 +4,15 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; local `HEAD` is monitoring commit `d1b2d84` plus the
-  follow-up proxy allowlist fix. `origin/master` remains `7cad923` because the
-  Production-triggering push requires explicit approval for that exact action;
+- Branch: `master`; local `HEAD` and `origin/master` are `f2d725c`. Monitoring
+  implementation commits `d1b2d84` and `bf8774b` are deployed ancestors;
   `origin/staging` remains `64fa59a`.
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
   their tests, current documentation, and whole-run `app_test` advisory lock.
 - `42e8bad` updates Nodemailer to 9.0.5; `b91524c` adds the npm override needed
   for strict clean-environment dependency resolution.
-- Working tree: the health route, route tests, monitoring documentation, and
-  current state updates plus the pre-existing untracked `.claude/worktrees/`.
+- Working tree: the live coordination update plus the pre-existing untracked
+  `.claude/worktrees/`.
 
 ## Live platform status
 
@@ -22,8 +21,8 @@ Updated: 2026-08-27
 - Authentication and tenancy: Auth.js is authoritative. Hosted staging OAuth,
   RBAC, and tenant checks are live-verified; cross-tenant leakage remains a
   release blocker.
-- Vercel: Production deployment `dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N` is READY at
-  `4899725`; isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`
+- Vercel: Production deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY at
+  `f2d725c`; isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`
   remains READY at `64fa59a`. The one-hour Production runtime-error scan is
   clean. Generic Preview remains fail-closed. The duplicate
   `ai-receptionist-dashboard-dsarao` project remains approval-gated cleanup debt.
@@ -42,9 +41,10 @@ Updated: 2026-08-27
   only a bounded structured completion log.
 - This is deployment liveness only, not database, provider, workflow, tenant, or
   business-semantic health.
-- No external uptime monitor, error/log drain, named owner/backup, paging route,
-  thresholds, acknowledgement target, escalation path, or controlled alert and
-  recovery proof exists yet.
+- The Production route is reachable with the Vercel automation bypass, and an
+  UptimeRobot account exists. Monitor creation, thresholds, alert contacts,
+  named owner/backup, acknowledgement target, escalation path, and controlled
+  alert/recovery proof remain unverified. No error/log drain exists.
 
 ## Business Knowledge and Pinecone
 
@@ -105,10 +105,11 @@ Updated: 2026-08-27
 
 ## Next phases
 
-1. With explicit approval, push `master`, verify `/api/health` over Production
-   HTTPS, then configure an approved uptime/error
-   monitoring system with named owners and controlled failure/recovery evidence.
-2. Prepare and execute an isolated restore drill without touching production.
+1. Finish and verify the UptimeRobot monitor, named owners, thresholds,
+   notification/escalation path, and one controlled failure/recovery alert.
+2. Run a migration-based disposable-schema recovery rehearsal without touching
+   staging or production; keep true backup-restore certification blocked until
+   Supabase dashboard restore access is available.
 3. Enable Production Pinecone only as a separate approved data-policy,
    credential, cost, monitoring, deployment, and certification phase.
 4. Environment changes, Vercel project removal, remote migrations, and provider
@@ -155,3 +156,10 @@ The user has since generated the bypass secret and created an UptimeRobot
 account. Verified `/api/health` with the bypass header (read from a local
 `.env.local` entry, never in chat): both `GET`/`HEAD` return `200 OK` with
 the expected body and no-store headers. External monitoring is unblocked.
+
+QA pass finished on Calls, Analytics, AI Receptionist, Business Profile,
+Connections: no console errors, `npm audit` clean (0 vulnerabilities),
+toggle switches and form labels all correct. Investigated four
+apparently-unlabeled elements and confirmed each is a `read_page` tool
+display quirk (multi-span text or placeholder-vs-label), not a real code
+defect. No code changes.

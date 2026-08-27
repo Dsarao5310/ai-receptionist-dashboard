@@ -28,7 +28,7 @@ Last updated: 2026-08-27
 
 ## Claude
 
-Status: in-progress
-Task: Continue UI/accessibility QA pass on remaining pages (Calls, Analytics, AI Receptionist, Business Profile, Connections) and recheck npm audit
-Started: 2026-08-27
+Status: idle
+Task: —
+Started: —
 Last updated: 2026-08-27

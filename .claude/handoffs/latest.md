@@ -1,13 +1,12 @@
 # Latest Handoff
 
 Updated: 2026-08-27
-Status: LOCAL END-TO-END LIVENESS VERIFIED; PRODUCTION PUSH EXPLICITLY GATED
+Status: PRODUCTION LIVENESS LIVE-VERIFIED; EXTERNAL MONITOR CONFIG UNVERIFIED
 
 ## Repository checkpoint
 
-- Local monitoring commit: `d1b2d84`, followed by the proxy allowlist fix in
-  this checkpoint. `origin/master` remains `7cad923` because the push would
-  trigger Production and the safety gate requires explicit approval.
+- Local `master` and `origin/master`: `f2d725c`. Health route `d1b2d84` and proxy
+  fix `bf8774b` are deployed ancestors.
 - `origin/staging` remains `64fa59a`.
 - Preserve and exclude the pre-existing untracked `.claude/worktrees/`.
 
@@ -35,15 +34,18 @@ Status: LOCAL END-TO-END LIVENESS VERIFIED; PRODUCTION PUSH EXPLICITLY GATED
 
 ## Remaining boundary
 
-- Explicit approval to push `master`, followed by Production HTTPS/deployment
-  verification, remains the immediate release step.
-- No uptime service, error/log drain, alert owner, paging route, thresholds,
-  escalation schedule, or controlled alert/recovery proof exists yet.
+- Production `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY. GET/HEAD passed live
+  HTTPS verification with the locally held Vercel bypass; no secret was printed.
+- An UptimeRobot account exists, but monitor creation, alert contacts, owners,
+  thresholds, escalation schedule, and controlled alert/recovery proof remain
+  unverified. No error/log drain exists.
 - Knowledge staging backlog remains complete: Coastal 5/5 and Harbour 4/4
   synchronized, with no retryable or `sync_required` rows. Production Pinecone
   remains fail-closed.
 - n8n, Twilio, Vapi/model live certification, privacy operations, external
-  monitoring ownership, and the restore drill remain separate pilot blockers.
+  monitoring ownership, and a true backup restore remain pilot blockers. A
+  migration-only disposable-schema rehearsal is the next safe local substitute
+  and must not be called backup-restore certification.
 
 ## Claude — health endpoint pushed; found platform-level SSO gate (2026-08-27)
 
@@ -80,3 +82,21 @@ migration-only substitute or the user restoring a real backup themselves via
 the Supabase dashboard. Presented both options; user dismissed the question
 without picking one, so this is holding for further direction rather than
 proceeding on either path.
+
+## Claude — QA pass finished on remaining pages (2026-08-27)
+
+Finished the accessibility/console QA pass on Calls, Analytics, AI
+Receptionist, Business Profile, and Connections. No console errors on any
+page; `npm audit` rechecked clean. AI Receptionist's toggle switches use
+proper `role="switch"` with descriptive names; form fields are properly
+labeled.
+
+Investigated four elements that looked unlabeled in the browser tool's
+summary (KPI drill-through links, the setup checklist buttons, Connections'
+capability jump-links, and the business-name input showing its placeholder
+instead of its label) and verified each against source: all have correct
+text content or a properly linked `<label>`. This is a confirmed `read_page`/
+`find` tool display limitation, not an app defect — the same shape recurred
+four times with source-level verification each time. No fixes needed; no
+code changes this pass. This closes out the accessibility QA sweep started
+with the sidebar fix.
