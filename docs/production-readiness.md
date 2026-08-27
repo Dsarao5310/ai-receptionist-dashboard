@@ -48,6 +48,10 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
   earlier complete Knowledge add/search/delete certification remains applicable;
   this phase added provider-free, audited dry-run evidence only.
 - Production origin: `https://ai-receptionist-dashboard-jade.vercel.app`
+- Local-rehearsal implementation deployment:
+  `dpl_4J364H4NyKxNZRrmiirmhjyYBSXn`, commit `87d1db9`, READY with the canonical
+  Production alias. Its fresh one-hour runtime-error scan found no errors. The
+  command is CLI-only and no migration replay or database connection ran.
 - Recovery-verifier implementation deployment:
   `dpl_6d3RbTTQ8BVPZorSGLY7sLy5SLC9`, commit `43c7d91`, READY with the intended
   Production aliases. Its fresh one-hour runtime-error scan found no errors.
@@ -103,7 +107,8 @@ not deploy and does not receive production or provider credentials.
   passed across 51 artifacts. Commands with no dedicated loopback URL and with
   a hosted Supabase target failed closed before database access. No replay,
   remote migration, backup restore, provider call, or deployment ran in this
-  pass.
+  verification pass. The later Git push produced READY Production deployment
+  `dpl_4J364H4NyKxNZRrmiirmhjyYBSXn` with a clean one-hour runtime-error scan.
 - Recovery-verifier target guards passed 5/5. The command refused the known
   staging ref before any database connection. The consolidated gate passed
   typecheck, full lint, 45/45 test files and 577/577 tests; the client-secret

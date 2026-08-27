@@ -5,9 +5,8 @@ Status: LOCAL MIGRATION REPLAY + READ-ONLY RESTORE VERIFIERS READY; TRUE BACKUP 
 
 ## Repository checkpoint
 
-- Local `master` contains the committed local-rehearsal foundation and is one
-  commit ahead of `origin/master` at deployed recovery-verifier commit
-  `43c7d91`. Health route `d1b2d84` and proxy fix `bf8774b` are deployed
+- Local and `origin/master` contain recovery-rehearsal implementation commit
+  `87d1db9`. Health route `d1b2d84` and proxy fix `bf8774b` are deployed
   ancestors.
 - `origin/staging` remains `64fa59a`.
 - Preserve and exclude the pre-existing untracked `.claude/worktrees/`.
@@ -49,6 +48,12 @@ Status: LOCAL MIGRATION REPLAY + READ-ONLY RESTORE VERIFIERS READY; TRUE BACKUP 
   unavailable, so the actual migration replay was not run.
 
 ## Remaining boundary
+
+- Recovery-rehearsal implementation deployment
+  `dpl_4J364H4NyKxNZRrmiirmhjyYBSXn` is READY in Production at `87d1db9`, has
+  the canonical Production alias, and its fresh one-hour runtime-error scan is
+  clean. The deployed command is CLI-only and was not executed against any
+  database.
 
 - Recovery-verifier implementation deployment
   `dpl_6d3RbTTQ8BVPZorSGLY7sLy5SLC9` is READY in Production at `43c7d91`, with

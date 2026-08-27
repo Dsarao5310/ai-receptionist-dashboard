@@ -22,7 +22,7 @@ already mandatory. There is no live polling.
 ## Codex
 
 Status: idle
-Task: — (last: loopback-only migration replay rehearsal implemented and guard-verified)
+Task: — (last: recovery rehearsal commit pushed; intended Production deployment READY)
 Started: —
 Last updated: 2026-08-27
 

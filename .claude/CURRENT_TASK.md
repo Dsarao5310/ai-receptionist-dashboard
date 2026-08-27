@@ -6,9 +6,8 @@ Status: **LOCAL MIGRATION REPLAY + READ-ONLY RESTORE VERIFIERS READY — TRUE BA
 
 ## Authoritative checkpoint
 
-- Local `master` contains the committed local-rehearsal foundation and is one
-  commit ahead of `origin/master` at deployed recovery-verifier commit
-  `43c7d91`; the health route and proxy fix are committed ancestors `d1b2d84`
+- Local and `origin/master` contain recovery-rehearsal implementation commit
+  `87d1db9`; the health route and proxy fix are committed ancestors `d1b2d84`
   and `bf8774b`.
   `origin/staging` remains isolated at `64fa59a`.
 - The pre-existing untracked `.claude/worktrees/` is not part of the task and
@@ -59,6 +58,12 @@ Recovery-verifier implementation deployment
 serves the intended Production aliases. The fresh one-hour Vercel runtime-error
 scan found no errors. This deploy evidence does not claim that a backup restore
 or restored-target verification was performed.
+
+Local-rehearsal implementation deployment
+`dpl_4J364H4NyKxNZRrmiirmhjyYBSXn` is READY in Production at `87d1db9`, has the
+canonical Production alias, and its fresh one-hour Vercel runtime-error scan is
+clean. The deployed command is CLI-only and does not change application runtime
+behavior unless an operator explicitly invokes it with a loopback database.
 
 Production deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY at
 `f2d725c`. GET and HEAD were live-verified with the Vercel automation bypass and

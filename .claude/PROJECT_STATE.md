@@ -4,17 +4,16 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; local `HEAD` contains the committed local-rehearsal
-  foundation and is one commit ahead of `origin/master` at deployed
-  recovery-verifier implementation `43c7d91`. Monitoring implementation commits
-  `d1b2d84` and `bf8774b` are deployed ancestors;
+- Branch: `master`; local and `origin/master` contain recovery-rehearsal
+  implementation commit `87d1db9`. Monitoring implementation commits `d1b2d84`
+  and `bf8774b` are deployed ancestors;
   `origin/staging` remains `64fa59a`.
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
   their tests, current documentation, and whole-run `app_test` advisory lock.
 - `42e8bad` updates Nodemailer to 9.0.5; `b91524c` adds the npm override needed
   for strict clean-environment dependency resolution.
-- Working tree: only the pre-existing untracked `.claude/worktrees/` after the
-  local-rehearsal commit.
+- Working tree: only the pre-existing untracked `.claude/worktrees/` before this
+  deployment-evidence documentation update.
 
 ## Live platform status
 
@@ -31,6 +30,10 @@ Updated: 2026-08-27
   remains READY at `64fa59a`. The one-hour Production runtime-error scan is
   clean. Generic Preview remains fail-closed. The duplicate
   `ai-receptionist-dashboard-dsarao` project remains approval-gated cleanup debt.
+- Recovery-rehearsal implementation deployment
+  `dpl_4J364H4NyKxNZRrmiirmhjyYBSXn` is READY in Production at `87d1db9`, has
+  the canonical Production alias, and its fresh one-hour runtime-error scan is
+  clean. The added command is operator-invoked and CLI-only.
 - Google Calendar is historically live-verified. n8n remains application-ready
   but externally inaccessible and not live-certified. Twilio, Vapi, Gmail, and
   the model provider still lack their respective live certification evidence.
