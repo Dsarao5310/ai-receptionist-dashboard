@@ -29,6 +29,6 @@ Last updated: 2026-08-27
 ## Claude
 
 Status: idle
-Task: — (last: pushed Codex's health endpoint, found the Vercel SSO deployment-protection gate, restore drill paused pending user direction after discovering no MCP tool can restore an actual backup)
+Task: — (last: verified external monitoring end-to-end via the Vercel bypass secret and UptimeRobot; restore drill still paused pending user direction)
 Started: —
 Last updated: 2026-08-27
