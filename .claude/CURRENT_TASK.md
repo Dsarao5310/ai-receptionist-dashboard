@@ -120,3 +120,21 @@ name, no console errors on any page, the customer detail dialog uses proper
 `role="dialog"` with an accessible name and closes correctly on Escape, and
 Settings form fields are properly labeled. No new issues found — the sidebar
 fix above was the one real gap. No code changes this round.
+
+## Claude — committed and pushed Codex's reconciliation tooling (2026-08-27)
+
+Once Codex's docs marked the reconciliation code finished (not just the
+live run — the four operator scripts, six-test file, `package.json`
+entries, and `env.ts`/`pinecone.ts` comment corrections), reviewed every
+file for hardcoded secrets (none found; test fixtures use fake
+`example.test` data only), then ran typecheck, lint, the focused
+`operator-cli.test.ts` suite (6/6), and the client-secret audit (56
+artifacts) — all pass. Committed in `6cd661d` (attributed to Codex),
+excluding `.claude/worktrees/`, and pushed.
+
+Production deployment `dpl_2rJpPZnT3hgovRHtJVdiV1HXKprk` is **READY** at
+`6cd661d`. Runtime error scan: clean for this deployment (0 errors in the
+last hour); the only error in a wider 24h scan is old and already resolved
+(the `provider_document_id` not-null violation from the isolated staging
+deployment-mismatch bug documented days earlier, tied to a different,
+already-fixed deployment — not a regression from this push).

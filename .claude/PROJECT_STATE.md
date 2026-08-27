@@ -106,3 +106,13 @@ reconciliation): checked Conversations, Appointments, Customers (+ detail
 dialog), and Settings. All clean — correct accessible names throughout,
 no console errors, dialog has proper `role="dialog"` and closes on Escape.
 No new issues found; no code changes.
+
+## Claude addendum — reconciliation tooling committed (2026-08-27)
+
+Codex's operator CLI tooling (4 scripts, 6 tests, package commands,
+env.ts/pinecone.ts comment corrections) reviewed for secrets (none found)
+and verified (typecheck, lint, 6/6 focused tests, client-secret audit all
+pass), then committed as `6cd661d` and pushed. Production
+`dpl_2rJpPZnT3hgovRHtJVdiV1HXKprk` is READY at that commit. Runtime scan
+clean; the one error in a 24h window is old, already-resolved, and tied to
+a different deployment. Full detail in `CURRENT_TASK.md`.

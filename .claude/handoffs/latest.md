@@ -85,3 +85,21 @@ every interactive element, no console errors, the customer dialog has
 proper `role="dialog"` with an accessible name and closes on Escape,
 Settings fields are properly labeled. No new issues found beyond the
 sidebar fix already committed; no code changes this round.
+
+## Claude — committed and pushed Codex's finished reconciliation tooling (2026-08-27)
+
+Codex's docs marked the operator CLI tooling finished: four scripts
+(dry-run, status, execute, shared cli helpers), a six-test file, three new
+`package.json` commands, and `env.ts`/`pinecone.ts` comment corrections
+reflecting live mode now being reachable when configured. Reviewed every
+file directly for hardcoded secrets before touching git — none found, test
+fixtures use fake `example.test` data only. Ran typecheck, lint, the
+focused `operator-cli.test.ts` suite (6/6), and the client-secret audit
+(56 artifacts) — all pass. Committed as `6cd661d` (attributed to Codex),
+excluding `.claude/worktrees/`, and pushed.
+
+Production deployment `dpl_2rJpPZnT3hgovRHtJVdiV1HXKprk` is READY at
+`6cd661d`. Scanned runtime errors: 0 in the last hour; the only entry in a
+24h window is the already-known, already-resolved `provider_document_id`
+not-null violation from the isolated staging deployment-mismatch bug
+documented days earlier — a different deployment, not a regression here.
