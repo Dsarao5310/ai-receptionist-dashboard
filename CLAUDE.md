@@ -10,8 +10,10 @@ At the beginning of a task:
 
 1. Read `CLAUDE.md`.
 2. Read `.claude/CURRENT_TASK.md`.
-3. Run `git status`.
-4. Inspect only code relevant to the current task.
+3. Read `.claude/ACTIVE_WORK.md` and update your own section to `in-progress`
+   before starting.
+4. Run `git status`.
+5. Inspect only code relevant to the current task.
 
 Read `.claude/PROJECT_STATE.md` only when current implementation status is needed.
 Load additional scoped files only when relevant:
@@ -95,3 +97,10 @@ work finished and verified, it is expected collaboration — not overstepping �
 to review it yourself (read the diff, check for secrets, run typecheck/lint/
 tests), and commit and push it. Attribute correctly in the commit message when
 work spans authors, since git cannot split authorship within one file.
+
+`.claude/ACTIVE_WORK.md` is the live "who is doing what right now" board —
+check it before starting anything that could collide (shared database
+schema, migrations, package.json, docs, deploys), keep your own section
+current while working, and set it back to idle when done. It is not a
+substitute for `CURRENT_TASK.md`/`PROJECT_STATE.md`/`handoffs/latest.md`,
+which remain the record of finished work.
