@@ -8,16 +8,12 @@ import { KnowledgeProviderError } from "./errors";
 /**
  * The live Pinecone-backed provider.
  *
- * ── Not wired up ─────────────────────────────────────────────────────────
- * `client.ts` never constructs this class. Its "live" branch is a
- * deliberate, unconditional fail-closed throw — "until a separately
- * approved Pinecone account, index policy, embedding model, and
- * data-handling review exist" — and `production-config.ts` rejects
- * `KNOWLEDGE_PROVIDER_MODE=live` outright, in every environment it
- * validates. Both are policy checkpoints, not technical gaps, and neither
- * is this file's to remove. This class exists so that decision, once made,
- * is a one-line change in `client.ts` rather than a new implementation
- * written under pressure.
+ * ── Explicit live configuration ──────────────────────────────────────────
+ * `client.ts` constructs this class only when live mode, the server-only API
+ * key, and the exact data-plane index host are all configured. Missing live
+ * configuration fails closed before a provider request. Production remains
+ * disabled in practice until it receives its own separately approved policy,
+ * credential, index, monitoring, deployment, and certification phase.
  *
  * ── One index, one text field, per-workspace namespaces ─────────────────
  * Integrated inference (Pinecone embeds on upsert/search) means no

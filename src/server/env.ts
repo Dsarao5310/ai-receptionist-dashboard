@@ -342,8 +342,9 @@ export const serverEnv = {
   },
 
   // ── Business Knowledge retrieval ────────────────────────────────────────
-  // Live mode is deliberately unavailable in this foundation. Development
-  // can exercise the exact tenant/sync contract with a deterministic simulator.
+  // Live mode is opt-in and still requires the server-only Pinecone credential
+  // and index host validated by the provider boundary. Simulation remains the
+  // credential-free development path; production defaults to disabled.
   get knowledgeProviderMode(): ProviderMode {
     const raw = read("KNOWLEDGE_PROVIDER_MODE");
     if (raw === "disabled" || raw === "simulated" || raw === "live") return raw;

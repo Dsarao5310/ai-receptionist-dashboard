@@ -21,7 +21,10 @@
     "db:seed:staging": "tsx scripts/seed-staging.ts",
     "calendar:preflight": "node scripts/calendar-preflight.mjs",
     "n8n:preflight": "tsx scripts/n8n-preflight.ts",
-    "privacy:preflight": "tsx scripts/privacy-preflight.ts"
+    "privacy:preflight": "tsx scripts/privacy-preflight.ts",
+    "knowledge:reconcile:dry-run": "node --conditions=react-server --import tsx scripts/knowledge-reconciliation-dry-run.ts",
+    "knowledge:reconcile:status": "node --conditions=react-server --import tsx scripts/knowledge-reconciliation-status.ts",
+    "knowledge:reconcile:execute": "node --conditions=react-server --import tsx scripts/knowledge-reconciliation-execute.ts"
   },
   "dependencies": {
     "@pinecone-database/pinecone": "^8.2.0",
