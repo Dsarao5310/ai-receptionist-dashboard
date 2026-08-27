@@ -4,8 +4,9 @@ Updated: 2026-08-27
 
 ## Repository checkpoint
 
-- Branch: `master`; local `HEAD` and `origin/master` were at coordination
-  checkpoint `7cad923` before the current monitoring change;
+- Branch: `master`; local `HEAD` is monitoring commit `d1b2d84` plus the
+  follow-up proxy allowlist fix. `origin/master` remains `7cad923` because the
+  Production-triggering push requires explicit approval for that exact action;
   `origin/staging` remains `64fa59a`.
 - `9a5b957` commits the protected Business Knowledge reconciliation operations,
   their tests, current documentation, and whole-run `app_test` advisory lock.
@@ -35,7 +36,8 @@ Updated: 2026-08-27
 
 ## Monitoring and alerting
 
-- Dynamic Node.js `GET`/`HEAD /api/health` is locally implemented and verified.
+- Dynamic Node.js `GET`/`HEAD /api/health` is locally implemented and verified
+  end-to-end through the production server and authentication proxy.
 - It is content-free and no-store, reads no database/provider state, and emits
   only a bounded structured completion log.
 - This is deployment liveness only, not database, provider, workflow, tenant, or
@@ -91,6 +93,9 @@ Updated: 2026-08-27
 - TypeScript, full lint, production build, and client-secret audit passed.
 - Focused health-route verification passed 2/2; the build lists `/api/health`
   as dynamic and the client-secret audit covered 56 artifacts.
+- Focused route/proxy regression verification passed 6/6 after adding the
+  health path to the narrow public allowlist. Local production GET and HEAD both
+  returned 200 with the expected minimal body/body-free response and headers.
 - The lock was independently exercised with two overlapping schema-hardening
   runs: both passed 3/3, and the second waited for the first to release ownership.
 - Live staging reconciliation: 8/8 attempted and synchronized across two
@@ -100,7 +105,8 @@ Updated: 2026-08-27
 
 ## Next phases
 
-1. Deploy and verify `/api/health`, then configure an approved uptime/error
+1. With explicit approval, push `master`, verify `/api/health` over Production
+   HTTPS, then configure an approved uptime/error
    monitoring system with named owners and controlled failure/recovery evidence.
 2. Prepare and execute an isolated restore drill without touching production.
 3. Enable Production Pinecone only as a separate approved data-policy,

@@ -4,8 +4,8 @@ Updated: 2026-08-27
 
 ## Decision
 
-**LOCAL LIVENESS FOUNDATION READY. EXTERNAL MONITORING AND ALERT OWNERSHIP NOT
-CONFIGURED.**
+**LOCAL END-TO-END LIVENESS READY. PRODUCTION PUSH, EXTERNAL MONITORING, AND
+ALERT OWNERSHIP NOT CONFIGURED.**
 
 The application exposes a deliberately minimal `GET`/`HEAD` `/api/health`
 liveness route. It proves that the deployed Next.js route handler can execute;
@@ -32,6 +32,11 @@ is healthy.
   44/44 test files, and 572/572 tests.
 - The optimized production build passed and lists `/api/health` as dynamic.
 - The client-secret audit passed across 56 artifacts without printing values.
+- The health route is explicitly public in the authentication proxy; focused
+  route/proxy regression tests passed 6/6.
+- A rebuilt production server passed unauthenticated GET and HEAD locally
+  through the real proxy with HTTP 200, the minimal/body-free responses, and
+  every expected no-store/nosniff header.
 - Deployed HTTPS verification remains required before the endpoint is called
   production-ready.
 

@@ -10,7 +10,7 @@ import type { NextRequest } from "next/server";
  */
 
 const SESSION_COOKIES = ["authjs.session-token", "__Secure-authjs.session-token"];
-const PUBLIC_PATHS = ["/sign-in", "/api/auth", "/api/internal"];
+const PUBLIC_PATHS = ["/sign-in", "/api/auth", "/api/health", "/api/internal"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));

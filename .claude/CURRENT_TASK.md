@@ -2,11 +2,13 @@
 
 Phase: **Monitoring and alerting foundation**
 
-Status: **LOCAL LIVENESS FOUNDATION VERIFIED — EXTERNAL MONITORING STILL BLOCKED — 2026-08-27**
+Status: **LOCAL END-TO-END LIVENESS VERIFIED — PRODUCTION PUSH EXPLICITLY GATED — 2026-08-27**
 
 ## Authoritative checkpoint
 
-- `master` and `origin/master` were at `7cad923` before this monitoring change;
+- Local `master` is at monitoring commit `d1b2d84`; `origin/master` remains
+  `7cad923` because the Production-triggering push was rejected by the safety
+  gate pending explicit approval for that exact action.
   `origin/staging` remains isolated at `64fa59a`.
 - The working tree contains the new health route, its tests, monitoring docs,
   and this state update. The pre-existing untracked `.claude/worktrees/` is not
@@ -25,6 +27,9 @@ Status: **LOCAL LIVENESS FOUNDATION VERIFIED — EXTERNAL MONITORING STILL BLOCK
   authorization headers.
 - Added operator guidance in `docs/monitoring-readiness.md` and
   `docs/operations-runbook.md`.
+- Added `/api/health` to the proxy's narrow public allowlist. Auth.js and all
+  business routes remain protected; the liveness route alone is reachable by an
+  unauthenticated uptime probe.
 
 ## Verification
 
@@ -33,15 +38,22 @@ Status: **LOCAL LIVENESS FOUNDATION VERIFIED — EXTERNAL MONITORING STILL BLOCK
   572/572 tests passed** under the whole-run Postgres advisory lock.
 - Production Next.js build passed and lists `/api/health` as a dynamic route.
 - Client-secret audit passed across **56 artifacts** without printing values.
+- Focused health/proxy regression gate passed **6/6** after runtime verification
+  found and corrected the original sign-in redirect.
+- The rebuilt production server was exercised locally through the real proxy:
+  GET and HEAD returned 200, GET returned only `{ "status": "ok" }`, HEAD had
+  no body, and all no-store/nosniff headers were present.
 
 ## Runtime boundary and next action
 
-The local endpoint is ready to deploy and verify over Production HTTPS. External
+The local endpoint is ready to deploy and verify over Production HTTPS. Pushing
+`master` triggers a Production release and is waiting for explicit approval for
+that exact push. External
 monitoring is not complete: no uptime vendor, error/log drain, named primary or
 backup owner, paging route, thresholds, acknowledgement target, escalation path,
 or controlled alert/recovery test has been configured.
 
-After deployment verification, the next safe implementation work is the
+After explicit push approval and deployed HTTPS verification, the next safe implementation work is the
 isolated restore-drill preparation. Actually configuring a monitoring vendor,
 running a restore drill against remote data, or enabling provider traffic needs
 the relevant external access and approval.

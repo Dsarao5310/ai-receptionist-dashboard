@@ -21,9 +21,9 @@ already mandatory. There is no live polling.
 
 ## Codex
 
-Status: in-progress
-Task: Add and verify a safe application liveness endpoint and monitoring-readiness documentation
-Started: 2026-08-27
+Status: idle
+Task: — (last: locally verified liveness endpoint; Production push remains explicitly gated)
+Started: —
 Last updated: 2026-08-27
 
 ## Claude
