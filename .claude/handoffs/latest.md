@@ -129,3 +129,25 @@ text content or a properly linked `<label>`. This is a confirmed `read_page`/
 four times with source-level verification each time. No fixes needed; no
 code changes this pass. This closes out the accessibility QA sweep started
 with the sidebar fix.
+
+## Claude — PR #4 (calendar-Undo fix) brought up to date, still unmerged (2026-08-27)
+
+`fix/undo-calendar-sync` (the calendar-Undo-sync fix, `e59cc7c`) had sat
+unmerged since diverging from `797f4b3`. Used the existing worktree already
+checked out on that branch, merged current `master` into it — only the
+three accumulating doc files conflicted (expected), no code conflicts,
+resolved by keeping master's content and re-recording the fix's own
+write-up rather than the branch's stale history.
+
+Re-verified the fix against the updated tree: typecheck clean, lint clean,
+the full calendar test suite (55/55, including the fix's own regressions)
+passed twice, production build clean (a stale `.next` cache briefly looked
+like a failure — confirmed not real after clearing it). Two full-suite runs
+got killed mid-run by something external, same pattern as earlier this
+session; relying on the targeted calendar-suite pass plus static checks
+instead of retrying further.
+
+Pushed the updated branch (`3e00059`, fast-forward). **Still not merged** —
+this remains a booking-engine correctness change touching a live calendar,
+gated behind explicit approval per `CLAUDE.md`. Only the merge-conflict
+blocker was removed; the merge decision is unchanged and still pending.

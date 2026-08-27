@@ -197,3 +197,12 @@ toggle switches and form labels all correct. Investigated four
 apparently-unlabeled elements and confirmed each is a `read_page` tool
 display quirk (multi-span text or placeholder-vs-label), not a real code
 defect. No code changes.
+
+## Claude addendum — PR #4 (calendar-Undo fix) brought up to date (2026-08-27)
+
+`fix/undo-calendar-sync` (`e59cc7c`) merged with current `master` to stay
+conflict-free (doc files only, no code conflicts). Re-verified against the
+updated tree: typecheck, lint, full calendar suite (55/55, twice), and
+production build all pass. Pushed as `3e00059`, fast-forward. Still
+unmerged — booking-engine approval gate unchanged. Full detail in
+`CURRENT_TASK.md`.

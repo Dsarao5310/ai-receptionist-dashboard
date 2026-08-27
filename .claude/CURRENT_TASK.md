@@ -161,3 +161,28 @@ each against source: all have correct, real text content or a properly
 placeholder-vs-label accessible names, confirmed across four separate
 instances, not an application bug. No fixes needed on this pass; no code
 changes.
+
+## Claude — brought unmerged PR #4 (calendar-Undo fix) up to date (2026-08-27)
+
+Unrelated to Knowledge/Pinecone/monitoring: `fix/undo-calendar-sync` (the
+Undo-never-touches-the-calendar fix, `e59cc7c`) had sat unmerged since
+diverging from `797f4b3`, well behind current `master`. Used the existing
+worktree already checked out on that branch, merged current `master` into
+it — no code conflicts, only the three accumulating doc files, resolved by
+keeping master's content and re-recording the fix's own write-up rather than
+the branch's stale intermediate history.
+
+Re-verified the fix against the updated tree: typecheck clean, lint clean,
+the full calendar test suite (55/55, including the fix's own undo-of-cancel/
+undo-of-reschedule regressions) passed twice, production build clean (after
+clearing a stale `.next` cache in that worktree, which briefly looked like a
+false failure — confirmed not a regression). Two full-suite runs got killed
+mid-run by something external (same pattern seen earlier this session, not
+caused by this change); relying on the targeted calendar-suite pass plus
+static checks instead of retrying further.
+
+Pushed the updated branch (`3e00059`, fast-forward, no history rewritten).
+**Still not merged** — this remains a booking-engine correctness change
+touching a live calendar, which `CLAUDE.md` explicitly gates behind explicit
+approval. This work only removed the merge-conflict blocker; the merge
+decision itself is unchanged and still pending.
