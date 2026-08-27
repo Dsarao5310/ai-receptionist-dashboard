@@ -259,3 +259,31 @@ less-correct draft of the calendar-Undo fix, superseded by what actually
 shipped to master. Left `fix/undo-calendar-sync` alone — merged, but tied
 to the locked, explicitly-protected worktree. Final branch state: `master`,
 `staging`, `fix/undo-calendar-sync`.
+
+## Claude — Production Pinecone groundwork, deploy/certify intentionally paused (2026-08-27)
+
+User asked to enable Production Pinecone. Walked all 8 readiness dimensions
+from `docs/knowledge-provider-readiness.md`. Settled data policy with the
+user (Knowledge is business-authored FAQ content, low-risk by design, no
+residency requirement, no erasure commitment written yet — pre-launch).
+
+Before doing credential/index/deploy work, found nothing in the live app
+actually calls Pinecone search yet — `receptionist-simulator.ts` uses a
+plain in-memory lookup, not Pinecone; no dashboard page or Server Action
+calls `.search()` outside tests. Going fully live today would sync writes
+to an external index with zero functional payoff. User chose the free
+groundwork now (index, credential path, rollback doc), holding off the
+actual live-flip and re-certification until there's a real search consumer.
+
+Created `ai-receptionist-knowledge-production` (isolated Pinecone index
+mirroring staging exactly) via the Pinecone console directly — this
+session's Pinecone MCP connection started failing mid-task, unrelated to
+the app itself. Caught and fixed a real misconfiguration before it became a
+problem: the console defaults the field map to `text`, but the app's code
+and staging's actual index both use `content`. Wrote the rollback procedure
+into `docs/knowledge-provider-readiness.md`.
+
+Remaining: user generates the production `PINECONE_API_KEY` themselves and
+sets it in Vercel Production (never through chat, same discipline as the
+earlier rotation). `KNOWLEDGE_PROVIDER_MODE` stays unset in Production —
+not flipped to `live`.

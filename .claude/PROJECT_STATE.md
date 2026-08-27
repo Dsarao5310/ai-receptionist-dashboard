@@ -342,3 +342,31 @@ scoped, untouched since Aug 21. Nothing was actually broken — the failed
 redeploys just weren't attached to the Production environment scope, and
 the live production deployment was never affected. Full detail in
 `CURRENT_TASK.md` and `.claude/providers/knowledge.md`.
+
+## Claude addendum — Production Pinecone groundwork, deploy/certify paused (2026-08-27)
+
+Walked all 8 Production Pinecone readiness dimensions with the user. Data
+policy settled (business-authored FAQ content, low-risk by design). Before
+doing credential/index/deploy work, found nothing in the live app actually
+calls Pinecone search yet (`receptionist-simulator.ts` uses a plain
+in-memory lookup; no dashboard page or Server Action calls `.search()`
+outside tests) — going fully live today would have zero functional payoff.
+User chose to do the free groundwork (separate prod index, credential path,
+rollback doc) but hold off the actual `KNOWLEDGE_PROVIDER_MODE=live` flip and
+re-certification until there's a real search consumer or an explicit
+decision otherwise.
+
+Created `ai-receptionist-knowledge-production` (isolated Pinecone index,
+mirrors staging: AWS us-east-1, dimension 1024, `llama-text-embed-v2`) via
+the Pinecone console directly, since this session's Pinecone MCP connection
+started failing mid-task (unrelated to the app). Caught and fixed a real
+misconfiguration: the console's default field map (`text`) doesn't match
+what this app's code and staging's index actually use (`content`). Wrote the
+rollback procedure into `docs/knowledge-provider-readiness.md`, including a
+flagged gap — `.search()` throws rather than degrading silently when
+disabled, needs handling before search ships to a real feature.
+
+Remaining: user generates `PINECONE_API_KEY` themselves and sets it in
+Vercel Production (never through chat). `KNOWLEDGE_PROVIDER_MODE` stays
+unset — not flipped live. Full detail in `CURRENT_TASK.md` and
+`docs/knowledge-provider-readiness.md`.

@@ -375,3 +375,48 @@ Left `fix/undo-calendar-sync` alone (local+remote) — already merged, but
 still checked out in the locked `.claude/worktrees/quizzical-sniffing-waffle`
 worktree, which is explicitly protected in `CLAUDE.md`. Final branch state:
 `master`, `staging`, `fix/undo-calendar-sync` only.
+
+## Claude — Production Pinecone groundwork (dimensions 2/3/8 only) (2026-08-27)
+
+User asked to enable Production Pinecone. Walked through all 8 readiness
+dimensions from `docs/knowledge-provider-readiness.md`. Settled data policy
+(1) as low-risk-by-design with the user: Knowledge is business-authored
+FAQ/policy content, no residency requirement, no erasure commitment written
+yet (pre-launch).
+
+Before touching credential/index/deploy work, found something that changed
+scope: nothing in the live app currently calls Pinecone search —
+`receptionist-simulator.ts` uses a plain in-memory `findKnowledge` lookup,
+not Pinecone, and no dashboard page or Server Action calls
+`KnowledgeSyncService.search()` outside tests. Flagged this; user chose to
+do the free/reversible groundwork (2/3/8) but explicitly hold off actually
+flipping `KNOWLEDGE_PROVIDER_MODE=live` (6) and re-running certification (7)
+until there's a real reason to, since going live today would sync writes to
+an external index with zero functional payoff.
+
+Created a separate, isolated production Pinecone index via browser
+(`ai-receptionist-knowledge-production` — the Pinecone MCP tool's own API
+key had started failing mid-session, unrelated to the app; used the console
+directly instead, which needs no credential). Mirrored staging exactly: AWS,
+us-east-1, Dense, On-demand, dimension 1024, integrated `llama-text-embed-v2`.
+
+Caught a real misconfiguration before it became a problem: the console's
+quickstart flow defaults the field map to `text`, but this app's code (and
+staging's actual index) uses `content` — corrected it before finishing.
+Retrieved the full index host
+(`ai-receptionist-knowledge-production-0b2bbjx.svc.aped-4627-b74a.pinecone.io`)
+via a clipboard-intercept JS snippet since the console UI truncates it with
+no way to select the full string.
+
+Wrote the rollback procedure into `docs/knowledge-provider-readiness.md`:
+flipping `KNOWLEDGE_PROVIDER_MODE` back + redeploy, no data-loss risk since
+writes already degrade gracefully when disabled — but flagged that
+`.search()` explicitly throws rather than falling back silently, which needs
+handling before search ever ships to a real feature.
+
+Remaining for the user: generate the production `PINECONE_API_KEY` in the
+Pinecone console themselves and enter it into Vercel's Production
+environment scope (never through chat), same as the earlier rotation. I have
+the index host value ready to hand over (not a secret). `KNOWLEDGE_PROVIDER_MODE`
+stays unset in Production — not flipped to `live` — until there's an actual
+consumer of search or an explicit decision to go live anyway.
