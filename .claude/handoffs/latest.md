@@ -68,10 +68,11 @@ Status: PR #4 (CALENDAR-UNDO FIX) MERGED AND DEPLOYED; RECOVERY VERIFIERS READY;
 - **Live-verified (2026-08-27):** the UptimeRobot monitor ("AI Receptionist —
   liveness") is active, checked every minute, correctly bypasses Vercel SSO,
   100% uptime 7/30/365d, single named email owner. A test notification was
-  triggered and independently confirmed delivered via Gmail search. Still
+  triggered and independently confirmed delivered via Gmail search — both the
+  DOWN alert and, two seconds later, the UP/recovery alert arrived. Still
   open: no SMS/voice/push or third-party backup channel, and zero real
-  incidents recorded — the actual down-detection pipeline is unproven. No
-  error/log drain exists.
+  incidents recorded — the test pair proves delivery, not that UptimeRobot's
+  own detection notices a real outage. No error/log drain exists.
 - Knowledge staging backlog remains complete: Coastal 5/5 and Harbour 4/4
   synchronized, with no retryable or `sync_required` rows. Production Pinecone
   remains fail-closed.
@@ -189,9 +190,12 @@ owner, no SMS/voice/push, no integrations, zero incidents ever recorded.
 Per the user's chosen option, triggered UptimeRobot's built-in "Test
 Notification" rather than editing the live bypass-secret header myself.
 Independently confirmed real delivery via Gmail search: `alert@uptimerobot.com`
-→ `dsarao5310@gmail.com`, "TEST: Monitor is DOWN: AI Receptionist — liveness",
-timestamp matching the click. Did not touch the stored secret value.
+→ `dsarao5310@gmail.com` — both "TEST: Monitor is DOWN" and, two seconds
+later, "TEST: Monitor is UP" (recovery) arrived as a pair, timestamps
+matching the click. Did not touch the stored secret value.
 
 Still open: no backup/escalation channel beyond one email, and no real
-down/recovery incident has ever fired — that proof needs either a genuine
-outage or a user-run drill against the bypass secret.
+down/recovery incident has ever fired — the test pair proves delivery of
+both alert types, not that UptimeRobot's own detection notices a real
+outage. That proof needs either a genuine outage or a user-run drill against
+the bypass secret.

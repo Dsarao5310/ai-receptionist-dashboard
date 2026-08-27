@@ -74,12 +74,14 @@ read locally and was not printed or committed.
 The UptimeRobot monitor is now live-verified (2026-08-27): "AI Receptionist —
 liveness" checks `/api/health` every minute with the correct bypass header,
 100% uptime 7/30/365d, single named email owner. A UI-triggered test
-notification was confirmed delivered end-to-end via the owner's real inbox.
-Still open: no SMS/voice/push or third-party integration as a backup channel,
-and zero real incidents have ever been recorded, so the actual down-detection
-pipeline (as opposed to a manual test-send) is unproven — that needs either a
-real outage or a user-run drill touching the bypass secret. No error tracker
-or log/trace drain has been configured.
+notification was confirmed delivered end-to-end via the owner's real inbox —
+both the "TEST: Monitor is DOWN" and, two seconds later, "TEST: Monitor is
+UP" recovery email arrived as a pair. Still open: no SMS/voice/push or
+third-party integration as a backup channel, and zero real incidents have
+ever been recorded — the test pair proves message delivery, not that
+UptimeRobot's own detection correctly notices a real outage. That needs
+either a real outage or a user-run drill touching the bypass secret. No
+error tracker or log/trace drain has been configured.
 
 The local migration-replay rehearsal command is implemented but could not be
 executed because this environment has no loopback Postgres instance. It must not
@@ -234,11 +236,12 @@ clicking UptimeRobot's built-in "Test Notification" rather than editing the
 live bypass-secret header (which would have required retyping the secret,
 something this agent does not do). Clicked it, then independently verified
 real delivery via Gmail search rather than trusting the UI's "sent" state:
-found the actual email (`alert@uptimerobot.com` → `dsarao5310@gmail.com`,
-"TEST: Monitor is DOWN: AI Receptionist — liveness") with a timestamp matching
-the click. This is live evidence, not simulator output.
+found both the DOWN email (`alert@uptimerobot.com` → `dsarao5310@gmail.com`,
+"TEST: Monitor is DOWN: AI Receptionist — liveness") and, two seconds later,
+the matching "TEST: Monitor is UP" recovery email, timestamps matching the
+click. This is live evidence, not simulator output.
 
-Remaining, explicitly not done: a real down/recovery incident (the manual
-test-send proves delivery but not detection) and any backup alert channel —
-both require either a real outage or the user handling the bypass secret
-directly.
+Remaining, explicitly not done: a real down/recovery incident (the test pair
+proves delivery of both alert types, not that UptimeRobot's own detection
+correctly notices a real outage) and any backup alert channel — both require
+either a real outage or the user handling the bypass secret directly.

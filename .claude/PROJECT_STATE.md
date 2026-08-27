@@ -57,15 +57,17 @@ Updated: 2026-08-27
   Alert contact is a single named owner (Dilpreet Singh, email), no delay/no
   repeat. A UI-triggered test notification was sent and independently confirmed
   delivered to the owner's real inbox (`alert@uptimerobot.com` →
-  `dsarao5310@gmail.com`, "TEST: Monitor is DOWN", received immediately) — the
-  alert-delivery channel is proven working end-to-end.
+  `dsarao5310@gmail.com`): both "TEST: Monitor is DOWN" and, two seconds
+  later, "TEST: Monitor is UP" (recovery) arrived as a pair — the alert AND
+  recovery delivery channel are both proven working end-to-end.
 - **Still open:** SMS/voice/push and all third-party integrations (Slack,
   Teams, webhooks) are unconfigured, so there is no backup/escalation channel
-  beyond one email address. Zero real incidents have ever been recorded, so
-  the actual down-detection → alert → recovery-alert pipeline (as opposed to
-  the manual test-send) remains unexercised — proving it requires either a
-  real outage or a user-run drill that touches the bypass secret directly (not
-  something this agent will type). No error/log drain exists.
+  beyond one email address. Zero real incidents have ever been recorded —
+  both test emails prove message *delivery* (UptimeRobot → inbox), not that
+  UptimeRobot's own *detection* correctly notices a real outage. Proving
+  detection requires either a real outage or a user-run drill that touches
+  the bypass secret directly (not something this agent will type). No
+  error/log drain exists.
 
 ## Recovery verification
 
