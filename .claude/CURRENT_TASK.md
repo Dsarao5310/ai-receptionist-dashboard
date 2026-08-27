@@ -71,17 +71,15 @@ Production deployment `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY at
 returned the expected 200 responses and no-store headers. The bypass value was
 read locally and was not printed or committed.
 
-The UptimeRobot monitor is now live-verified (2026-08-27): "AI Receptionist —
-liveness" checks `/api/health` every minute with the correct bypass header,
-100% uptime 7/30/365d, single named email owner. A UI-triggered test
-notification was confirmed delivered end-to-end via the owner's real inbox —
-both the "TEST: Monitor is DOWN" and, two seconds later, "TEST: Monitor is
-UP" recovery email arrived as a pair. Still open: no SMS/voice/push or
-third-party integration as a backup channel, and zero real incidents have
-ever been recorded — the test pair proves message delivery, not that
-UptimeRobot's own detection correctly notices a real outage. That needs
-either a real outage or a user-run drill touching the bypass secret. No
-error tracker or log/trace drain has been configured.
+The UptimeRobot monitor is now fully live-verified (2026-08-27), including a
+real controlled drill: "AI Receptionist — liveness" checks `/api/health`
+every minute with the correct bypass header, single named email owner. A
+UI-triggered test notification confirmed both alert templates deliver. A
+genuine down/recovery drill then found and fixed a real monitor
+misconfiguration (see below) and produced a real closed incident (1m 20s
+down, real DOWN email at 19:01:05Z, real UP email at 19:02:25Z). Still open:
+no SMS/voice/push or third-party integration as a backup channel. No error
+tracker or log/trace drain has been configured.
 
 The local migration-replay rehearsal command is implemented but could not be
 executed because this environment has no loopback Postgres instance. It must not
@@ -231,17 +229,48 @@ connected — no backup or escalation channel exists beyond one email address.
 Incidents page showed zero incidents ever recorded, meaning the alert
 pipeline had never actually fired.
 
-Presented three options for closing that gap; user chose the safe one —
-clicking UptimeRobot's built-in "Test Notification" rather than editing the
-live bypass-secret header (which would have required retyping the secret,
-something this agent does not do). Clicked it, then independently verified
-real delivery via Gmail search rather than trusting the UI's "sent" state:
-found both the DOWN email (`alert@uptimerobot.com` → `dsarao5310@gmail.com`,
-"TEST: Monitor is DOWN: AI Receptionist — liveness") and, two seconds later,
-the matching "TEST: Monitor is UP" recovery email, timestamps matching the
-click. This is live evidence, not simulator output.
+Presented three options for closing that gap; user first chose the safe
+one — clicking UptimeRobot's built-in "Test Notification" rather than
+editing the live bypass-secret header (which would have required retyping
+the secret, something this agent does not do). Clicked it, then
+independently verified real delivery via Gmail search: found both the DOWN
+email (`alert@uptimerobot.com` → `dsarao5310@gmail.com`, "TEST: Monitor is
+DOWN: AI Receptionist — liveness") and, two seconds later, the matching
+"TEST: Monitor is UP" recovery email, timestamps matching the click.
 
-Remaining, explicitly not done: a real down/recovery incident (the test pair
-proves delivery of both alert types, not that UptimeRobot's own detection
-correctly notices a real outage) and any backup alert channel — both require
-either a real outage or the user handling the bypass secret directly.
+## Claude — real UptimeRobot down/recovery drill (2026-08-27)
+
+User asked to run the real drill next. Plan: this agent would corrupt the
+bypass header (garbage value, not the real secret) to force a genuine
+failure, then the user would restore the real secret since this agent does
+not type tokens/secrets into fields.
+
+The auto-mode classifier blocked even the corruption step (typing into a
+field adjacent to a stored credential) — reasonable caution — so the user
+made that edit directly. Waited 3 minutes; the monitor unexpectedly stayed
+"Up". Independently verified via `curl` (with no header, and with the exact
+garbage value now saved) that the live endpoint genuinely returns `302`
+either way — the SSO gate itself is working correctly, so the false
+positive was in UptimeRobot's own config, not the drill setup.
+
+Root cause, found by reading the monitor's Advanced settings: "Up HTTP
+status codes" was set to `2xx` **and** `3xx`, and "Follow redirections" was
+enabled — so UptimeRobot silently followed the SSO gate's redirect to the
+login page (`200`) and counted that as healthy. This is a real,
+previously-undiscovered gap: as configured, this monitor could never have
+detected a real bypass-secret expiry or revocation in production. Fixed both
+settings (plain UI toggles, no secret involved) and saved.
+
+User re-saved the still-bad header value under the corrected config; the
+monitor correctly flipped to Down within the next check cycle. Verified via
+Gmail: real (non-`TEST:`) "Monitor is DOWN: AI Receptionist — liveness" at
+19:01:05Z. User then restored the real secret and saved; monitor recovered.
+Verified via Gmail: real "Monitor is UP: AI Receptionist — liveness" at
+19:02:25Z. Dashboard shows one closed incident, 1m 20s down, across 24h/7d/
+30d/365d stats.
+
+This is genuine, independently-confirmed down-detection → alert →
+recovery-alert proof — not a manual test-send, not simulator output. This
+agent never typed the bypass secret at any point; both the corruption and
+the restoration were done by the user directly. Remaining, explicitly not
+done: a backup/escalation alert channel beyond the one email address.

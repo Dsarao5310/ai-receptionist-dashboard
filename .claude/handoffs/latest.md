@@ -65,14 +65,15 @@ Status: PR #4 (CALENDAR-UNDO FIX) MERGED AND DEPLOYED; RECOVERY VERIFIERS READY;
 
 - Production `dpl_DzM2nQB42EGDVccnDdupih8zQf6j` is READY. GET/HEAD passed live
   HTTPS verification with the locally held Vercel bypass; no secret was printed.
-- **Live-verified (2026-08-27):** the UptimeRobot monitor ("AI Receptionist —
-  liveness") is active, checked every minute, correctly bypasses Vercel SSO,
-  100% uptime 7/30/365d, single named email owner. A test notification was
-  triggered and independently confirmed delivered via Gmail search — both the
-  DOWN alert and, two seconds later, the UP/recovery alert arrived. Still
-  open: no SMS/voice/push or third-party backup channel, and zero real
-  incidents recorded — the test pair proves delivery, not that UptimeRobot's
-  own detection notices a real outage. No error/log drain exists.
+- **Fully live-verified (2026-08-27), including a real drill:** the
+  UptimeRobot monitor ("AI Receptionist — liveness") is active, checked every
+  minute, correctly bypasses Vercel SSO, single named email owner. A test
+  notification confirmed both alert templates deliver. A real controlled
+  down/recovery drill then found and fixed a genuine monitor misconfiguration
+  (3xx/redirects were counted as "Up", masking the exact failure mode this
+  monitor exists to catch) and produced one real closed incident: DOWN email
+  at 19:01:05Z, UP/recovery email at 19:02:25Z, 1m 20s down. Still open: no
+  SMS/voice/push or third-party backup channel. No error/log drain exists.
 - Knowledge staging backlog remains complete: Coastal 5/5 and Harbour 4/4
   synchronized, with no retryable or `sync_required` rows. Production Pinecone
   remains fail-closed.
@@ -194,8 +195,25 @@ Independently confirmed real delivery via Gmail search: `alert@uptimerobot.com`
 later, "TEST: Monitor is UP" (recovery) arrived as a pair, timestamps
 matching the click. Did not touch the stored secret value.
 
-Still open: no backup/escalation channel beyond one email, and no real
-down/recovery incident has ever fired — the test pair proves delivery of
-both alert types, not that UptimeRobot's own detection notices a real
-outage. That proof needs either a genuine outage or a user-run drill against
-the bypass secret.
+## Claude — real UptimeRobot down/recovery drill (2026-08-27)
+
+User asked for the real drill next. This agent corrupted the bypass header —
+the auto-mode classifier blocked even the corruption typing (credential-
+adjacent field), so the user made that edit directly with a garbage value,
+never the real secret. Monitor unexpectedly stayed "Up" for 3+ minutes;
+independently confirmed via `curl` that the live endpoint genuinely returned
+`302` regardless (the SSO gate itself was fine).
+
+Root cause: the monitor's "Up HTTP status codes" included `3xx` and "Follow
+redirections" was on, so UptimeRobot silently followed the SSO redirect to a
+`200` login page and called that healthy — a real, previously-undiscovered
+gap meaning this monitor could never have caught an actual bypass-secret
+expiry. Fixed both (plain toggles, no secret touched).
+
+User re-saved the bad header under the fixed config: monitor correctly went
+Down, real "Monitor is DOWN" email at 19:01:05Z (verified via Gmail). User
+restored the real secret: monitor recovered, real "Monitor is UP" email at
+19:02:25Z. One closed incident, 1m 20s down, recorded on the dashboard. This
+agent never typed the bypass secret; both edits were made by the user.
+
+Still open: no backup/escalation channel beyond one email address.

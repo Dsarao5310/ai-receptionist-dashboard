@@ -60,14 +60,26 @@ Updated: 2026-08-27
   `dsarao5310@gmail.com`): both "TEST: Monitor is DOWN" and, two seconds
   later, "TEST: Monitor is UP" (recovery) arrived as a pair — the alert AND
   recovery delivery channel are both proven working end-to-end.
+- **Real controlled drill completed (2026-08-27):** the user set the bypass
+  header to an invalid value in UptimeRobot; the monitor genuinely flipped to
+  Down and a real (non-TEST) "Monitor is DOWN" email arrived at 19:01:05Z. The
+  user then restored the correct secret; the monitor flipped back to Up and a
+  real "Monitor is UP" recovery email arrived at 19:02:25Z. Dashboard records
+  one closed incident, 1m 20s down. This is genuine down-detection → alert →
+  recovery-alert proof, independently confirmed via Gmail, not simulator
+  output. This agent did not type the secret at any point — only the
+  temporary corruption's *fix* required the real value, which the user
+  entered directly.
+- **Monitor misconfiguration found and fixed during the drill:** the monitor
+  originally accepted `2xx` **and** `3xx` as "Up" and had "Follow redirections"
+  enabled — meaning the Vercel SSO gate's 302 redirect (and the 200 login page
+  it followed to) would have counted as healthy. This meant the monitor could
+  never have detected a real bypass-secret expiry/revocation. Fixed by
+  removing `3xx` from accepted status codes and disabling "Follow
+  redirections"; the drill only produced a real Down after this fix.
 - **Still open:** SMS/voice/push and all third-party integrations (Slack,
   Teams, webhooks) are unconfigured, so there is no backup/escalation channel
-  beyond one email address. Zero real incidents have ever been recorded —
-  both test emails prove message *delivery* (UptimeRobot → inbox), not that
-  UptimeRobot's own *detection* correctly notices a real outage. Proving
-  detection requires either a real outage or a user-run drill that touches
-  the bypass secret directly (not something this agent will type). No
-  error/log drain exists.
+  beyond one email address. No error/log drain exists.
 
 ## Recovery verification
 
@@ -154,10 +166,10 @@ Updated: 2026-08-27
 
 ## Next phases
 
-1. UptimeRobot monitor, owner, and email alert delivery are live-verified
-   (2026-08-27). Remaining: a backup/escalation channel beyond one email, and
-   a real (not manual-test) down/recovery incident proof — needs a
-   user-run drill against the bypass secret.
+1. UptimeRobot monitor, owner, email alert delivery, AND a real controlled
+   down/recovery incident are all live-verified (2026-08-27), including a
+   real misconfiguration (3xx/redirects counted as "Up") found and fixed
+   along the way. Remaining: a backup/escalation channel beyond one email.
 2. Restore a real backup into a separate disposable project, run the new
    read-only verifier, prove application compatibility through an isolated
    Preview, and clean up only after confirming no deployment points at it.
@@ -225,13 +237,24 @@ bypass header, 100% uptime 7/30/365d. Owner is a single email contact
 (Dilpreet Singh); no SMS/voice/push, no Slack/Teams/webhook integrations, zero
 incidents ever recorded.
 
-Per user's choice among three options, triggered UptimeRobot's built-in "Test
-Notification" (a reversible, no-field-edit action) rather than editing the
-live bypass-secret header myself. Independently confirmed real delivery via
-Gmail search: `alert@uptimerobot.com` → `dsarao5310@gmail.com`, "TEST: Monitor
-is DOWN: AI Receptionist — liveness", timestamp matching the click. This is
-live evidence of the alert-delivery channel, not simulator output. Did not
-touch the stored bypass secret value at any point. Full detail in
+Per user's choice among three options, first triggered UptimeRobot's built-in
+"Test Notification" (reversible, no-field-edit). Independently confirmed via
+Gmail: both a "TEST: Monitor is DOWN" and "TEST: Monitor is UP" arrived as a
+pair.
+
+User then asked for the real drill. The auto-mode classifier blocked this
+agent from typing into the bypass-header field directly, so the user made
+that edit themselves (garbage value, not the real secret entered by this
+agent at any point). Result was surprising: the monitor stayed "Up" even
+though `curl` independently confirmed the endpoint genuinely returned 302.
+Root cause found: the monitor accepted `3xx` as "Up" and had "Follow
+redirections" enabled, so it silently followed the Vercel SSO redirect to a
+200 login page. Fixed both (plain settings toggles, no secret involved); user
+re-saved the bad header, and the monitor correctly went Down — real "Monitor
+is DOWN" email at 19:01:05Z. User then restored the real secret; monitor
+recovered, real "Monitor is UP" email at 19:02:25Z, one closed incident
+(1m 20s down) recorded on the dashboard. Full closed-loop proof, independently
+confirmed via Gmail at every step, not simulator output. Full detail in
 `CURRENT_TASK.md`.
 
 ## Claude addendum — PR #4 (calendar-Undo fix) merged (2026-08-27)
