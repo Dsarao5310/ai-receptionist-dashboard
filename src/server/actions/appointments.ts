@@ -7,6 +7,7 @@ import { recordAuditEvent } from "@/server/audit";
 import { serverNow } from "@/server/clock";
 import { getWorkspaceConfiguration, scopeFor } from "@/server/workspace-data";
 import {
+  requestAppointmentBooking,
   requestAppointmentCancellation,
   requestAppointmentReschedule,
 } from "@/server/integrations/workflows";
@@ -240,29 +241,22 @@ export async function updateAppointmentNotesAction(input: {
 /**
  * Undo.
  *
- * Undo does not get a pass on the scheduling rules, and — since fixing the gap
- * described below — not on the calendar either. Every undo is validated as a
- * move to `date`/`time` exactly as any other reschedule would be, even an
- * undo-cancel whose target slot is the one the appointment never actually
- * left: the calendar entry behind it did leave, and recreating that entry can
- * land on a slot the ordinary rules would now refuse (the hour has passed, or
- * something else has since taken it).
+ * The subtlety worth being explicit about: undo does not get a pass on the
+ * scheduling rules, and it does not get a pass on the calendar either. Undoing
+ * a *reschedule* moves the appointment back to a time, so it goes through the
+ * same workflow gate as an ordinary reschedule — otherwise the dashboard would
+ * revert while a live calendar stayed at the new time. Undoing a
+ * *cancellation* is asking the calendar to recreate an event it was already
+ * told to remove, so it goes through the booking workflow instead. A plain
+ * status change with no time movement (undoing nothing calendar-shaped) skips
+ * the workflow entirely, same as it always has.
  *
- * So if the slot has since become invalid, the undo is refused with the
- * reason. That reads as a limitation and is really the rule holding: there is
- * no path, including this one, that puts an appointment somewhere the
- * ordinary rules would not allow.
- *
- * ── Why undo reuses the reschedule workflow, not a new one ──────────────────
- * A cancelled appointment's calendar entry is a tombstone the instant it's
- * cancelled (`cancelExecutor` keeps the mapping precisely so this is
- * reversible). `requestAppointmentReschedule`'s executor already repairs a
- * tombstoned or missing event by creating a fresh one in its place — the same
- * repair a genuine reschedule needs when its mapped event has gone stale — so
- * undo-cancel gets a live calendar entry back for free by asking for exactly
- * that repair. Undo-reschedule is, from the calendar's side, just another
- * move. Neither needs its own operation type; introducing one would mean a
- * migration to extend the `operation` check constraints for no behavioral gain.
+ * Both of those calendar-touching paths are also time moves in the sense that
+ * matters here, so both get the same slot check a reschedule would: if the
+ * original slot has since passed, or the business has since closed that day,
+ * the undo is refused with the reason. That reads as a limitation and is
+ * really the rule holding: there is no path, including this one, that puts an
+ * appointment somewhere the ordinary rules would not allow.
  */
 export async function restoreAppointmentAction(input: {
   appointmentId: string;
@@ -280,31 +274,42 @@ export async function restoreAppointmentAction(input: {
 
     const config = await getWorkspaceConfiguration(context);
     const now = serverNow();
-    const check = checkRescheduleSlot(config, appointment, input.date, input.time, now);
-    if (!check.valid) return { ok: false, error: check.message };
+    const movesInTime = appointment.date !== input.date || appointment.time !== input.time;
+    const uncancels = appointment.status === "cancelled" && input.status !== "cancelled";
+
+    if (movesInTime || uncancels) {
+      const check = checkRescheduleSlot(config, appointment, input.date, input.time, now);
+      if (!check.valid) return { ok: false, error: check.message };
+    }
 
     // Validation first, workflow second, database third — the same ordering
-    // rescheduleAppointmentAction uses and for the same reason.
-    const disposition = await requestAppointmentReschedule(context, {
-      appointment,
-      configuration: config,
-      date: input.date,
-      time: input.time,
-      now,
-    });
-    const gated = gate(disposition);
+    // reschedule and cancel already follow, for the same reason.
+    let gated: WorkflowGate = { proceed: true, operationId: null };
+    if (uncancels) {
+      const disposition = await requestAppointmentBooking(context, {
+        appointment: { ...appointment, date: input.date, time: input.time },
+        configuration: config,
+        now,
+      });
+      gated = gate(disposition);
+    } else if (movesInTime) {
+      const disposition = await requestAppointmentReschedule(context, {
+        appointment,
+        configuration: config,
+        date: input.date,
+        time: input.time,
+        now,
+      });
+      gated = gate(disposition);
+    }
     if (!gated.proceed) return { ok: false, error: gated.error };
 
-    // The workflow only ever moves (or recreates) the calendar entry. Undo's
-    // actual job — restoring status and notes, not just where the calendar
-    // heard about it — is this commit, scoped to exactly the fields an undo
-    // changes, same as `restore()`'s own documented contract.
     const committed = await commitWithSyncGuard(
       context,
       {
         appointmentId: input.appointmentId,
         operationId: gated.operationId,
-        detail: "The calendar was restored but this record could not be saved.",
+        detail: "The calendar was updated but this undo could not be saved.",
         now,
       },
       () =>
@@ -314,15 +319,6 @@ export async function restoreAppointmentAction(input: {
         )
     );
     if (!committed.ok) return { ok: false, error: committed.error };
-
-    await recordAuditEvent({
-      actorUserId: context.user.id,
-      workspaceId: context.workspaceId,
-      action: "appointment.restored",
-      targetType: "appointment",
-      targetId: appointment.id,
-      metadata: { to: `${input.date} ${input.time}`, status: input.status },
-    });
 
     revalidateWorkspaceViews();
     return { ok: true };

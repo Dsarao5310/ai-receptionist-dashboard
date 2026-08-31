@@ -6,6 +6,16 @@ import { nullableIso, str, WorkspaceScopedRepository, type Row } from "./base";
 
 export type KnowledgeSyncState = "pending" | "synced" | "error" | "sync_required";
 
+export interface KnowledgeSyncStatus {
+  total: number;
+  pending: number;
+  error: number;
+  syncRequired: number;
+  synced: number;
+  retryable: number;
+  oldestRetryableAt: string | null;
+}
+
 export interface KnowledgeSyncDocument extends KnowledgeEntry {
   workspaceId: string;
   providerDocumentId: string;
@@ -139,6 +149,40 @@ export class KnowledgeSyncRepository extends WorkspaceScopedRepository {
         and provider_sync_state in ('pending', 'error')
       order by updated_at asc limit ${Math.max(1, Math.min(limit, 500))}`;
     return rows.map(toDocument);
+  }
+
+  /**
+   * A content-free operational summary for the authorized workspace.
+   *
+   * It deliberately returns no entry ids, provider ids, namespaces, content,
+   * or error text. Operators need to know whether work is queued or parked for
+   * manual attention; none of the provider infrastructure belongs in a client
+   * response or audit event.
+   */
+  async syncStatus(): Promise<KnowledgeSyncStatus> {
+    const [row] = await this.sql`
+      select
+        count(*)::int as total,
+        count(*) filter (where provider_sync_state = 'pending')::int as pending,
+        count(*) filter (where provider_sync_state = 'error')::int as error,
+        count(*) filter (where provider_sync_state = 'sync_required')::int as sync_required,
+        count(*) filter (where provider_sync_state = 'synced')::int as synced,
+        min(updated_at) filter (
+          where provider_sync_state in ('pending', 'error')
+        ) as oldest_retryable_at
+      from knowledge_entries
+      where workspace_id = ${this.ws}`;
+    const pending = Number(row?.pending ?? 0);
+    const error = Number(row?.error ?? 0);
+    return {
+      total: Number(row?.total ?? 0),
+      pending,
+      error,
+      syncRequired: Number(row?.sync_required ?? 0),
+      synced: Number(row?.synced ?? 0),
+      retryable: pending + error,
+      oldestRetryableAt: nullableIso(row?.oldest_retryable_at),
+    };
   }
 }
 

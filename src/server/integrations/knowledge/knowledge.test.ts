@@ -11,6 +11,7 @@ import type { IntegrationRecord } from "@/types";
 import { knowledgeProviderServerAdapter } from "./adapter";
 import type { KnowledgeProviderClient } from "./contracts";
 import { createKnowledgeSyncService } from "./operations";
+import { readKnowledgeSyncHealth } from "./reconciliation";
 import { KnowledgeProviderError } from "./errors";
 import { simulatedKnowledgeProvider } from "./simulator";
 
@@ -457,6 +458,33 @@ describeDb("knowledge provider tenancy and reconciliation", () => {
 
     expect(created.state).toBe("local_only");
     expect(await workspaceScope(a, sql).knowledgeSync.find(created.id)).toMatchObject({ syncState: "pending" });
+  });
+
+  it("reports retryable backlog only for the server-authorized workspace", async () => {
+    const a = await contextA();
+    const b = await contextB();
+    const beforeA = await readKnowledgeSyncHealth(a, workspaceScope(a, sql).knowledgeSync);
+    const beforeB = await readKnowledgeSyncHealth(b, workspaceScope(b, sql).knowledgeSync);
+    process.env.KNOWLEDGE_PROVIDER_MODE = "disabled";
+
+    await createKnowledgeSyncService(a, workspaceScope(a, sql).knowledgeSync).create({
+      ...entry,
+      title: "Workspace A reconciliation status",
+    }, NOW);
+    await createKnowledgeSyncService(b, workspaceScope(b, sql).knowledgeSync).create({
+      ...entry,
+      title: "Workspace B reconciliation status",
+    }, NOW);
+
+    const afterA = await readKnowledgeSyncHealth(a, workspaceScope(a, sql).knowledgeSync);
+    const afterB = await readKnowledgeSyncHealth(b, workspaceScope(b, sql).knowledgeSync);
+    expect(afterA.pending).toBe(beforeA.pending + 1);
+    expect(afterB.pending).toBe(beforeB.pending + 1);
+    expect(afterA.retryable).toBe(beforeA.retryable + 1);
+    expect(afterB.retryable).toBe(beforeB.retryable + 1);
+    expect(JSON.stringify(afterA)).not.toMatch(/workspace B reconciliation status/i);
+
+    process.env.KNOWLEDGE_PROVIDER_MODE = "simulated";
   });
 
   it("records a safe reconciliation state after provider failure", async () => {

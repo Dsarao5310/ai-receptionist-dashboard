@@ -4,7 +4,7 @@ import type { AppConfiguration, Appointment } from "@/types";
 import type { AuthContext } from "@/server/auth/policy";
 import { instantForProvider } from "@/services/adapters/provider-time";
 import { runWorkflowOperation, type OperationDisposition } from "./n8n/operations";
-import { calendarConnected, cancelExecutor, rescheduleExecutor } from "./calendar-sync";
+import { calendarConnected, cancelExecutor, createExecutor, rescheduleExecutor } from "./calendar-sync";
 
 /**
  * The operations the application knows how to ask a workflow to perform.
@@ -87,6 +87,47 @@ export async function requestAppointmentReschedule(
         date,
         time,
         startsAt: instantForProvider(date, time, timezone).toISOString(),
+      },
+    },
+  });
+}
+
+/**
+ * Ask the mapped workflow to (re)create the appointment's calendar event.
+ *
+ * The appointment currently has no live event to move — right now that is
+ * exactly the undo-a-cancellation case, restoring a booking the calendar had
+ * already been asked to remove. Same idempotency and sync-guard spine as the
+ * other two operations, so a duplicate click cannot create a second event.
+ */
+export async function requestAppointmentBooking(
+  context: AuthContext,
+  input: AppointmentWorkflowInput
+): Promise<OperationDisposition> {
+  const { appointment, configuration, now } = input;
+  const timezone = configuration.business.timezone;
+
+  return runWorkflowOperation(context, {
+    operation: "appointment.book",
+    executor: (await calendarConnected(context))
+      ? createExecutor(context, { appointment, configuration })
+      : undefined,
+    idempotencyParts: [appointment.id, appointment.updatedAt],
+    target: { type: "appointment", id: appointment.id },
+    now,
+    data: {
+      appointmentId: appointment.id,
+      timezone,
+      customer: {
+        name: appointment.customerName,
+        phone: appointment.customerPhone,
+        email: appointment.customerEmail,
+      },
+      service: { name: appointment.service.name, durationMin: appointment.service.durationMin },
+      scheduled: {
+        date: appointment.date,
+        time: appointment.time,
+        startsAt: instantForProvider(appointment.date, appointment.time, timezone).toISOString(),
       },
     },
   });

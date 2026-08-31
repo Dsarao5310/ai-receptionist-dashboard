@@ -19,9 +19,14 @@
     "db:reset": "node scripts/db.mjs reset",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:staging": "tsx scripts/seed-staging.ts",
+    "db:recovery:rehearse": "tsx scripts/recovery-rehearse.ts",
+    "db:recovery:verify": "tsx scripts/recovery-verify.ts",
     "calendar:preflight": "node scripts/calendar-preflight.mjs",
     "n8n:preflight": "tsx scripts/n8n-preflight.ts",
-    "privacy:preflight": "tsx scripts/privacy-preflight.ts"
+    "privacy:preflight": "tsx scripts/privacy-preflight.ts",
+    "knowledge:reconcile:dry-run": "node --conditions=react-server --import tsx scripts/knowledge-reconciliation-dry-run.ts",
+    "knowledge:reconcile:status": "node --conditions=react-server --import tsx scripts/knowledge-reconciliation-status.ts",
+    "knowledge:reconcile:execute": "node --conditions=react-server --import tsx scripts/knowledge-reconciliation-execute.ts"
   },
   "dependencies": {
     "@pinecone-database/pinecone": "^8.2.0",
@@ -42,7 +47,7 @@
     "lucide-react": "^1.31.0",
     "next": "16.3.1",
     "next-auth": "^5.0.0-beta.32",
-    "nodemailer": "^8.0.11",
+    "nodemailer": "^9.0.5",
     "postgres": "^3.4.9",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -67,5 +72,8 @@
   },
   "allowScripts": {
     "esbuild@0.28.2": true
+  },
+  "overrides": {
+    "nodemailer": "^9.0.5"
   }
 }

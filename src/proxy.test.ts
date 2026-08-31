@@ -18,8 +18,14 @@ describe("Next.js Proxy", () => {
     expect(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url: "/appointments" })).toBe(true);
   });
 
-  it("leaves Auth.js and machine-authenticated callbacks reachable", () => {
-    for (const path of ["/sign-in", "/api/auth/session", "/api/internal/n8n/events", "/api/internal/twilio/sms"]) {
+  it("leaves Auth.js, liveness, and machine-authenticated callbacks reachable", () => {
+    for (const path of [
+      "/sign-in",
+      "/api/auth/session",
+      "/api/health",
+      "/api/internal/n8n/events",
+      "/api/internal/twilio/sms",
+    ]) {
       expect(proxy(new NextRequest(`https://app.example.com${path}`)).headers.get("location"), path).toBeNull();
     }
   });
