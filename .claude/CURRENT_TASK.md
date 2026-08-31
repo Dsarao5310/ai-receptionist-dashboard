@@ -506,3 +506,46 @@ kept, and none of it happened to be technically wrong — but it ran for
 hours without the coordination check `ACTIVE_WORK.md`/current `CLAUDE.md`
 require, which is what let the duplicate Undo work happen at all. Filed as
 its own note in `handoffs/latest.md`.
+
+## Claude — Twilio/Vapi live certification investigated, paused per user cost policy (2026-08-31)
+
+User directed three priorities in order: (1) wire real Knowledge/Pinecone
+search into the live AI receptionist flow, (2) live Twilio/Vapi
+certification, (3) the backup-restore drill. Started on (1); found
+`receptionist-simulator.ts` is an explicit UI-preview stand-in ("when a
+real AI backend is connected this module is the single thing that gets
+replaced"), and this app has no live conversation-AI integration at all —
+Vapi webhooks only handle post-call events (`status-update`,
+`end-of-call-report`), no live tool-calling endpoint exists. So (1)
+actually depends on (2) — there's no live assistant to wire search into
+yet. User agreed to do (2) first.
+
+Investigated (2)'s real state: production's `integration_records` claim
+Twilio/Vapi are "configured" for both demo workspaces, but the data behind
+it is fake seed data — a fictional `+1 (604) 555-0142` number shared
+identically across both workspaces and both providers, `provider_sid` null,
+and `vapi_assistants` completely empty. Confirmed via direct SQL, not
+assumed. Real setup is a from-scratch task: buy a Twilio number, connect an
+existing Vapi assistant, configure webhooks, set five env vars
+(`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_PHONE_NUMBER`/
+`VAPI_API_KEY`/`VAPI_WEBHOOK_BEARER_TOKEN`), and write real values into
+`provider_phone_numbers`/`vapi_assistants` for one workspace. User confirmed:
+target workspace is Coastal Bloom, a Vapi assistant already exists, a
+Twilio number still needs to be purchased.
+
+**This runs into the same standing instruction already on record above
+("real restore drill blocked on plan tier" entry, 2026-08-27): the user
+batched Supabase Pro upgrade + n8n + Twilio + Vapi together and said to
+wait until all of it is ready, not just Twilio/Vapi in isolation. Explicitly
+re-confirmed by the user just now in this session after this agent started
+laying out Twilio/Vapi setup steps unprompted — a reminder that this was
+already paused, not a new decision. No session should do anything that
+costs money or nudges toward spending it on any of these four until the
+user says the batch is ready.** Also flagged in `ACTIVE_WORK.md`, which is
+more visible day-to-day but gets overwritten each cycle; this entry plus
+the 2026-08-27 one above are the durable record.
+
+Pivoting to no-cost prep for (1)/(2): building the Vapi function-calling
+webhook endpoint Knowledge search will need once a live assistant exists,
+matching Vapi's documented tool-call contract, code+tests only — stays
+unverified live until the user unblocks the costly step.
