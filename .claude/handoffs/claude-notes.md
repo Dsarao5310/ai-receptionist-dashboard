@@ -557,3 +557,81 @@ sandbox; `n8n/contract.test.ts`, the file actually touched, is DB-free and
 ran for real: 32/32). `npm run build` (fail-closed production build): pass.
 No other correctness, cross-tenant, sync-guard, or secret-leak issues found
 in this scope.
+
+## 2026-08-31 — round 6 review: repositories + actions, no new bug fixed
+
+Third review pass of the day, same session. Asked to give the same scrutiny
+to `src/server/db/repositories/` (every file except `knowledge-sync.ts`,
+already covered in today's pass 1) and `src/server/actions/` (every file
+except the Knowledge methods in `configuration.ts`, same reason). Read every
+in-scope file directly by hand: `activity.ts`, `appointments.ts`, `base.ts`,
+`call-privacy.ts`, `calls.ts`, `configuration.ts`, `conversations.ts`,
+`customers.ts`, `email.ts`, `integrations.ts`, `messaging.ts`,
+`notifications.ts`, `orchestration.ts`, `privacy-erasure-requests.ts`,
+`privacy-maintenance.ts`, `settings.ts`, `vapi-calls.ts`, `workspaces.ts`
+under repositories, and `appointments.ts`, `auth.ts`, `calendar.ts`,
+`configuration.ts` (non-Knowledge parts), `integrations.ts`,
+`knowledge-result.ts`, `privacy.ts`, `workspace-settings.ts`, `workspace.ts`
+under actions. Most of this had already gone through round 2's "essentially
+the full database repository layer" pass on 2026-08-26 with no bugs found;
+this read confirmed that again and concentrated extra scrutiny on files and
+methods that pass hadn't named individually (`call-privacy.ts`'s
+consent-ordering transaction, `email.ts`'s non-transactional-looking
+`applyMessage` — confirmed safe because the shared inbound pipeline always
+calls it inside `getDb().begin()`, `vapi-calls.ts`'s event-ordering guard,
+`configuration.ts`'s hours/services/AI methods).
+
+**No new bug met the bar to fix.** Three things worth recording instead:
+
+- **Already known, still present, still not fixed**: `restoreAppointmentAction`
+  → `AppointmentRepository.restore()` (the Undo toast after cancel/reschedule)
+  still writes only the local row and never calls back into
+  `requestAppointmentReschedule`/`commitWithSyncGuard`/the calendar workflow,
+  unlike `cancelAppointmentAction`/`rescheduleAppointmentAction` on the way
+  out. This is the same bug logged under "2026-08-26 — real bug found: Undo
+  on cancel/reschedule never touches the calendar" above — re-confirmed by
+  reading the current file, not re-discovered. Still left unfixed: wiring Undo
+  through the same validate → workflow → commit path reschedule uses is a
+  real behavior change to the booking/calendar-sync engine, bigger and riskier
+  than this pass's "smallest safe fix" bar, and needs an explicit product
+  decision rather than a unilateral patch mid-review.
+- **New observation, not fixed**: `MessagingRepository.applyDeliveryStatus`
+  (`src/server/db/repositories/messaging.ts`) applies a Twilio delivery-status
+  webhook unconditionally — there is no guard comparing the incoming event
+  against a stored "last provider event" instant, unlike the analogous
+  ordering guards `VapiCallRepository.applyCallUpdate` (`previousAt`/
+  `input.eventAt`) and `CallPrivacyRepository.recordConsent`
+  (`last_consent_event_at`) both already have. The Twilio inbound idempotency
+  key is `${messageSid}:${status}` (exactly-once per status value, confirmed
+  in `twilio/inbound.ts`), so a *duplicate* delivery is already blocked — but
+  two *different* status callbacks arriving out of order (e.g. a delayed
+  "sent" webhook processed after "delivered" already landed) would silently
+  regress the stored status and clear `delivered_at`. Did not fix:
+  `sms_messages` has no column recording the provider's own event timestamp
+  to order against (only `sent_at`/`delivered_at`, conditionally written, and
+  `updated_at`, which is server-write time, not provider event time) — a
+  correct fix needs a migration to add one, out of this pass's scope (no
+  migrations). Low real-world severity (SMS status display only, no
+  tenant-scoping or security exposure), since Twilio's callbacks are
+  practically ordered in the normal case.
+- **Dead code, not touched**: `ConfigurationRepository.addKnowledge` /
+  `updateKnowledge` / `removeKnowledge`
+  (`src/server/db/repositories/configuration.ts`) are unreachable — grepped
+  the whole `src/server` tree and found no caller. The live Knowledge actions
+  (`addKnowledgeAction` etc. in `actions/configuration.ts`, out of scope for
+  this pass) route entirely through `createKnowledgeSyncService` →
+  `knowledge-sync.ts` instead, which is the correct provider-aware path (sets
+  `provider_document_id`, sync state, etc.). These three repository methods
+  read like a pre-Knowledge-provider leftover. Left alone rather than
+  deleted: removing methods is a refactor this pass's scope doesn't call for,
+  and anything Knowledge-shaped is deliberately out of bounds for this
+  session's third pass regardless of which file it lives in.
+
+Every workspace-scoped query in every file above still reads
+`where workspace_id = ${this.ws}` (or joins through a table that does) with
+no exception; every idempotency-sensitive write (orchestration claims,
+inbound receipts, erasure-request state transitions, email thread/message
+uniqueness) is arbitrated by a database constraint, not a check-then-act
+race. No cross-tenant leak, forged-authorization path, or over-eager
+validator rejecting legitimate input was found in this scope. No code
+changed in this pass, so no `npm run check` re-run was needed.
