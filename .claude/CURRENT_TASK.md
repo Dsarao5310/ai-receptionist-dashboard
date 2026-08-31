@@ -64,6 +64,37 @@ search → delete → confirmed gone from both DB and Pinecone. Full detail in
   `npx next typegen && npm run check` (typecheck, lint, 365/365 runnable
   tests, 194 DB-backed tests skipped — no live DB in this sandbox) and
   `npm run build` (fail-closed production build) after the fix: both green.
+- A repository/actions review pass (`src/server/db/repositories/` minus
+  `knowledge-sync.ts`, `src/server/actions/` minus Knowledge methods) found
+  no new bug meeting the fix bar; removed one confirmed-dead-code item
+  instead (`ConfigurationRepository.addKnowledge/updateKnowledge/removeKnowledge`,
+  no remaining caller — live Knowledge writes route through
+  `knowledge-sync.ts`). Flagged two items rather than fixing them inline:
+  `restoreAppointmentAction` (Undo) never re-entered the calendar workflow,
+  unlike cancel/reschedule — fixed next, see below. `MessagingRepository
+  .applyDeliveryStatus` has no out-of-order-webhook guard, unlike its
+  siblings — low severity (SMS status display only), needs a migration to
+  fix properly, left open.
+- Fixed the Undo/calendar gap with explicit direction on one open question
+  (undo-cancel now validates the target slot via `checkRescheduleSlot`,
+  same as undo-reschedule already did — user confirmed this over leaving
+  it unconditional). `restoreAppointmentAction` now routes through the
+  existing `requestAppointmentReschedule` workflow before its local
+  `restore()` commit, reusing the `appointment.reschedule` operation and
+  its executor's existing tombstone-repair path rather than introducing a
+  new operation type (which would have needed a migration to extend the
+  `operation` check constraints in `0006_orchestration.sql` — out of
+  scope). Added `"appointment.restored"` to the `AuditAction` TS union
+  (`types/identity.ts`) — pure type, no DB constraint. No dedicated unit
+  test: this codebase has no unit-test harness for
+  reschedule/cancelAppointmentAction either, both covered only by hosted-DB
+  integration tests (skipped here, no live DB). Verified by
+  typecheck/lint/365-tests/production-build, all green, plus a careful
+  hand-trace against the already-tested primitives it composes. **Live/
+  hosted verification of this fix is still an open gate** — the same
+  hosted tenant-isolation suite that already exercises `restoreAppointmentAction`
+  should be extended or re-run against a live DB+calendar before this is
+  called certified, not just typecheck/build-verified.
 
 ## Result
 
