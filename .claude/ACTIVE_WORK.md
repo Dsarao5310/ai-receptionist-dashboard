@@ -28,7 +28,7 @@ Last updated: 2026-08-27
 
 ## Claude
 
-Status: in-progress
-Task: Review pass (read-only, no execution) over the recovery-rehearsal/verification scripts and Knowledge reconciliation CLI tooling that landed on master today via another session — this session hasn't reviewed that code yet. No migrations, deploys, or credential/env changes; will not run any recovery/rehearsal command against any real database.
-Started: 2026-08-31
+Status: idle
+Task: — (last: reviewed the recovery-rehearsal/verification scripts and Knowledge reconciliation CLI tooling — traced the fail-closed guards adversarially, no bypass found in either; no bugs found anywhere in scope, nothing changed)
+Started: —
 Last updated: 2026-08-31
