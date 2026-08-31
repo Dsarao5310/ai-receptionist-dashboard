@@ -29,6 +29,6 @@ Last updated: 2026-08-27
 ## Claude
 
 Status: in-progress
-Task: Re-ordered per user: live Twilio/Vapi certification first (found receptionist-simulator.ts is explicitly a UI preview stand-in, not the real call path — "when a real AI backend is connected this module is the single thing that gets replaced" — so there's no live assistant yet for Knowledge search to hook into). Investigating current Twilio/Vapi credential/account state before proposing concrete next steps; this needs the user's direct involvement (accounts, phone numbers, live test calls). Knowledge-search wiring (#1) and the backup-restore drill (#3) queued after.
+Task: STANDING USER INSTRUCTION: do not do anything that costs money (buying a Twilio number, generating live Vapi/Twilio credentials, etc.) or nudge toward it — the user will explicitly say when that part is ready. Until then, work only on no-cost parts. Confirmed: production's Twilio/Vapi "configured" integration_records are fake seed data (fictional 555 number shared identically across both demo workspaces, provider_sid null, vapi_assistants table empty) — real setup is a from-scratch task, paused per the above. User confirmed target is Coastal Bloom workspace, has a Vapi assistant already, needs to buy a Twilio number (the paused/costly step). Pivoting now to no-cost prep: building the Vapi function-calling webhook endpoint Knowledge search will need, code+tests only, unverified live until the user unblocks #2.
 Started: 2026-08-31
 Last updated: 2026-08-31
