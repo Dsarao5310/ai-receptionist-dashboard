@@ -1,22 +1,32 @@
 # Current Project State
 
-Updated: 2026-08-26
+Updated: 2026-08-31
 
 ## Repository checkpoint
 
-Branch: `master`, HEAD `ccf6272`.
+Branch: `master`, HEAD `797f4b3` (also current on session branch
+`claude/launch-terminal-q0czdf`, which is even with `master`).
 
 PR #1 merged the former `ui/dashboard-reconstruction` branch as `5af8fd7`.
 Commit `ccf6272` then fixed fresh-checkout CI type generation by running
-`next typegen` before TypeScript. GitHub Actions subsequently passed.
+`next typegen` before TypeScript.
 
-The working tree contains the existing Markdown reconciliation, Claude's active
-UI polish, the uncommitted advisor-hardening artifacts, and the Business
-Knowledge provider foundation. The repository now has 19 migration files. Both
-staging and production are verified through file 18 and are currently 18/19;
-file 19 is local-only namespace-immutability privilege hardening.
-The prior UI, provider, privacy, scheduler, and email foundation remains
-committed; none of the five migrations already applied to staging was edited.
+PR #2 (`knowledge/pinecone-provider-foundation`) subsequently merged as
+`f365cea`, landing the full Business Knowledge provider foundation on
+`master` — it is no longer an uncommitted working-tree artifact. Two
+docs-only follow-up commits (`0b444ac`, `797f4b3`) recorded the merge and
+the live end-to-end Knowledge/Pinecone certification through the real UI;
+see `.claude/CURRENT_TASK.md` and `.claude/handoffs/latest.md` for the full
+evidence trail. The working tree is otherwise clean — no pending advisor-
+hardening or Knowledge artifacts remain uncommitted.
+
+The repository has 19 migration files. Both staging and production are
+verified through file 18 and remain 18/19; file 19
+(`20260826033517_knowledge_namespace_immutability.sql`) is still local-only
+namespace-immutability privilege hardening, not yet applied remotely. The
+prior UI, provider, privacy, scheduler, and email foundation remains
+committed; none of the migrations already applied to staging/production was
+edited.
 
 ## Live platform status
 
@@ -39,12 +49,13 @@ committed; none of the five migrations already applied to staging was edited.
 - Hosted staging RBAC/tenancy matrix: **LIVE RE-CERTIFIED AT `ccf6272`**.
 - Google Calendar: **LIVE VERIFIED historically**.
 - Production Vercel project: **DEPLOYED + PUBLIC SIGN-IN HEALTH VERIFIED**.
-  `ai-receptionist-dashboard` deployed `ccf6272` as
-  `dpl_789Ci6wJ7bf4kKj6Lyup1JcxWnfx`; the production origin returned HTTP 200.
-  A read-only 2026-08-26 refresh reconfirmed production and staging `READY` at
-  `ccf6272`, both public sign-in surfaces at HTTP 200, and zero 5xx,
-  error/fatal entries, or grouped runtime-error clusters in the inspected
-  24-hour production/Preview window.
+  Superseded by the PR #2 merge: production redeployed at merge commit
+  `f365cea` (`dpl_8fRbX5znDPXbVfoyM68HYcovmfSk`, READY), then again at the
+  docs-only follow-up `0b444ac` (`dpl_Bk16VV1VwRN2ALkVG3HUziCrvbfW`, READY).
+  Production now runs the Business Knowledge/Pinecone code, though
+  `KNOWLEDGE_PROVIDER_MODE` remains unset/disabled there — no live Pinecone
+  traffic from production. The earlier `ccf6272`/`dpl_789Ci6wJ7bf4kKj6Lyup1JcxWnfx`
+  checkpoint and its 24-hour health refresh predate this and are historical only.
 - Authenticated production behavior after the new deployment is **PARTIALLY
   RE-CERTIFIED: OWNER + NO-WORKSPACE FAIL-CLOSED**. A real Coastal Bloom owner
   completed Google OAuth in the in-app Browser on production and passed the
@@ -54,12 +65,18 @@ committed; none of the five migrations already applied to staging was edited.
   workspace. Manager, staff, Harbour owner, and platform-operator production
   identities were not available among the saved Google accounts, so their
   production matrix is not claimed.
-- Staging alias: **READY AT `ccf6272` + PUBLIC SIGN-IN HEALTH VERIFIED**.
-  Remote branch `staging` was fast-forwarded from `96a124d` to `ccf6272`; Vercel
-  created Preview deployment `dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`. The stable
-  staging alias returned HTTPS 200 and no Preview runtime errors appeared in the
-  inspected 15-minute window. Five-role authenticated RBAC/tenant behavior was
-  subsequently re-certified on this exact deployment.
+- Staging alias: **READY AT `0b444ac` + LIVE KNOWLEDGE/PINECONE FLOW CERTIFIED
+  THROUGH THE REAL UI (2026-08-26)**. After the PR #2 merge, the user pushed
+  `master:staging` directly; Vercel redeployed staging at `0b444ac`
+  (`dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, READY), matching production's code. The
+  authenticated re-run against this deployment confirmed the full round trip
+  independently at every layer: UI entry survives a hard reload, the database
+  row has `provider_document_id` set and `provider_sync_state = synced`,
+  Pinecone semantic search finds the real vector, and delete removes it from
+  both DB and Pinecone. No stray test data was left behind. Full detail in
+  `.claude/handoffs/latest.md`. The earlier `ccf6272`/`dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`
+  checkpoint and its five-role RBAC re-certification predate this and remain
+  historically valid but are no longer the current staging deployment.
 - Staging database schema: **MIGRATED + ADVISORS CLEAR, NOT AUTH-CERTIFIED**. All
   expected new tables exist; privacy defaults cover 2/2 workspaces and the
   privacy-state backfill covers 443/443 calls. The forward hardening migration
@@ -108,14 +125,20 @@ committed; none of the five migrations already applied to staging was edited.
   its schema is applied remotely through file 17, but no legal approval, true
   reauthentication, configured schedule secret, external alerting, recording
   ingestion, or live certification exists.
-- Knowledge/Pinecone: **APPLICATION FOUNDATION BUILT + STAGING AND PRODUCTION
-  SCHEMA VERIFIED; NOT LIVE**. Server-issued tenant namespaces, durable sync
-  and reconciliation state, tombstones, monotonic version ordering, bounded
+- Knowledge/Pinecone: **LIVE, CERTIFIED END-TO-END THROUGH THE REAL UI ON
+  STAGING (2026-08-26)**. Server-issued tenant namespaces, durable sync and
+  reconciliation state, tombstones, monotonic version ordering, bounded
   contracts, a deterministic simulator, registry projection, and production
   fail-closed policy are implemented. Schema migration 18 is applied and
-  verified in both staging and production (2026-08-26). No Pinecone
-  account/API/index, credential, embedding, or live certification exists;
-  production remains in its existing fail-closed live-mode policy.
+  verified in both staging and production. The application code (server
+  actions, repositories, UI) merged via PR #2 (`f365cea`) and is deployed to
+  both production and staging. The full round trip — UI → server action → DB
+  (`provider_document_id` set) → Pinecone upsert → synced → semantic search
+  finds it → delete → removed from both DB and Pinecone — is verified live on
+  staging; see the staging alias bullet above and `.claude/handoffs/latest.md`.
+  Production has the code but no `KNOWLEDGE_PROVIDER_MODE`/Pinecone credential
+  configured, so it remains fail-closed/disabled in practice; no production
+  live certification is claimed.
   **Addendum, Claude, same day:** wrote the actual live adapter
   (`src/server/integrations/knowledge/pinecone.ts`, real
   `@pinecone-database/pinecone` SDK calls, 9/9 unit tests against a fake
@@ -283,10 +306,11 @@ committed; none of the five migrations already applied to staging was edited.
 1. Production and staging are both at 18/19. File 19 is a local-only,
    forward-only least-privilege hardening migration; executed-schema validation
    and any remote application require a separate explicit approval.
-2. Staging now has branch-scoped live Pinecone configuration and READY deployment
-   `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`. Claude owns authenticated staging and
-   provider-flow verification; do not call this live-certified until that
-   controlled matrix passes. Production remains unconfigured for Pinecone.
+2. Staging Knowledge/Pinecone flow is now live-certified end-to-end through the
+   real UI (2026-08-26), on redeployed staging `dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`
+   at commit `0b444ac`. Production remains unconfigured for Pinecone
+   (code deployed, no credential/mode set) — no production live certification
+   is claimed.
 3. Complete the production manager/staff/Harbour-owner/operator matrix only when
    those provisioned Google identities are available in the in-app Browser.
    Owner and no-workspace fail-closed behavior are now live verified.
