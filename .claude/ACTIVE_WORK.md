@@ -29,6 +29,6 @@ Last updated: 2026-08-27
 ## Claude
 
 Status: in-progress
-Task: User-directed priority #1 of 3: wire real Knowledge/Pinecone search (KnowledgeSyncService.search()) into the live AI receptionist conversation flow, which currently uses a plain in-memory lookup in receptionist-simulator.ts — investigating scope now. #2 (live Twilio/Vapi certification) and #3 (backup-restore drill) queued next, both need the user's direct involvement.
+Task: Re-ordered per user: live Twilio/Vapi certification first (found receptionist-simulator.ts is explicitly a UI preview stand-in, not the real call path — "when a real AI backend is connected this module is the single thing that gets replaced" — so there's no live assistant yet for Knowledge search to hook into). Investigating current Twilio/Vapi credential/account state before proposing concrete next steps; this needs the user's direct involvement (accounts, phone numbers, live test calls). Knowledge-search wiring (#1) and the backup-restore drill (#3) queued after.
 Started: 2026-08-31
 Last updated: 2026-08-31
