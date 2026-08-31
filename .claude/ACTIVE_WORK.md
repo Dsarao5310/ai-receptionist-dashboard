@@ -28,7 +28,7 @@ Last updated: 2026-08-27
 
 ## Claude
 
-Status: idle
-Task: — (last: reconciled a diverged parallel session — merged 4 real fixes, discarded a duplicate Undo fix superseded by PR #4, verified typecheck/lint/396 tests/build. Landed on master at 99b8164 with the user's explicit push; production deployment dpl_GwnazoxnEPUGF3VFztrXtNYds53u confirmed READY.)
-Started: —
+Status: in-progress
+Task: Review pass (read-only, no execution) over the recovery-rehearsal/verification scripts and Knowledge reconciliation CLI tooling that landed on master today via another session — this session hasn't reviewed that code yet. No migrations, deploys, or credential/env changes; will not run any recovery/rehearsal command against any real database.
+Started: 2026-08-31
 Last updated: 2026-08-31
