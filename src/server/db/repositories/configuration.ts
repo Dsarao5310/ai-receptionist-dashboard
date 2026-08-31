@@ -245,38 +245,6 @@ export class ConfigurationRepository extends WorkspaceScopedRepository {
     });
   }
 
-  // ── Knowledge ─────────────────────────────────────────────────────────────
-
-  async addKnowledge(entry: Omit<KnowledgeEntry, "id">): Promise<string> {
-    const id = newId("kn");
-    await this.sql`
-      insert into knowledge_entries
-        (id, workspace_id, category, title, content, active, position, provider_document_id)
-      values (${id}, ${this.ws}, ${entry.category}, ${entry.title}, ${entry.content}, ${entry.active},
-              coalesce((select max(position) + 1 from knowledge_entries where workspace_id = ${this.ws}), 0),
-              ${id})`;
-    return id;
-  }
-
-  async updateKnowledge(id: string, patch: Partial<Omit<KnowledgeEntry, "id">>): Promise<void> {
-    const columns: Record<string, unknown> = {
-      category: patch.category,
-      title: patch.title,
-      content: patch.content,
-      active: patch.active,
-    };
-    const entries = Object.entries(columns).filter(([, v]) => v !== undefined);
-    if (entries.length === 0) return;
-
-    await this.sql`
-      update knowledge_entries set ${this.sql(Object.fromEntries(entries))}
-      where id = ${id} and workspace_id = ${this.ws}`;
-  }
-
-  async removeKnowledge(id: string): Promise<void> {
-    await this.sql`delete from knowledge_entries where id = ${id} and workspace_id = ${this.ws}`;
-  }
-
   // ── AI behaviour ──────────────────────────────────────────────────────────
 
   async updateAI(patch: Partial<AIConfiguration>): Promise<void> {
