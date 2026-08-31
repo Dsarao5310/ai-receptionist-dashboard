@@ -396,3 +396,35 @@ No remote configuration, database migration, provider traffic, commit, push, or
 deployment occurred. Because the releasable state spans a large shared
 uncommitted tree rather than an isolated Knowledge patch, committing/pushing and
 deploying it remains a separate explicit-approval boundary.
+
+## Provider integrations code-review pass (2026-08-31)
+
+A hand review (no diff to anchor on) of `twilio/`, `vapi/`, `google-calendar/`,
+`email/`, `model-provider/`, `n8n/`, `integrations/inbound/`, and
+`credential-store.ts`. Most of this scope had already been through several
+review rounds in `handoffs/claude-notes.md` (2026-08-24 through 08-26) with no
+bugs found; this pass gave the files those rounds hadn't individually named —
+`n8n/operations.ts`, `n8n/contract.ts`, `n8n/inbound.ts`, `n8n/client.ts`,
+`integrations/inbound/pipeline.ts`, and every `google-calendar/*` file — the
+same level of scrutiny.
+
+- **Fixed**: `optionalString()` in `n8n/contract.ts` treated a present-but-
+  empty optional field as invalid and rejected the whole envelope, even though
+  every one of its callers already falls back to treating empty and absent
+  the same (`serviceId ?? null`, `notes ?? ""`, `reason ?? ""`). n8n's own
+  payload construction routinely sends `""` rather than omitting a key when
+  nothing was captured, so a legitimate booking with no notes taken or no
+  service identified could be rejected outright — the same over-validation
+  shape as the Knowledge `title` fix above. Now empty/whitespace-only is
+  treated as absent; a wrong-typed or oversized value still refuses the
+  envelope. Regression tests added to `n8n/contract.test.ts` for every
+  affected field (`notes`, `serviceId`, `reason`, `detail`, `operationId`,
+  `executionRef` on both the inbound envelope and the outbound result) plus
+  the still-refused wrong-type/oversized cases.
+- Also simplified a redundant identical-branch ternary in `n8n/client.ts`'s
+  simulated-mode `dispatch()` path (no behavior change).
+- No other correctness, cross-tenant, sync-guard, or secret-leak issues found
+  in this scope after a careful read. `npx next typegen && npm run check`
+  (typecheck, lint, 365/365 runnable tests, 194 DB-backed tests skipped — no
+  live DB in this sandbox) and `npm run build` (fail-closed production build)
+  both green after the fix.

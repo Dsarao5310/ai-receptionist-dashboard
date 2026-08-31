@@ -192,10 +192,7 @@ export async function dispatch(input: DispatchInput): Promise<DispatchResult> {
   }
 
   if (mode === "simulated") {
-    const result = simulate(input);
-    return result.outcome === "succeeded"
-      ? { ...result, latencyMs: Date.now() - started }
-      : { ...result, latencyMs: Date.now() - started };
+    return { ...simulate(input), latencyMs: Date.now() - started };
   }
 
   const base = n8nBaseUrl();

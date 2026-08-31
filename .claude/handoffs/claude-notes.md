@@ -498,3 +498,62 @@ it — this is a booking-engine correctness fix, which is an approval-boundary
 item per CLAUDE.md ("redesign or simplify the production-proven
 booking/reservation engine" needs explicit approval), not something to patch
 unilaterally mid-review.
+
+## 2026-08-31 — round 5 review: n8n contract over-validation fix
+
+Asked to give the same scrutiny as the same-day Knowledge review (which found
+and fixed two bugs) to the rest of the provider integration modules. Read
+`twilio/`, `vapi/`, `google-calendar/`, `email/`, `model-provider/`, `n8n/`,
+`integrations/inbound/`, and `credential-store.ts` directly (no diff to
+anchor on). Everything rounds 1-4 above already named individually (Twilio,
+Vapi, email, model-provider, credential-store) held up again on a second
+read — no new issues there, consistent with "no correctness bugs found
+across four full review rounds." Concentrated the extra scrutiny on what
+those rounds hadn't named file-by-file: `n8n/operations.ts`, `n8n/contract.ts`,
+`n8n/inbound.ts`, `n8n/client.ts`, `integrations/inbound/pipeline.ts` (the
+shared webhook gate sequence), and every `google-calendar/*` file (which had
+instead gone through live-account validation directly, per its own code
+comments about the cancelled-tombstone case).
+
+**Found and fixed**: `optionalString()` in `n8n/contract.ts` conflated "empty
+string" with "wrong type" and "too long," returning `null` for all three. Every
+caller then does `if (x === null) return fail(...)` before falling through to
+its own absent-vs-empty fallback (`serviceId ?? null`, `notes ?? ""`,
+`reason ?? ""`, `detail`/`operationId`/`executionRef` used directly as
+`string | undefined`) — so a field that is optional and legitimately empty
+(`notes: ""`, `serviceId: ""`) was rejecting the *entire* inbound envelope or
+outbound result before ever reaching the fallback written to handle exactly
+that case. Confirmed this was a real oversight, not a design choice: the
+`phone`/`email` fields in the same function already work correctly only
+because they use `?? ""` *directly* on the `optionalString()` result rather
+than guarding on `=== null` first — the one place in the file the two
+behaviors happened to line up.
+
+n8n's own payload construction (Set nodes, JS expressions like `notes ||
+""`) routinely produces `""` rather than omitting a key when nothing was
+captured, so this was a real, live failure mode: a legitimate booking with no
+notes taken, or where the receptionist didn't identify a specific service,
+could be rejected outright — losing a real customer's appointment — while
+`resolveService()` downstream was already written to handle `serviceId ===
+null` gracefully. Same shape of bug as the Knowledge `title` fix earlier
+today (over-validation of a field the code downstream is already prepared to
+receive as absent), just in the n8n contract instead of the Pinecone one.
+
+**Fix**: `optionalString()` now treats an empty/whitespace-only value the
+same as an absent key (returns `undefined`), while a wrong-typed or
+over-length value still returns `null` and still refuses the envelope. Added
+regression tests to `n8n/contract.test.ts` for every affected field on both
+the inbound envelope (`executionRef`) and the outbound result
+(`executionRef`, `reason`), plus `parseBookedEvent` (`notes`, `serviceId`),
+`parseCancelledEvent` (`reason`), and `parseExecutionEvent` (`operationId`,
+`detail`) — each asserting the empty case is now accepted and the
+wrong-type/oversized case still is not. Also simplified a redundant
+identical-branch ternary in `n8n/client.ts`'s simulated-mode `dispatch()`
+(no behavior change).
+
+Verification: `npx next typegen && npm run check` — typecheck, lint, and
+365/365 runnable tests pass (194 DB-backed tests skipped, no live DB in this
+sandbox; `n8n/contract.test.ts`, the file actually touched, is DB-free and
+ran for real: 32/32). `npm run build` (fail-closed production build): pass.
+No other correctness, cross-tenant, sync-guard, or secret-leak issues found
+in this scope.

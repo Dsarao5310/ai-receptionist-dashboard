@@ -212,6 +212,20 @@ describe("inbound envelope validation", () => {
     expect(parsed.ok).toBe(true);
     if (parsed.ok) expect(parsed.value).not.toHaveProperty("workspaceId");
   });
+
+  it("treats an empty optional executionRef the same as an absent one", () => {
+    // n8n's own payload construction routinely sends "" rather than omitting
+    // a key when nothing was captured. An empty *optional* field is not a
+    // malformed envelope, and must not refuse the whole delivery.
+    const parsed = parseInboundEnvelope(envelope({ executionRef: "" }));
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.value.executionRef).toBeUndefined();
+  });
+
+  it("still refuses a wrongly-typed or absurdly long optional field", () => {
+    expect(parseInboundEnvelope(envelope({ executionRef: 42 })).ok).toBe(false);
+    expect(parseInboundEnvelope(envelope({ executionRef: "x".repeat(5000) })).ok).toBe(false);
+  });
 });
 
 describe("event payload validation", () => {
@@ -263,6 +277,55 @@ describe("event payload validation", () => {
     expect(parseExecutionEvent({ outcome: "succeeded" }).ok).toBe(true);
     expect(parseExecutionEvent({ outcome: "maybe" }).ok).toBe(false);
   });
+
+  it("does not refuse a booking over an empty notes or serviceId — the receipt of a call where neither was captured", () => {
+    // The receptionist not identifying a service, or taking no notes, is a
+    // normal outcome of a voice call — not a malformed booking. n8n sends
+    // these as "" rather than omitting the key, and this must fall through
+    // to the same "nothing captured" handling an absent key gets, not refuse
+    // the whole booking.
+    const parsed = parseBookedEvent({
+      customer: { name: "Jordan Blake", phone: "+1 604 555 0101" },
+      serviceId: "",
+      date: "2026-08-20",
+      time: "10:30",
+      notes: "",
+      source: "voice",
+    });
+    expect(parsed).toEqual({
+      ok: true,
+      value: {
+        customer: { name: "Jordan Blake", phone: "+1 604 555 0101", email: "" },
+        serviceId: null,
+        date: "2026-08-20",
+        time: "10:30",
+        notes: "",
+        source: "voice",
+      },
+    });
+  });
+
+  it("still refuses a serviceId or notes of the wrong type", () => {
+    const base = {
+      customer: { name: "Jordan Blake", phone: "+1 604 555 0101" },
+      date: "2026-08-20",
+      time: "10:30",
+      source: "voice" as const,
+    };
+    expect(parseBookedEvent({ ...base, serviceId: 42 }).ok).toBe(false);
+    expect(parseBookedEvent({ ...base, notes: 42 }).ok).toBe(false);
+  });
+
+  it("does not refuse a cancellation or execution report over an empty optional field", () => {
+    expect(parseCancelledEvent({ appointmentId: "apt_1", reason: "" })).toEqual({
+      ok: true,
+      value: { appointmentId: "apt_1", reason: "" },
+    });
+    expect(parseExecutionEvent({ outcome: "succeeded", operationId: "", detail: "" })).toEqual({
+      ok: true,
+      value: { outcome: "succeeded", operationId: undefined, detail: undefined },
+    });
+  });
 });
 
 describe("outbound response validation", () => {
@@ -281,5 +344,12 @@ describe("outbound response validation", () => {
     expect(parseOutboundResult({}).ok).toBe(false);
     expect(parseOutboundResult({ status: "ok" }).ok).toBe(false);
     expect(parseOutboundResult(null).ok).toBe(false);
+  });
+
+  it("does not refuse a result over an empty optional executionRef or reason", () => {
+    expect(parseOutboundResult({ status: "succeeded", executionRef: "", reason: "" })).toEqual({
+      ok: true,
+      value: { status: "succeeded", executionRef: undefined, reason: undefined },
+    });
   });
 });

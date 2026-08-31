@@ -161,9 +161,32 @@ function stringField(source: Record<string, unknown>, key: string, max: number):
   return trimmed;
 }
 
+/**
+ * A bounded string that is allowed to be absent — and, just as importantly,
+ * allowed to be *present and empty*.
+ *
+ * Those are not the same check. `stringField` treats an empty value as
+ * invalid, which is exactly right for a required field: an appointment id
+ * that is `""` is not an appointment id. It is exactly wrong for an optional
+ * one, because n8n's own payload construction routinely produces `""` rather
+ * than omitting a key when nothing was captured — a booking with no notes
+ * taken arrives as `notes: ""`, not as a missing `notes` field. Every caller
+ * of this function already treats "absent" and "empty" the same on the way
+ * out (`serviceId ?? null`, `notes ?? ""`, `reason ?? ""`), so refusing the
+ * whole envelope here over an empty optional field — as this used to, before
+ * falling through to that fallback — rejected a legitimate booking, cancel-
+ * lation or report for a reason its own return value was written to shrug
+ * off. A value that is the wrong type, or too long to be trustworthy, is a
+ * genuinely malformed payload and still refuses it.
+ */
 function optionalString(source: Record<string, unknown>, key: string, max: number): string | undefined | null {
-  if (source[key] === undefined || source[key] === null) return undefined;
-  return stringField(source, key, max);
+  const value = source[key];
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+  if (trimmed.length > max) return null;
+  return trimmed;
 }
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;

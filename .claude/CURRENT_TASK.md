@@ -37,6 +37,33 @@ search → delete → confirmed gone from both DB and Pinecone. Full detail in
   credentials, the duplicate Vercel project, provider live-certification
   phases) remain explicitly approval-gated per this file's own boundaries;
   none were touched.
+- A dedicated code-review pass over the other provider integration modules
+  (`twilio/`, `vapi/`, `google-calendar/`, `email/`, `model-provider/`,
+  `n8n/`, `integrations/inbound/`, `credential-store.ts`) — read directly by
+  hand, not a diff review. Most of this scope had already been through
+  several review rounds on 2026-08-24/25/26 (`handoffs/claude-notes.md`)
+  with no bugs found; this pass concentrated extra scrutiny on the files
+  those rounds hadn't named individually (`n8n/operations.ts`,
+  `n8n/contract.ts`, `n8n/inbound.ts`, `n8n/client.ts`,
+  `integrations/inbound/pipeline.ts`, `google-calendar/*`). Found and fixed
+  one real bug (commit follows this entry): `optionalString()` in
+  `n8n/contract.ts` treated a present-but-empty optional field (`notes: ""`,
+  `serviceId: ""`, `reason: ""`, `detail: ""`, `executionRef: ""`,
+  `operationId: ""`) as invalid and refused the *entire* envelope, even
+  though every caller's own fallback (`serviceId ?? null`, `notes ?? ""`,
+  `reason ?? ""`) already treats empty the same as absent — the same class
+  of over-validation as the Knowledge fix above. n8n's own payload
+  construction routinely sends `""` rather than omitting a key when nothing
+  was captured, so a legitimate booking with no notes taken, or no service
+  identified, could be rejected outright. Fixed so empty (or whitespace-only)
+  is treated as absent, while a wrong-typed or oversized value still refuses
+  the envelope. Added regression tests to `n8n/contract.test.ts` covering
+  every affected field plus the still-refused wrong-type/oversized cases.
+  Also simplified a redundant identical-branch ternary in
+  `n8n/client.ts`'s simulated-mode `dispatch()` (no behavior change). Ran
+  `npx next typegen && npm run check` (typecheck, lint, 365/365 runnable
+  tests, 194 DB-backed tests skipped — no live DB in this sandbox) and
+  `npm run build` (fail-closed production build) after the fix: both green.
 
 ## Result
 
