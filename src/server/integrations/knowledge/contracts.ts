@@ -34,7 +34,13 @@ export const knowledgeQuerySchema = z.object({
 
 export const knowledgeMatchesSchema = z.array(z.object({
   id: boundedText(128),
-  title: boundedText(300),
+  // Unlike the application's own title (boundedText), a raw provider match's
+  // title is metadata the provider echoed back, not authoritative content —
+  // the caller only ever reads `id`/`score` off a match and rehydrates
+  // title/content from the local record. A provider can legitimately return
+  // an empty title (e.g. missing field metadata), so this must not reject
+  // the whole batch the way the app's own required title would.
+  title: z.string().trim().max(300),
   content: z.string().trim().max(20_000),
   score: z.number().finite().min(0).max(1),
 }).strict()).max(20);

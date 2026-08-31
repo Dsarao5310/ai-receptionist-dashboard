@@ -17,6 +17,16 @@ export interface KnowledgeSyncDocument extends KnowledgeEntry {
 
 export class KnowledgeSyncRepository extends WorkspaceScopedRepository {
   async ensureNamespace(): Promise<string> {
+    // A workspace's namespace, once provisioned, never changes (enforced by
+    // the namespace-immutability migration) — every create/update/remove/
+    // search call reaches this method, so check first rather than always
+    // paying the insert+select round trip for a value that is fixed after
+    // its first call.
+    const [existing] = await this.sql`
+      select namespace from knowledge_provider_namespaces
+      where workspace_id = ${this.ws}`;
+    if (existing) return str(existing.namespace);
+
     const namespace = newId("kns");
     await this.sql`
       insert into knowledge_provider_namespaces (workspace_id, namespace)

@@ -232,6 +232,38 @@ describe("knowledge provider contracts", () => {
     ]);
   });
 
+  it("tolerates a provider match with an empty title instead of failing the whole search", async () => {
+    const repository = {
+      ensureNamespace: vi.fn().mockResolvedValue("kns_simulated_namespace"),
+      findActiveByProviderDocumentIds: vi.fn(async (ids: string[]) => ids.includes("provider_known")
+        ? [{
+            id: "kn_local",
+            providerDocumentId: "provider_known",
+            title: "Trusted title",
+            content: "Trusted local content",
+          }]
+        : []),
+    } as unknown as KnowledgeSyncRepository;
+    const provider: KnowledgeProviderClient = {
+      upsert: vi.fn(),
+      remove: vi.fn(),
+      // Mirrors the real Pinecone adapter's stringField(), which defaults a
+      // missing/non-string title to "" rather than throwing.
+      search: vi.fn().mockResolvedValue([
+        { id: "provider_known", title: "", content: "", score: 0.9 },
+      ]),
+    };
+    const service = createKnowledgeSyncService(
+      { workspaceId: DEV_WORKSPACE_A } as AuthContext,
+      repository,
+      () => provider
+    );
+
+    await expect(service.search("parking")).resolves.toEqual([
+      { id: "kn_local", title: "Trusted title", content: "Trusted local content", score: 0.9 },
+    ]);
+  });
+
   it("reports a stale failed synchronization as superseded", async () => {
     const document = {
       id: "kn_local",
