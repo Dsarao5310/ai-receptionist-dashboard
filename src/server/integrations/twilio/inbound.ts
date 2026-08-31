@@ -214,7 +214,7 @@ export const twilioStatusProvider: InboundProvider<DeliveryStatus> = {
     const status = normalizeStatus(event.status);
     if (!status) return { ok: false, detail: `unsupported message status "${event.status}"` };
 
-    const updated = await scope.messaging.applyDeliveryStatus({
+    const result = await scope.messaging.applyDeliveryStatus({
       providerMessageSid: event.messageSid,
       status,
       errorCode: event.errorCode,
@@ -224,7 +224,19 @@ export const twilioStatusProvider: InboundProvider<DeliveryStatus> = {
 
     // A callback for a message this workspace never sent. Scoped lookup, so a
     // sid belonging to another tenant resolves to nothing here.
-    if (!updated) return { ok: false, detail: "no message matches that provider id" };
+    if (!result) return { ok: false, detail: "no message matches that provider id" };
+
+    // The message already reached delivered/undelivered/failed — a sink
+    // Twilio does not transition out of — so this callback is a stale,
+    // out-of-order redelivery of an earlier state, not new information.
+    // Accepted (it is not malformed or foreign), but nothing changed and
+    // nothing is reported: firing a notification for a fact that already
+    // settled would tell an operator something happened when it did not.
+    if (!result.changed) {
+      return { ok: true, detail: `Message already ${result.message.status}; stale callback ignored.`, operationId: null };
+    }
+
+    const updated = result.message;
 
     // The moment worth surfacing: the carrier accepted this message earlier and
     // has now refused it. The operation that sent it already succeeded and is

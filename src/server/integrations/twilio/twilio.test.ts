@@ -570,6 +570,39 @@ describeDb("a carrier accepting a message is not the message arriving", () => {
     expect(message.status).toBe("delivered");
   });
 
+  it("ignores a status callback that arrives after the message already reached a terminal state", async () => {
+    const context = await contextFor(await alex(), DEV_WORKSPACE_A);
+    await claimNumber(context, OUR_NUMBER);
+    const scope = workspaceScope(context, sql);
+    const sid = await sendOne(context);
+
+    await ingestDeliveryStatus(
+      signed(STATUS_URL, statusFields({ MessageSid: sid, MessageStatus: "delivered" }))
+    );
+
+    // A distinct raw status from Twilio's vocabulary — not a repeat of any
+    // callback already applied, so the inbound pipeline's own exact-duplicate
+    // idempotency does not catch this by itself. It still normalizes to
+    // "sent" and arrives after the message is already terminal: the
+    // out-of-order case a reordered or retried delivery can produce, since
+    // Twilio's status callbacks carry no event timestamp to order by.
+    const outcome = await ingestDeliveryStatus(
+      signed(STATUS_URL, statusFields({ MessageSid: sid, MessageStatus: "sending" }))
+    );
+    expect(outcome.status).toBe("accepted");
+
+    const [message] = await scope.messaging.listMessages();
+    expect(message.status).toBe("delivered");
+    expect(message.deliveredAt).toBeTruthy();
+
+    // Nothing regressed, so nothing new was reported either — a second
+    // notification here would tell an operator something happened when it
+    // did not.
+    const events = await scope.integrations.listEvents(20);
+    expect(events.filter((e) => e.type === "message_delivered")).toHaveLength(1);
+    expect(events.some((e) => e.type === "message_undelivered")).toBe(false);
+  });
+
   it("refuses a status callback for a message another tenant sent", async () => {
     const contextA = await contextFor(await alex(), DEV_WORKSPACE_A);
     const contextB = await contextFor(await priya(), DEV_WORKSPACE_B);

@@ -79,6 +79,9 @@ function toMessage(row: Row): SmsMessage {
   };
 }
 
+/** Twilio never transitions a delivery status further once it lands here. */
+const TERMINAL_SMS_STATUSES = new Set<SmsStatus>(["delivered", "undelivered", "failed"]);
+
 export class MessagingRepository extends WorkspaceScopedRepository {
   // ── Numbers ───────────────────────────────────────────────────────────────
 
@@ -171,6 +174,18 @@ export class MessagingRepository extends WorkspaceScopedRepository {
    * This is the whole reason the table exists. A carrier accepting a message is
    * not the message arriving, and the difference shows up here — minutes later,
    * on a separate request, against a row that already said `sent`.
+   *
+   * ── Terminal means terminal ──────────────────────────────────────────────
+   * Twilio's status callbacks carry no event timestamp to order by (unlike
+   * Vapi's or call-privacy's provider events), only a status string, and
+   * delivery is not guaranteed in order — a retried `sent` callback can
+   * legitimately arrive after the `delivered` one it preceded. But Twilio also
+   * never transitions a message once it reaches `delivered`, `undelivered` or
+   * `failed`: those are sinks, not states it revisits. So a callback that
+   * shows up after one already landed is necessarily stale, and the guard
+   * needed is simpler than a timestamp comparison — refuse any further write
+   * once the row is already terminal, mirroring the terminal-state guard
+   * `VapiCallRepository.applyCallUpdate` already uses for the same reason.
    */
   async applyDeliveryStatus(input: {
     providerMessageSid: string;
@@ -178,7 +193,16 @@ export class MessagingRepository extends WorkspaceScopedRepository {
     errorCode?: string | null;
     errorMessage?: string | null;
     at: Date;
-  }): Promise<SmsMessage | null> {
+  }): Promise<{ message: SmsMessage; changed: boolean } | null> {
+    const [existing] = await this.sql`
+      select * from sms_messages
+      where workspace_id = ${this.ws} and provider_message_sid = ${input.providerMessageSid}`;
+    if (!existing) return null;
+
+    if (TERMINAL_SMS_STATUSES.has(str(existing.status) as SmsStatus)) {
+      return { message: toMessage(existing), changed: false };
+    }
+
     const [row] = await this.sql`
       update sms_messages set
         status        = ${input.status},
@@ -187,7 +211,7 @@ export class MessagingRepository extends WorkspaceScopedRepository {
         delivered_at  = ${input.status === "delivered" ? input.at : null}
       where workspace_id = ${this.ws} and provider_message_sid = ${input.providerMessageSid}
       returning *`;
-    return row ? toMessage(row) : null;
+    return row ? { message: toMessage(row), changed: true } : null;
   }
 
   async listMessages(limit = 50): Promise<SmsMessage[]> {
