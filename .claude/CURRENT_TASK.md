@@ -11,6 +11,33 @@ persists past reload → DB row correct (`provider_document_id` set,
 search → delete → confirmed gone from both DB and Pinecone. Full detail in
 `handoffs/latest.md`. Test entry cleaned up; no stray data left.
 
+## Follow-up (2026-08-31)
+
+- Synced `.claude/PROJECT_STATE.md`, `README.md`, and the readiness docs
+  (`docs/production-readiness.md`, `docs/knowledge-provider-readiness.md`,
+  `docs/staging-foundation.md`) to this checkpoint — they still referenced
+  pre-merge commit `ccf6272`/deployment mismatch. Commits `22e9a37`, `5e223f3`.
+- Ran `npm run check` on the post-merge tree: typecheck, lint, and 358/358
+  runnable tests pass (194 DB-backed tests skipped, no live Supabase
+  connection in this session). Confirms the merged state is solid.
+- A code-review pass over `src/server/integrations/knowledge/` and
+  `src/server/db/repositories/knowledge-sync.ts` found and fixed two issues
+  (commit `2d51fe0`): `knowledgeMatchesSchema` required a non-empty `title`,
+  but the Pinecone adapter can legitimately return an empty one, which made
+  one malformed match fail the entire search instead of just being ignored
+  (only `id`/`score` are read from a raw match downstream); and
+  `ensureNamespace()` always paid an insert+select round trip even though a
+  workspace's namespace is immutable after first provisioning — now checks
+  first. Added a regression test for the schema fix. `npm run check` re-run
+  green after: 359/359 runnable tests.
+- Verified the two previously-flagged non-security UI defects (`/admin/privacy`
+  rendering a generic error on a 403; sign-in ignoring Auth.js `AccessDenied`)
+  are already fixed in the current merged code — no action needed.
+- All remaining "next" items (migration file 19, production Pinecone
+  credentials, the duplicate Vercel project, provider live-certification
+  phases) remain explicitly approval-gated per this file's own boundaries;
+  none were touched.
+
 ## Result
 
 - Added a server-only Business Knowledge provider boundary under
