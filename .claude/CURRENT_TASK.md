@@ -95,6 +95,25 @@ search → delete → confirmed gone from both DB and Pinecone. Full detail in
   hosted tenant-isolation suite that already exercises `restoreAppointmentAction`
   should be extended or re-run against a live DB+calendar before this is
   called certified, not just typecheck/build-verified.
+- Fixed the second flagged item too: `MessagingRepository.applyDeliveryStatus`
+  had no out-of-order guard. Investigated whether it needed a migration
+  (mirroring the timestamp-based guards in `vapi-calls.ts`/`call-privacy.ts`)
+  and confirmed it does not — Twilio's status callback carries no event
+  timestamp at all, only a status string, so the correct guard is a
+  terminal-state check (delivered/undelivered/failed are sinks Twilio never
+  transitions out of), mirroring `VapiCallRepository.applyCallUpdate`'s
+  existing terminal-state guard instead of its timestamp one. No schema
+  change needed. Updated the caller (`twilio/inbound.ts`) to treat a
+  guarded/stale callback as accepted-but-unchanged and skip the operator
+  notification for it. Added a DB-backed regression test using a distinct
+  raw status value so it isn't just re-testing the pipeline's own exact-
+  duplicate idempotency. Typecheck, lint, and the full non-DB suite
+  (365/365) pass; DB-backed test skipped here, no live DB in this sandbox.
+- Both items originally flagged in the repository/actions review pass are
+  now closed. Everything else remaining in "Boundaries and next gate" below
+  stays explicitly approval-gated (migration file 19, production Pinecone
+  credentials, the duplicate Vercel project, provider live-certification
+  phases) — none of it was touched.
 
 ## Result
 
