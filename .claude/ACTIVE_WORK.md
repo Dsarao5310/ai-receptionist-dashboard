@@ -28,7 +28,7 @@ Last updated: 2026-08-27
 
 ## Claude
 
-Status: idle
-Task: — (last: reviewed the recovery-rehearsal/verification scripts and Knowledge reconciliation CLI tooling — traced the fail-closed guards adversarially, no bypass found in either; no bugs found anywhere in scope, nothing changed)
-Started: —
+Status: in-progress
+Task: User-directed priority #1 of 3: wire real Knowledge/Pinecone search (KnowledgeSyncService.search()) into the live AI receptionist conversation flow, which currently uses a plain in-memory lookup in receptionist-simulator.ts — investigating scope now. #2 (live Twilio/Vapi certification) and #3 (backup-restore drill) queued next, both need the user's direct involvement.
+Started: 2026-08-31
 Last updated: 2026-08-31
