@@ -33,7 +33,10 @@ Why this model:
 - Staging origin:
   `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
 - Latest verified Preview deployment: `dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`,
-  commit `ccf6272`, `READY` and five-role re-certified.
+  commit `ccf6272`, `READY` and five-role re-certified. Staging was later
+  redeployed at `0b444ac` (`dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, READY) after
+  PR #2 merged, bringing in the Business Knowledge/Pinecone application code;
+  see `docs/knowledge-provider-readiness.md` for the live certification.
 - Required Preview values are scoped to branch `staging` only, including the
   rotated runtime `DATABASE_URL`. Other Preview branches remain fail-closed.
 - Production-only variables: `AUTH_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`,
@@ -131,8 +134,11 @@ AUTH_URL=https://<stable-staging-branch-alias>
 
 Do not use the random deployment URL.
 
-Completed. Branch `staging` points to commit `ccf6272`, and the stable alias is
-`https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
+Completed. Branch `staging` pointed to commit `ccf6272` at the time of this
+provisioning step; the stable alias is
+`https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`. Staging
+has since advanced to commit `0b444ac` after PR #2 merged — the alias is
+unchanged.
 
 ### 5. Create the staging Google OAuth client
 

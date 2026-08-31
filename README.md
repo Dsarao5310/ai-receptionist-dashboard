@@ -243,12 +243,17 @@ see [`docs/email-provider-readiness.md`](docs/email-provider-readiness.md).
 
 Business Knowledge now has a server-only provider boundary with server-issued
 tenant namespaces, durable reconciliation/tombstone state, monotonic write
-ordering, and a deterministic simulator. It is **application-ready and schema-
-verified in staging and production, not Pinecone-ready**: migration file 18 is
-applied and verified in both environments. Local migration file 19 removes
-unused runtime update authority from the immutable namespace mapping and is
-verified against disposable `app_test`, but remains pending application in both
-staging and production `app`. There is no Pinecone account, credential, index,
-embedding model, live call, or certification. Production live mode remains
-fail-closed; see
+ordering, a deterministic simulator, and a live Pinecone adapter. It is **live
+and certified end-to-end through the real UI on staging (2026-08-26)**:
+migration file 18 is applied and verified in both environments, the
+application code merged via PR #2 (`f365cea`) and is deployed to both staging
+and production, and the full round trip — UI save, database
+`provider_document_id`/sync state, Pinecone semantic search, and delete — was
+verified live against the redeployed staging deployment. Local migration
+file 19 removes unused runtime update authority from the immutable namespace
+mapping and is verified against disposable `app_test`, but remains pending
+application in both staging and production `app`. Production has the code but
+no `KNOWLEDGE_PROVIDER_MODE`/Pinecone credential configured, so it remains
+fail-closed in practice there; no production live certification is claimed.
+See
 [`docs/knowledge-provider-readiness.md`](docs/knowledge-provider-readiness.md).

@@ -4,9 +4,14 @@ Updated: 2026-08-26
 
 ## Current status
 
-**Application foundation built, schema verified in staging and production, and
-the isolated live Pinecone adapter verified. The database-backed staging UI flow
-is not certified because deployed code is behind the migrated schema.**
+**Live, certified end-to-end through the real UI on staging (2026-08-26).**
+The application code (server actions, repositories, UI) merged via PR #2
+(`f365cea`) and is deployed to both staging and production. The full round
+trip — UI save, database `provider_document_id`/`provider_sync_state`,
+Pinecone semantic search, and delete — is verified live against the
+redeployed staging deployment. Production has the code but no
+`KNOWLEDGE_PROVIDER_MODE`/Pinecone credential configured, so it remains
+fail-closed in practice there; no production live certification is claimed.
 
 Business Knowledge remains the owner-facing authority. The application now has
 a private server boundary for explicit provider synchronization without
@@ -95,8 +100,16 @@ embedding details to client DTOs.
   47/47; the Next.js production build and 56-artifact client-secret audit pass.
 - Controlled isolated live smoke: a dedicated non-tenant namespace in the
   staging Pinecone index passed upsert, search, delete, and confirm-absent. This
-  proves the real adapter/provider path only; it is not a database-backed,
-  authenticated, or cross-tenant UI certification.
+  proved the real adapter/provider path only, ahead of any database-backed or
+  authenticated UI certification.
+- Authenticated staging UI certification (2026-08-26): after PR #2 merged and
+  staging redeployed at `0b444ac` (`dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, READY),
+  the real Coastal Bloom owner added a Knowledge entry through the live UI. It
+  survived a hard reload; the database row showed `provider_document_id` set
+  and `provider_sync_state = synced`; Pinecone semantic search found the real
+  vector with correct fields; delete removed it from both DB and Pinecone. No
+  stray test data was left behind. This is the database-backed, authenticated
+  UI certification the isolated smoke above did not by itself provide.
 
 ## Remote state
 
@@ -114,31 +127,44 @@ access; the runtime can read and has select/insert/update without delete.
 Security Advisor is clear in both and Performance Advisor reports only
 unused-index INFO notices.
 
-The intended Vercel project now has `KNOWLEDGE_PROVIDER_MODE`,
-`PINECONE_API_KEY`, and `PINECONE_INDEX_HOST` configured only for Preview branch
-`staging`; the key is a server-only Secret and is not documented. Production and
-generic Preview were untouched. Deployment `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`
-is READY at commit `ccf6272`, but that commit predates the uncommitted Knowledge
-application code. A real authenticated owner create therefore reached the old
-action and failed on migration 18's required `provider_document_id`; Postgres
-rolled the insert back. This is schema/code skew, not a Pinecone failure.
+The intended Vercel project has `KNOWLEDGE_PROVIDER_MODE`, `PINECONE_API_KEY`,
+and `PINECONE_INDEX_HOST` configured only for Preview branch `staging`; the key
+is a server-only Secret and is not documented. Production remains
+unconfigured for Pinecone (no `KNOWLEDGE_PROVIDER_MODE`/credential) and
+generic Preview was untouched. The Knowledge application code (server actions,
+repositories, UI) merged to `master` via PR #2 (`f365cea`); production
+redeployed at `f365cea` then at docs-only follow-up `0b444ac`, and the user
+pushed `master:staging` directly, redeploying staging at `0b444ac`
+(`dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, READY).
+
+This resolved the earlier schema/code skew recorded here: deployment
+`dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN` at commit `ccf6272` predated the Knowledge
+application code, so a real authenticated owner create then reached the old
+action and failed on migration 18's required `provider_document_id`, with
+Postgres rolling the insert back. That gap is closed — see the authenticated
+staging UI certification above.
 
 File 19 is local only. It preserves runtime select/insert and revokes unused
 update on the namespace mapping. Its permanent schema assertion passes against
 disposable `app_test`; staging/production `app` application remains separately
 approval-gated.
 
-## Required gates before staging UI certification
+## Remaining gates
 
-1. Explicitly approve committing and pushing the reviewed combined working tree,
-   then redeploy the `staging` branch so application code matches migration 18.
-2. Run the authenticated staging create/edit/search/deactivate/delete matrix and
-   correlate UI, scoped database rows, Pinecone state, and sanitized runtime logs.
-3. Include cross-workspace negative probes and verify no provider identifier,
-   namespace, credential, or raw error reaches client state.
-4. Keep migration file 19 and every Production Pinecone credential/request as
-   separate explicit approval phases.
+1. Done. PR #2 merged (`f365cea`); both production and staging were
+   redeployed with application code matching migration 18. See "Remote state"
+   above.
+2. Done for create/persist/search/delete. The authenticated staging UI
+   certification above correlated UI, scoped database rows, and live Pinecone
+   state for create, hard-reload persistence, semantic search, and delete.
+   Edit and deactivate were not separately exercised in this pass.
+3. Not yet run. Cross-workspace negative probes on the live Knowledge UI flow,
+   and confirmation that no provider identifier, namespace, credential, or raw
+   error reaches client state under those probes, remain outstanding.
+4. Migration file 19 and any Production Pinecone credential/request remain
+   separate explicit approval phases; production has no Pinecone credential
+   configured.
 
 Production remains fail-closed in practice without Pinecone credentials. The
-isolated live adapter smoke is real provider evidence, but it does not certify
-the tenant-aware hosted application flow.
+authenticated staging certification above covers the tenant-aware hosted
+application flow on staging only; it does not extend to production.
