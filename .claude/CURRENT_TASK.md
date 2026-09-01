@@ -986,3 +986,57 @@ the dev server and confirmed all five headers appear correctly on both
 documented header-overriding rule). Full `npx vitest run`: 41/41 files,
 396/396 tests passed, 5 files/199 tests skipped as expected (DB-backed,
 no live DB here) — nothing broke.
+
+## Claude — CI confirmed healthy, extensions clean, RLS boundary independently verified (2026-09-01)
+
+User asked to keep going. Three checks, no code changes.
+
+**CI health.** Never verified this session despite extensive manual
+checking. `.github/workflows/ci.yml` ("Repository validation") exists,
+runs `next typegen` → `typecheck` → `lint` → `npm test` →
+`deploy:build` + `audit:client-secrets` on every push to `master`/
+`staging` and every PR. Pulled the last 30 runs: every one green
+(`conclusion: success`) except one `cancelled` run that was just
+superseded by a newer push to the same ref under the `cancel-in-progress`
+concurrency group — not a failure. By design it does **not** run on
+arbitrary task-branch pushes (only `master`/`staging`/PRs), so today's
+later commits on this branch (everything after the `847be16` master
+fast-forward) haven't been independently CI-verified yet, only checked
+locally in this sandbox — expected given the trigger config, not a gap.
+
+**Supabase extensions, both projects.** Only 5 actually installed on
+either: `pgcrypto`, `pg_stat_statements`, `supabase_vault`, `uuid-ossp`,
+`plpgsql` — all standard Supabase defaults. Notably absent: `pg_net`/
+`http` (would let the database itself make outbound HTTP calls). Clean,
+minimal, nothing to flag.
+
+**RLS is disabled on every `app`-schema table on production — verified
+this is the documented, correct architecture, not a gap.** Queried
+`pg_class`/`pg_policy` directly: all 45 tables in `app` show
+`rls_enabled: false`, `policy_count: 0`. Re-read `database.md`'s own
+line carefully before treating this as a finding: "RLS is not a
+decorative security claim: Auth.js identity is not automatically
+`auth.uid()`... Application authorization and private-schema access
+remain authoritative" — this is *describing* the real boundary (private
+schema + app-layer authorization via `app_runtime`'s scoped grants), not
+claiming RLS itself does the work. Correct: this app never uses Supabase
+Auth, so `auth.uid()` is always null and an RLS policy built on it would
+be actively misleading, not protective.
+
+Didn't stop at re-reading the doc — independently tested the actual
+claim it depends on: that `app` is genuinely unreachable via Supabase's
+auto-generated PostgREST API (the one thing that would make
+RLS-disabled dangerous if false). The read-only test needed one live
+external HTTP call against the production project's public anon key, which
+the auto-mode classifier correctly flagged for approval before running;
+asked the user, they approved it specifically. Result, decisive:
+`GET .../rest/v1/users` with `Accept-Profile: app` →
+`406 {"code":"PGRST106","message":"Invalid schema: app"}` — PostgREST's
+own error names the exposed set explicitly: `Only the following schemas
+are exposed: public, graphql_public`. The `public` schema probe for
+`workspaces` also 404s (`PGRST205`, table not found) — confirms `public`
+holds none of the application's tables either. The documented security
+model is independently confirmed to actually hold, not just asserted.
+
+No code or database change from this entry — investigation and one
+externally-approved read-only HTTP request only.

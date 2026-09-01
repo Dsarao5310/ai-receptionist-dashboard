@@ -1,73 +1,60 @@
 # Latest Handoff
 
 Updated: 2026-09-01
-Status: SECRET-SCAN CONFIRMED CLEAN, MISSING SECURITY HEADERS FIXED
+Status: CI CONFIRMED HEALTHY, RLS BOUNDARY INDEPENDENTLY VERIFIED — NO GAP FOUND
 
 ## What happened
 
-User asked to keep doing more no-cost maintenance work.
+User asked to keep doing more no-cost maintenance work. Three checks,
+read-only throughout except one externally-approved HTTP request.
 
-**1. Full-git-history secret scan.** Directly relevant given this
-project's earlier real key-exposure incident (a Pinecone key pasted into
-local CLI history, never into this repo). GitHub's `run_secret_scanning`
-needs Advanced Security, not enabled here, so did it manually instead:
+**1. CI health**, never verified this session. `.github/workflows/
+ci.yml` ("Repository validation") runs `next typegen` → `typecheck` →
+`lint` → `npm test` → `deploy:build` + `audit:client-secrets` on every
+push to `master`/`staging` and every PR. Pulled the last 30 runs: all
+green, the one `cancelled` run was just superseded by a newer push to
+the same ref (concurrency cancellation), not a failure. By design it
+doesn't trigger on arbitrary task-branch pushes, so this branch's later
+commits today are only locally verified so far — expected given the
+trigger config.
 
-- Confirmed no `.env*` file other than the values-free `.env.example` was
-  ever committed, in any commit ever.
-- `git log --all -G` (pickaxe) across the whole history for common
-  leaked-secret shapes: Pinecone `pcsk_`, Anthropic `sk-ant-`, Google
-  `AIza`/`ya29.`, AWS `AKIA`, Slack `xox[bp]-`, Twilio account SIDs, and
-  any `postgres://user:pass@host` connection string.
-- Every hit read in full context: a runbook checklist line telling an
-  operator to grep for a token prefix and expect nothing, a unit test
-  verifying `Secret`'s redaction with an obviously-fake token, and
-  connection-string test fixtures using the literal words
-  "secret"/"password" against fake hosts. Nothing real.
-- Read `credential-store.ts`/`secret-store.ts`/`env.ts`/`.env.example` in
-  full — every value is `process.env`-sourced or empty by design.
+**2. Supabase extensions**, both projects: clean. Only 5 actually
+installed on either — `pgcrypto`, `pg_stat_statements`,
+`supabase_vault`, `uuid-ossp`, `plpgsql`, all standard defaults. Notably
+absent: `pg_net`/`http` (would let the database make outbound calls
+itself).
 
-Clean, confirmed — not just an absence of hits.
+**3. RLS is disabled on all 45 `app`-schema tables on production —
+checked whether this is a gap, found it's the documented, correct
+architecture.** Queried `pg_class`/`pg_policy` directly. Re-read
+`database.md`'s own line first: "RLS is not a decorative security
+claim... Application authorization and private-schema access remain
+authoritative" is *describing* the actual boundary, not claiming RLS
+does the work — correct, since this app never uses Supabase Auth, so
+`auth.uid()` is always null and an RLS policy built on it would be
+actively misleading.
 
-**2. Missing global security headers — a real gap, now fixed.**
-`next.config.ts` had zero global HTTP security headers; the only header
-anywhere in the app was a route-specific `nosniff` on `/api/health`.
-Confirmed by grep across `src/`, `next.config.ts`, `vercel.json`.
-
-Read Next's own bundled docs first
-(`node_modules/next/dist/docs/.../headers.md`), then added to
-`next.config.ts` on every route:
-
-- `X-Frame-Options: DENY`
-- `X-Content-Type-Options: nosniff`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
-- `Strict-Transport-Security: max-age=63072000; includeSubDomains`
-
-Two deliberate exclusions, made explicit rather than silently assumed:
-
-- **No CSP.** Needs a careful source-by-source audit this no-DB sandbox
-  can't fully verify against a real authenticated page; getting it wrong
-  breaks the app rather than hardening it. `X-Frame-Options: DENY` covers
-  the one thing CSP would otherwise add here (clickjacking) — flagged as
-  a deliberate follow-up, not attempted today.
-- **No HSTS `preload`.** Effectively permanent once submitted, covers
-  every subdomain forever — a real decision, not a default. Used
-  `includeSubDomains` alone, fully reversible.
-
-Confirmed camera/mic/geolocation are safe to restrict — grepped for
-`getUserMedia`/`navigator.geolocation`/`navigator.mediaDevices`/
-`RTCPeerConnection` across `src/`: zero matches, this app never uses any
-of them.
+Didn't stop at re-reading the doc — tested the claim the whole model
+depends on: that `app` is genuinely unreachable via Supabase's
+auto-generated PostgREST API. That needed one live external HTTP call
+against production's public anon key; the auto-mode classifier correctly
+flagged it for approval, asked the user, they approved it specifically
+for this one check. Result: `GET .../rest/v1/users` with
+`Accept-Profile: app` → `406 {"code":"PGRST106","message":"Invalid
+schema: app"}`, and PostgREST's own error names the exposed set:
+`Only the following schemas are exposed: public, graphql_public`. The
+`public` schema probe for `workspaces` also 404s — confirms `public`
+holds none of the app's tables either. The documented security model is
+now independently confirmed to actually hold, not just asserted.
 
 ## Verification
 
-- `npx next typegen && npm run typecheck && npm run lint`: clean.
-- `npm run build`: exit 0, 0 warnings (full log checked, not just tail).
-- Booted the dev server, confirmed all five headers on real `curl -sD -`
-  responses for both `/sign-in` and `/api/health` (the route's own
-  `nosniff` doesn't conflict — same value).
-- `npx vitest run`: 41/41 files, 396/396 tests passed, 5 files/199 tests
-  skipped as expected (DB-backed, no live DB here). Nothing broke.
+- CI run history pulled via `actions_list`/`list_workflow_runs`.
+- `list_extensions` (Supabase MCP) on both projects.
+- Direct read-only SQL (`pg_class`/`pg_policy`) on production.
+- One user-approved read-only `curl` against the production PostgREST
+  endpoint with the public anon key (no data mutated, no auth bypassed —
+  the calls confirm the boundary holds, they don't cross it).
 
 ## Standing batch — still untouched
 
@@ -76,15 +63,14 @@ live setup.
 
 ## Still open
 
-Whether to drop production's stale `app_test` schema (raised two passes
-ago) — still unanswered. Ask again or wait for the user.
+Whether to drop production's stale `app_test` schema (raised a few
+passes ago) — still unanswered. Ask again or wait for the user.
 
 ## Next safe action
 
-Nothing else pending from this pass — committed and pushed to the task
-branch in the same turn as this write-up. Standing priorities per the
-user's last direction remain, in order: (1) live Knowledge/Pinecone
-wiring into the AI receptionist flow — blocked on (2); (2) Twilio/Vapi
-live certification — paused, costs money, batched with Supabase Pro
-upgrade, wait for explicit user go-ahead; (3) the backup-restore drill —
+Nothing else pending from this pass. Standing priorities per the user's
+last direction remain, in order: (1) live Knowledge/Pinecone wiring into
+the AI receptionist flow — blocked on (2); (2) Twilio/Vapi live
+certification — paused, costs money, batched with Supabase Pro upgrade,
+wait for explicit user go-ahead; (3) the backup-restore drill —
 externally gated on plan tier.
