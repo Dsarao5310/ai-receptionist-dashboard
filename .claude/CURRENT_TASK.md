@@ -906,3 +906,83 @@ list.
 
 Verification: `get_runtime_errors`/`query_logs` are both read-only. No
 code or database change from this entry.
+
+## Claude — secret-scan confirmation + missing global security headers fixed (2026-09-01)
+
+User asked to keep going. Two pieces:
+
+**Secret-scan confirmation across all of git history**, directly relevant
+given this project's earlier real key-exposure incident (a Pinecone key
+pasted into local CLI history, never into this repo — confirmed then,
+re-confirmed more thoroughly now). GitHub's `run_secret_scanning` tool
+needs GitHub Advanced Security, which isn't enabled on this repo, so used
+two manual methods instead: (1) confirmed no `.env*` file other than the
+values-free `.env.example` was ever committed, in any commit, ever
+(`git log --all --diff-filter=A --name-only`); (2) `git log --all -G` (pickaxe)
+across full history for common leaked-secret shapes (Pinecone `pcsk_`,
+Anthropic `sk-ant-`, Google `AIza`/`ya29.`, AWS `AKIA`, Slack `xox[bp]-`,
+Twilio `AC[a-f0-9]{32}`, and any `postgres://user:pass@host` connection
+string). The `ya29.` and connection-string hits were all read in full
+context and are exactly what they should be: a runbook checklist item
+telling an operator to grep for that literal prefix and expect nothing,
+a unit test verifying `Secret`'s redaction using an obviously-fake token
+string, and connection-string test fixtures using the literal words
+"secret"/"password" as the placeholder credential against fake hosts
+(`pooler.example.test`, `db.invalid`). Nothing real. Also read
+`credential-store.ts`/`secret-store.ts`/`env.ts`/`.env.example` in full —
+every value is `process.env`-sourced or empty by design, nothing
+hardcoded. Clean confirmation, not just an absence of hits.
+
+**Missing global security headers — a real gap, fixed.** `next.config.ts`
+had zero global HTTP security headers; the only header anywhere in the
+app was a route-specific `X-Content-Type-Options: nosniff` on `/api/
+health`. Confirmed via grep across `src/`, `next.config.ts`, and
+`vercel.json` — nothing else sets `X-Frame-Options`, a CSP, `Referrer-
+Policy`, or `Permissions-Policy` anywhere. (One nuance: `docs/staging-
+foundation.md`'s 2026-08-22 certification already observed HSTS on
+`/sign-in` — that was Vercel's own platform-level default for HTTPS
+deployments, not anything this app's code set; explicitly setting it now
+makes that guarantee this app's own, not a platform assumption.)
+
+Read Next's own bundled docs (`node_modules/next/dist/docs/.../headers.md`)
+for the exact `headers()` config shape and the standard recommended
+header set before writing anything, per `.claude/rules/frontend.md`.
+Added to `next.config.ts`, applied to every route (`/:path*`):
+`X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
+`Referrer-Policy: strict-origin-when-cross-origin`,
+`Permissions-Policy: camera=(), microphone=(), geolocation=()`, and
+`Strict-Transport-Security: max-age=63072000; includeSubDomains`.
+
+Two deliberate exclusions, both judgment calls made explicit rather than
+silently assumed:
+
+- **No Content-Security-Policy.** A correct CSP needs a careful audit of
+  every legitimate script/style/font/connect source this app actually
+  uses (Next's own hydration scripts, any Vercel toolbar/analytics,
+  fonts, HMR in dev) — getting it wrong breaks the app rather than
+  hardening it, and this sandbox has no live database to verify an
+  authenticated page renders correctly under a candidate policy. `X-
+  Frame-Options: DENY` is the narrow, unambiguous piece of what CSP would
+  otherwise cover here (clickjacking) — this dashboard has no legitimate
+  reason to be framed by anyone, same-origin included. Left as a flagged
+  follow-up, not attempted today.
+- **No HSTS `preload` directive.** Submission to the browser preload list
+  is effectively permanent and applies to every subdomain forever, even
+  ones that might need plain HTTP later — a real, hard-to-reverse
+  decision that deserves an explicit choice, not a default. Used
+  `includeSubDomains` alone, which is fully reversible by just changing
+  the header.
+
+Confirmed camera/microphone/geolocation are safe to restrict:
+`grep -rn "getUserMedia|navigator.geolocation|navigator.mediaDevices|RTCPeerConnection" src/`
+— zero matches; this app never uses any of them (voice calls are
+server-side Twilio/Vapi, not browser mic access).
+
+Verification: `npx next typegen && npm run typecheck && npm run lint` —
+clean. `npm run build` — exit 0, 0 warnings (full log checked). Booted
+the dev server and confirmed all five headers appear correctly on both
+`/sign-in` and `/api/health` via `curl -sD -` (the route's own redundant
+`nosniff` doesn't conflict — same value, last-wins per Next's own
+documented header-overriding rule). Full `npx vitest run`: 41/41 files,
+396/396 tests passed, 5 files/199 tests skipped as expected (DB-backed,
+no live DB here) — nothing broke.
