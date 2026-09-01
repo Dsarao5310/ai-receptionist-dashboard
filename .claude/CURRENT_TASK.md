@@ -651,3 +651,41 @@ across all 10 test files in the reviewed scope (full `npm run check` not
 re-run since no code changed; typecheck/lint/targeted-tests already confirm
 the reviewed layer is green, and the last full-suite run recorded above was
 already clean).
+
+## Claude — Vercel Preview-build noise stopped at the source (2026-09-01)
+
+User asked to check Gmail for Vercel emails. `get_thread` on the growing
+"Failed preview deployment" thread (`1a0558498899ce0f`, 34 messages, Aug 31
+01:52 → Sep 1 01:03) confirmed every message is the same generic failure
+for the real `ai-receptionist-dashboard` project, one per push to this task
+branch — expected, since Preview secrets are branch-scoped to
+`master`/`staging` only (`docs/staging-foundation.md`), so any other
+branch's Preview build has always failed by design. Separately checked
+"Failed production deployment" emails: both threads are Aug 24-27, before
+the duplicate-Vercel-project cleanup, one of them literally for the old
+deleted `ai-receptionist-dashboard-dsarao` project; nothing since Aug 27 —
+production has deployed clean the whole time. No live-project incident.
+
+User asked to stop it at the source. Added `ignoreCommand` to `vercel.json`:
+
+```json
+"ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"master\" ] || [ \"$VERCEL_GIT_COMMIT_REF\" = \"staging\" ]; then exit 1; else exit 0; fi"
+```
+
+Per Vercel's documented `ignoreCommand` contract (exit 0 = skip build,
+exit 1 = continue), this skips every branch except `master`/`staging`,
+which keep building normally. Verified the JSON still parses and manually
+ran the exact shell logic for all three cases (task branch → skip,
+`master` → build, `staging` → build) before committing. Also fixed
+`docs/staging-foundation.md`'s stale "Preview branch tracking: enabled for
+all non-production branches" line to describe the new gate.
+
+Scope note: this only takes effect for builds on commits carrying this
+file. It stops future failed Preview builds on this branch (`claude/
+launch-terminal-q0czdf`) as soon as it's pushed. It does **not** yet apply
+to other in-flight branches (e.g. any Codex branch) or change how
+`master`/`staging` behave — for the rule to apply platform-wide it needs to
+reach `master`, which still requires the user's own literal push command
+per the standing auto-mode-classifier pattern recorded earlier in this
+file. No app code changed; nothing to typecheck/lint/test beyond the JSON
+syntax check.

@@ -29,7 +29,11 @@ Why this model:
 
 - Production branch: `master`.
 - Production origin: `https://ai-receptionist-dashboard-jade.vercel.app`.
-- Vercel Preview branch tracking: enabled for all non-production branches.
+- Vercel Preview branch tracking: enabled for all non-production branches at
+  the platform level, but as of 2026-09-01 `vercel.json`'s `ignoreCommand`
+  skips the actual build unless the branch is `master` or `staging` — every
+  other branch (task branches included) no longer produces a build, since
+  none of them ever had Preview secrets and the builds only ever failed.
 - Staging origin:
   `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
 - Staging has since advanced well past the deployments below — it's currently
