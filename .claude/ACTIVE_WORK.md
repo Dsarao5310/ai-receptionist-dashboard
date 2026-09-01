@@ -28,7 +28,7 @@ Last updated: 2026-08-27
 
 ## Claude
 
-Status: idle
-Task: — (last: UI/frontend review pass over src/app/, src/components/, src/features/. Found and fixed one real bug — setInternalNotes/setFeatureFlag in workspace-stores.tsx applied optimistic writes but never rolled back on server refusal, unlike every other mutator in the file; SaveBar hid itself at the exact moment the failure toast fired. Fixed to match the established rollback pattern, verified typecheck/lint/396 tests green, pushed as 3cadcb5. Rest of the layer held up clean. Standing reminder: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready, see CURRENT_TASK.md's 2026-08-27/2026-08-31 entries.)
-Started: —
+Status: in-progress
+Task: Review pass on src/services/ and src/lib/ (scheduling, timezone, business-hours math, and other shared business logic underpinning both UI and backend) — no-cost, not yet given a dedicated pass today (only touched incidentally via imports from the UI/backend review passes). Standing reminder unchanged: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready, see CURRENT_TASK.md's 2026-08-27/2026-08-31 entries.
+Started: 2026-09-01
 Last updated: 2026-09-01
