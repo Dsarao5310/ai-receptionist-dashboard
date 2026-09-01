@@ -593,3 +593,61 @@ Verification: `npx next typegen && npm run check` — typecheck, lint, and
 `vitest run` all passed (41 test files / 396 tests passed, 5 files / 199
 DB-backed tests skipped as expected, no live DB here). `package-lock.json`
 was untouched by `npm run check` (nothing to restore).
+
+## Claude — shared business-logic/utility review pass, no bug found (2026-09-01)
+
+Final un-reviewed layer after today's backend and UI passes: `src/lib/`
+(`buckets.ts`, `business-format.ts`, `date-range.ts`, `filter-params.ts`,
+`kpi-format.ts`, `permissions.ts`, `safe-redirect.ts`, `timezone.ts`,
+`use-account-summary.ts`, `use-unsaved-changes.ts`, `utils.ts`,
+`validation.ts`, `workspace-data.tsx`, and `src/lib/store/` excluding
+`workspace-stores.tsx`) and all of `src/services/` including
+`adapters/` (excluding `receptionist-simulator.ts`, already read and
+confirmed a UI-preview stand-in). Read `.claude/rules/database.md` and
+`.claude/rules/tenancy-auth.md` first per the task's own instruction.
+
+Traced `scheduling.ts`'s slot-validity chain (`checkBusinessTime`,
+`checkTemporal`, `checkRescheduleSlot`, `getValidStartTimes`,
+`getNearbyStartTimes`) specifically for the temporal-validity/business-hours-
+fit/real-capacity conflation `database.md` calls out, for split-shift and
+special-hours interval boundary math, and for duration-fit (start+duration,
+not just start, against a single interval) — all correctly separated and
+covered by `scheduling.test.ts`'s 47 cases, including a DST-transition
+property test. Checked `timezone.ts`/`provider-time.ts` for DST and
+day-boundary correctness (`wallClockToInstant`'s two-pass offset
+resolution, `addZonedDays` holding wall-clock time steady, `zonedDayKey`)
+against `timezone.test.ts`'s and `timezone-scenarios.test.ts`'s transition-
+sweep tests — no gap found. Checked `permissions.ts`'s role table for an
+unexplained asymmetry — `PLATFORM_ONLY`/workspace tables are disjoint by
+construction and every grant traces to a stated reason in the file's own
+comments; nothing looked like a mistake. Checked `safe-redirect.ts` against
+known open-redirect bypasses (protocol-relative, backslash-as-slash,
+control-char, encoded variants) — the existing backslash/control-char
+regex plus URL-based origin check correctly rejects all of them, matching
+`safe-redirect.test.ts`. Checked the mock adapters
+(`services/adapters/mock/*`) against the real adapter contract in
+`services/adapters/types.ts` — all route through the same
+`createMockAdapter`/`instantFromProvider` boundary, no divergent shortcut
+found.
+
+One rare, low-severity, non-actionable observation (not fixed, not
+flagged as a defect): `buckets.ts`'s intraday ("Today") bucketing steps in
+fixed 4-hour blocks from `bounds.start`, so a business-timezone day with a
+fall-back DST transition (25 real hours) yields 7 buckets instead of the
+usual 6, capturing the repeated hour as its own short bucket rather than
+losing it — arguably correct (no data loss or double-count), just an
+undocumented deviation from the "6 buckets" assumption `date-range.test.ts`
+only exercises on a non-transition day. Not touched: this is a rare
+(twice-yearly, one specific chart, one specific day) display-shape question,
+not a correctness defect, and the task's own instruction is to flag rather
+than fix anything in the timezone/business-hours space without full
+confidence in the right behavior.
+
+No other real bug, security gap, or drift from `database.md`/
+`tenancy-auth.md` found. No fix made — nothing to commit. Verification:
+`npx next typegen` clean, `npm run typecheck` clean, `npm run lint` clean,
+targeted `vitest run src/lib src/services` — **191/191 tests passed**
+across all 10 test files in the reviewed scope (full `npm run check` not
+re-run since no code changed; typecheck/lint/targeted-tests already confirm
+the reviewed layer is green, and the last full-suite run recorded above was
+already clean).
