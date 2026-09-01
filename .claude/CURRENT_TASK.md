@@ -689,3 +689,32 @@ reach `master`, which still requires the user's own literal push command
 per the standing auto-mode-classifier pattern recorded earlier in this
 file. No app code changed; nothing to typecheck/lint/test beyond the JSON
 syntax check.
+
+## Claude — Gmail cleanup, the second half of the Vercel-noise fix (2026-09-01)
+
+User asked to do both previously-offered mitigations, not just the
+vercel.json fix above. Checked this session's Gmail MCP toolset for a
+filter/rule-creation tool before doing anything — there isn't one; only
+label create/apply and archive/trash/spam tools are exposed (no Gmail
+Filters API equivalent). So a true "auto-archive all future matching
+mail forever" rule isn't buildable through these tools.
+
+Did the closest available equivalent: created a Gmail label
+(`Vercel/Preview-Build-Noise`) and applied it to the 34-message Preview-
+failure thread (`1a0558498899ce0f`) and the two old, already-resolved
+Production-failure threads (`1a03fab09453e9fc`, `1a037854384f10a1`), then
+removed `INBOX`/`UNREAD` from all three (archived + marked read). Per the
+`label_thread` tool's own documentation, the label applies to "any future
+messages added to it," and Gmail has been auto-grouping every new Vercel
+notification for this project into the same long-running thread ID for
+days — so as long as that grouping continues, new arrivals should pick up
+the label; whether they also get silently re-archived rather than
+reappearing in the inbox is standard Gmail behavior for a thread that
+gets a new message, not something these tools control or guarantee.
+Told the user this plainly rather than claiming a persistent filter was
+created. Also functionally moot for this branch going forward since the
+vercel.json fix above stops the emails from being generated in the first
+place once it's live.
+
+No code or doc file changed for this half (pure Gmail mailbox actions,
+nothing in the repo) beyond this entry.
