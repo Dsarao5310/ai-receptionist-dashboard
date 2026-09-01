@@ -38,7 +38,10 @@ approved, bounded, audited staging phase.
   deployed; Production and generic Preview were not given Pinecone credentials.
 - Deployment inspection on 2026-08-27: Production is READY at `4899725`
   (`dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N`), while isolated staging remains READY at
-  `64fa59a` (`dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`).
+  `64fa59a` (`dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa`). Production has since advanced
+  (currently `99b8164`, four unrelated backend fixes, none touching Knowledge)
+  — the Decision above is unchanged: still NOT READY for Production Pinecone,
+  no credential configured there.
 - Staging Pinecone: READY integrated-inference index using
   `llama-text-embed-v2`, dimension 1024, `content` field mapping.
 - Real staging owner certification: create → reload → scoped DB row with provider
