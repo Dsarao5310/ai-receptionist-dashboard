@@ -1,93 +1,88 @@
 # Latest Handoff
 
 Updated: 2026-09-01
-Status: VERCEL PREVIEW-BUILD NOISE FIXED, BOTH HALVES DONE (vercel.json + Gmail cleanup)
+Status: DEPENDENCY HYGIENE + HTTP-BOUNDARY REVIEW PASS COMPLETE — NO BUG FOUND
 
 ## What happened
 
-User asked to check Gmail for Vercel emails, then to do both mitigations
-offered rather than just one.
+User asked for any other legitimate no-cost work on the project, explicitly
+excluding the paused Supabase Pro + n8n + Twilio + Vapi batch (that
+remains untouched — see below). Three pieces of work:
 
-**Investigation** (`get_thread` on the relevant threads):
+**1. Dependency hygiene.** `npm audit` (with and without `--omit=dev`): 0
+vulnerabilities, both times. `npm outdated`: nothing security-relevant
+behind current; a handful of majors are available (`next` 16.3.4, `ai`
+7.x, `typescript` 7.x, `vitest` 4.x, `eslint` 10.x) but not touched — a
+major bump is real upgrade work with regression risk, out of scope for
+opportunistic cleanup. One thing worth flagging so it isn't misread
+later: `npm outdated` shows `next-auth` "Latest: 4.24.15", which looks
+like a downgrade target but isn't — that's npm's stable dist-tag for the
+v4 line; this repo is intentionally on the v5 beta (`5.0.0-beta.32`) per
+`CLAUDE.md`'s locked architecture decision. Not a real outdated-package
+flag.
 
-- Thread `1a0558498899ce0f` had grown to 34 "Failed preview deployment"
-  emails (Aug 31 01:52 → Sep 1 01:03, still growing) for the real
-  `ai-receptionist-dashboard` project — one per push to this task branch.
-  Root cause confirmed: Preview environment secrets (`DATABASE_URL`,
-  `AUTH_*`, provider modes, etc.) are branch-scoped to `master`/`staging`
-  only (`docs/staging-foundation.md`), so any other branch's Preview build
-  fails by design, every time. Not a regression, not a live-project issue.
-- "Failed production deployment" emails checked separately: both threads
-  are Aug 24–27, before the duplicate-Vercel-project cleanup
-  (`docs/production-readiness.md`); one is literally the old deleted
-  `ai-receptionist-dashboard-dsarao` project. Nothing since Aug 27 —
-  production has been deploying clean.
+**2. First real browser check this session.** Every earlier verification
+this session was static (typecheck/lint/tests/build) — the app itself was
+never actually driven. Booted `npm run dev` (Turbopack): ready in ~2.4s,
+`GET /sign-in` returns 200 with correct title/content, no console or
+server errors, dev-only "Development accounts" sign-in buttons render
+correctly labeled. Confirmed this sandbox has no `DATABASE_URL`/
+`AUTH_SECRET`/etc. anywhere (checked both `.env.local`, which doesn't
+exist, and the shell environment) — so this is the actual ceiling of what
+browser verification can reach here; anything past the sign-in page needs
+a real database this environment doesn't have. Tried one raw POST against
+a dev-account sign-in button; inconclusive by design (a plain curl POST
+doesn't reproduce Next.js's Server Action wire protocol) and not worth
+engineering further just to rediscover the same known no-DB limit that's
+already governed the DB-backed test suite all session.
 
-**Fix 1 — stop the builds** (committed `d47e77a`, pushed). Added to
-`vercel.json`:
+**3. HTTP-boundary review — the one layer the five earlier passes hadn't
+targeted directly.** Those passes covered the shared provider/integration
+*logic* (`src/server/integrations/`); this pass read the thin Next.js
+route handlers that actually sit on the internet in front of it, against
+`.claude/rules/security.md`:
 
-```json
-"ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"master\" ] || [ \"$VERCEL_GIT_COMMIT_REF\" = \"staging\" ]; then exit 1; else exit 0; fi"
-```
+- `POST /api/internal/twilio/sms`, `POST /api/internal/twilio/status`
+- `POST /api/internal/n8n/events`, `POST /api/internal/vapi/events`
+- `GET /api/admin/calendar/authorize`, `GET /api/admin/calendar/callback`
+- `GET /api/internal/cron/privacy-purge`
+- the NextAuth catch-all route, and `src/proxy.ts`
 
-Per Vercel's documented contract (`ignoreCommand`: exit 0 skips the build,
-exit 1 continues it), this skips the build for every branch except
-`master`/`staging`, which still build normally. Verified all three cases
-locally (`task-branch → 0/skip`, `master → 1/build`, `staging → 1/build`)
-before committing. Also updated `docs/staging-foundation.md`'s stale
-"Preview branch tracking: enabled for all non-production branches" line to
-note the new gate.
-
-**Fix 2 — clean up the mailbox.** Checked this session's Gmail MCP tools
-for a filter/rule-creation tool first — there isn't one, only label
-create/apply and archive/trash/spam actions on existing mail. So a true
-persistent "auto-archive all future matching mail" rule isn't buildable
-here. Did the closest available thing: created label
-`Vercel/Preview-Build-Noise`, applied it to all three threads above, and
-removed `INBOX`/`UNREAD` from each (archived + marked read). Told the user
-directly that this isn't a guaranteed persistent filter, just the nearest
-available action — and that it's largely moot for this branch once Fix 1
-is live, since the emails stop being generated at all.
+Every webhook route rejects a missing signature/authorization header
+before reading the body, reads the raw body exactly once (required —
+re-serializing would break signatures computed over the original bytes),
+returns uniform no-detail failures on auth rejection, and correctly
+distinguishes permanent (`422`/`403`, no retry) from transient (`503`,
+retry expected) outcomes. Tenancy is always resolved from a trusted
+server-side mapping, never a client-supplied id. The calendar OAuth
+callback re-checks `integrations.manage` against the *state row's*
+workspace (not the session's current one) and never echoes a token
+anywhere. The cron route's bearer check (`verifyCronAuthorization`) is
+already SHA-256 + `timingSafeEqual` — properly constant-time.
+`src/proxy.ts` is correctly optimistic-only (cookie presence gates a
+redirect, never authorization) with no admin path in its public
+allowlist. No bug, no gap, nothing fixed — a clean confirmation pass.
 
 ## Verification
 
-- `node -e "JSON.parse(...)"`: `vercel.json` still parses.
-- Manually ran the exact `ignoreCommand` shell logic for
-  `VERCEL_GIT_COMMIT_REF` = the task branch, `master`, and `staging`;
-  got skip/build/build respectively, matching intent.
-- Gmail actions confirmed via each tool's empty-success response
-  (`label_thread`/`unlabel_thread` on all three thread IDs).
-- No app code changed beyond `vercel.json`; nothing else to typecheck/
-  lint/test.
+- `npm audit`, `npm audit --omit=dev`: 0 vulnerabilities both.
+- `npm outdated`: captured and reviewed, nothing actioned.
+- Dev server boot + `/sign-in` response inspected directly over real
+  HTTP (200, correct HTML/title, no error markers in response or server
+  log).
+- HTTP-boundary review: read-only, no code changed, nothing to
+  typecheck/lint/test.
 
-## Important scope note
+## Standing batch — still untouched
 
-Fix 1 only takes effect for builds on commits that carry this
-`vercel.json` change. It's committed on `claude/launch-terminal-q0czdf`
-now, so pushes to *this* branch stop triggering failed Preview builds
-immediately. It will not affect other in-flight task branches (e.g. any
-Codex branch) until they also carry this file — and will not affect
-`master`/`staging` builds at all (the command explicitly always continues
-for those) until/unless this reaches `master`, which still requires the
-user's own literal push command per the standing auto-mode-classifier
-pattern.
-
-## Master push completed
-
-User gave the literal `git push origin claude/launch-terminal-q0czdf:master`
-command; pushed and fast-forwarded `origin/master` from `99b8164` to
-`847be16`. The `ignoreCommand` rule is now live platform-wide — any future
-push to a branch other than `master`/`staging`, from this session, Codex,
-or anyone else, will no longer trigger a failed Preview build. Confirmed
-via `list_deployments`: production deployment `dpl_B7DnP5ssbzoxzeMdxzqRs6NYWKrN`
-at `847be16` started `BUILDING` immediately, correctly continuing (not
-skipping) since `VERCEL_GIT_COMMIT_REF=master`.
+Nothing in this pass touched Supabase, n8n, Twilio, or Vapi. That batch
+remains paused exactly as before; the user will say when ready.
 
 ## Next safe action
 
-This task is fully closed. Standing priorities per the user's last
-direction remain, in order: (1) live Knowledge/Pinecone wiring into the AI
-receptionist flow — blocked on (2); (2) Twilio/Vapi live certification —
-paused, costs money, batched with Supabase Pro upgrade, wait for explicit
-user go-ahead; (3) the backup-restore drill — externally gated on plan
-tier.
+Nothing pending from this pass — it is closed. Standing priorities per
+the user's last direction remain, in order: (1) live Knowledge/Pinecone
+wiring into the AI receptionist flow — blocked on (2); (2) Twilio/Vapi
+live certification — paused, costs money, batched with Supabase Pro
+upgrade, wait for explicit user go-ahead; (3) the backup-restore drill —
+externally gated on plan tier.

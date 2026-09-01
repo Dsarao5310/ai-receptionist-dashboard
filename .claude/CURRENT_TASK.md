@@ -729,3 +729,63 @@ under the new `ignoreCommand`, not skips it). The `ignoreCommand` rule is
 now live platform-wide: any future push to a branch other than
 `master`/`staging` (this session's, Codex's, or anyone else's) will no
 longer trigger a failed Preview build.
+
+## Claude — dependency hygiene + HTTP-boundary review pass, no bug found (2026-09-01)
+
+User asked for any other legitimate no-cost work, explicitly excluding the
+paused Supabase/n8n/Twilio/Vapi batch. Two pieces:
+
+**Dependency hygiene.** `npm audit` (with and without `--omit=dev`): 0
+vulnerabilities. `npm outdated`: nothing security-relevant behind; a
+handful of packages have major versions available (`next` 16.3.4, `ai`
+7.x, `typescript` 7.x, `vitest` 4.x, `eslint` 10.x, `next-auth` — note the
+"latest" 4.24.15 shown by npm is actually *older* than this repo's
+installed `5.0.0-beta.32`, an artifact of how npm resolves a pre-release
+current version against a stable "latest" dist-tag, not a real available
+upgrade). Not touched — a major-version bump is real upgrade work with
+regression risk, out of scope for opportunistic no-cost cleanup and not
+something to do unprompted.
+
+**Live dev-server check.** This session's own docs had flagged that the
+app has never actually been driven in a browser this session, only
+verified statically (typecheck/lint/tests/build). Booted `npm run dev`
+(Turbopack) locally: starts clean in ~2.4s, `/sign-in` returns 200 with
+correct title/content, no console or server errors. Confirmed this
+sandbox has no `DATABASE_URL`/`AUTH_SECRET`/etc. anywhere (not in
+`.env.local` — none exists — nor in the shell environment), so this is as
+far as browser verification can go here: anything past the sign-in page
+needs a real database this environment doesn't have, matching the same
+constraint already documented all session for the DB-backed test suite.
+Attempted a raw POST to exercise a "development account" sign-in button
+directly; inconclusive by design (a plain curl POST doesn't reproduce
+Next.js's Server Action wire protocol), and not worth engineering further
+just to rediscover the already-known no-DB limitation.
+
+**HTTP-boundary review.** The prior five review passes this session
+covered the shared provider/integration *logic* (`src/server/
+integrations/`) but not, as a distinct target, the thin Next.js route
+handlers that sit in front of it — the actual internet-facing surface.
+Read all of them against `.claude/rules/security.md`: `POST /api/
+internal/twilio/sms`, `POST /api/internal/twilio/status`, `POST /api/
+internal/n8n/events`, `POST /api/internal/vapi/events`, `GET /api/admin/
+calendar/authorize`, `GET /api/admin/calendar/callback`, `GET /api/
+internal/cron/privacy-purge`, the NextAuth catch-all, and `src/proxy.ts`.
+
+Every route: rejects a missing signature/authorization header before
+reading the body, reads the raw body exactly once (no re-serialization
+that would break a signature computed over the original bytes), returns
+uniform no-detail failure for auth rejections (permanent vs. transient
+correctly distinguished — `422`/`403` vs `503` — so a legitimate sender's
+retry logic behaves correctly), and resolves tenancy only from a trusted
+server-side mapping, never a client-supplied id. The calendar OAuth
+callback re-verifies `integrations.manage` against the *state row's*
+workspace, not the session's currently-selected one, and never echoes a
+token into a URL or page. The cron route's bearer-secret check
+(`verifyCronAuthorization`) uses SHA-256 + `timingSafeEqual`, already
+constant-time. `proxy.ts` is correctly optimistic-only (cookie presence
+gates a redirect, never authorization) with no admin path added to its
+public allowlist. No bug, no security gap, nothing to fix.
+
+Verification: read-only pass, no code changed. `npm audit`/`npm outdated`
+output captured above; dev-server boot and `/sign-in` response inspected
+directly (200, correct HTML, no error markers in response or server log).
