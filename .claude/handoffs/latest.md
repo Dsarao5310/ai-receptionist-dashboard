@@ -1,89 +1,61 @@
 # Latest Handoff
 
-Updated: 2026-08-31
-Status: RECONCILED A DIVERGED PARALLEL SESSION — 4 REAL FIXES MERGED, 1 DUPLICATE DISCARDED
+Updated: 2026-09-01
+Status: UI/FRONTEND REVIEW PASS COMPLETE — ONE OPTIMISTIC-WRITE ROLLBACK BUG FIXED
 
 ## What happened
 
-A separate cloud Claude session (task branch `claude/launch-terminal-q0czdf`,
-forked from `master` at `797f4b3`) worked for several hours believing it was
-current. Its embedded `CLAUDE.md` predated `7cad923`/`c509644` (the
-`ACTIVE_WORK.md` board and the mandatory step to read it before starting),
-so it never checked in and never noticed `master` had moved ~40 commits
-ahead in the meantime — including PR #4, the Recovery-verification-
-foundation phase, Production Pinecone groundwork, and everything else
-recorded above this entry in `CURRENT_TASK.md`/`PROJECT_STATE.md`.
+Ran the frontend/UI review pass that today's earlier backend-focused review
+passes (provider integrations, repositories, actions, recovery/
+reconciliation tooling) had deliberately left for last. Scope: `src/app/`
+(excluding `api/`, already reviewed), `src/components/`, `src/features/` —
+breadth-first skim for structural issues, then depth on real candidates,
+checked against `.claude/rules/frontend.md`/`.claude/rules/design-system.md`.
 
-The user flagged that Codex (and, as it turned out, a lot more prior work)
-was happening in parallel and asked for a full reconciliation. Full
-narrative in `CURRENT_TASK.md`'s "session reconciliation" entry.
+## Net result
 
-## Net result after reconciling
+Most of the layer held up under scrutiny — nav route-matching correctly
+funnels through `isNavItemActive`/`findNavItem` everywhere, `KPICard`/
+`Table`/density-token usage matches the documented rules, dialogs/drawers
+all have real titles, filter hooks reset pagination correctly, and the one
+"resolved by the server" label in `/admin/settings` genuinely reads from
+the verified session (traced the prop flow to confirm).
 
-Fetched `origin/master`, verified file-by-file which of that session's
-changes were genuinely still unfixed on `master` (vs. independently fixed
-by someone else in the interim, vs. duplicating already-shipped work), then
-merged `origin/master` into the task branch and resolved conflicts:
+**Fixed:** `src/lib/store/workspace-stores.tsx` — `setInternalNotes` and
+`setFeatureFlag` applied their optimistic write before the server
+responded but never rolled it back on refusal, unlike every other mutator
+in the same file (`commitConfiguration`/`commitKnowledge`, which document
+"apply locally, ask the server, roll back on refusal" as the deliberate
+pattern). Concretely, `AdminSettingsView`'s Internal Notes `SaveBar` derives
+`dirty` from `notesDraft !== workspace.internalNotes`; because the
+optimistic write already matched the draft, a refused save hid the SaveBar
+(nothing to save) at the same instant the failure toast said the save
+didn't happen, leaving the unsaved, unpersisted text on screen with no
+retry affordance until an unrelated refresh. Feature flags had the same
+gap without a visible symptom. Fixed both to capture the previous value
+inside the state updater and restore it on `ok: false`.
 
-**Kept — four real, independently-verified-untouched bug fixes:**
-- `src/server/integrations/knowledge/contracts.ts`: `knowledgeMatchesSchema`
-  required a non-empty `title`, but the Pinecone adapter can legitimately
-  return an empty one — one malformed match failed an entire search instead
-  of being ignored. Dropped the min-length requirement to match `content`'s.
-- `src/server/db/repositories/knowledge-sync.ts`: `ensureNamespace()`
-  always paid an insert+select round trip for a value that's immutable
-  after first provisioning. Now checks first.
-- `src/server/integrations/n8n/contract.ts`: `optionalString()` conflated
-  "empty string" with "wrong type"/"too long", rejecting an entire inbound
-  envelope or outbound result whenever an optional field arrived as `""`
-  rather than absent — exactly how n8n's own payloads represent "nothing
-  captured". Fixed so empty/whitespace-only is treated as absent.
-- `src/server/db/repositories/messaging.ts` +
-  `src/server/integrations/twilio/inbound.ts`: `applyDeliveryStatus` had no
-  guard against an out-of-order Twilio status callback. Twilio's callback
-  carries no event timestamp (unlike Vapi's/email's), so — after confirming
-  this — used a terminal-state guard instead of a timestamp column, no
-  migration needed. Caller now treats a guarded/stale callback as
-  accepted-but-unchanged and skips the operator notification for it.
-
-Plus one confirmed-dead-code removal
-(`ConfigurationRepository.addKnowledge/updateKnowledge/removeKnowledge`, no
-remaining caller) and a `.gitignore` addition for the local Supabase CLI
-cache directory.
-
-**Discarded — duplicate, inferior work:** that session independently
-rediscovered and fixed the same Undo/calendar-sync gap already fixed and
-merged as PR #4 (`e59cc7c` → `b24e51c`). Its version reused the
-`appointment.reschedule` operation for both undo-cancel and undo-reschedule
-rather than PR #4's purpose-built `appointment.book`/`createExecutor` path,
-and had no hosted-DB test coverage. Took `master`'s version entirely on
-conflict.
-
-**Discarded — superseded docs:** a large stack of doc-sync commits
-reconciling `PROJECT_STATE.md`/`README.md`/readiness docs against a
-`ccf6272`→PR#2 checkpoint that predates nearly everything recorded above
-this entry. Took `master`'s versions of the conflicting doc files.
+No test file exists for `src/lib/store/` (no `.test.*` siblings), so none
+was added, per the task's own scope note not to manufacture a new harness.
 
 ## Verification
 
 - `npx next typegen && npm run check`: typecheck clean, full ESLint clean,
   **396/396 runnable tests pass** (199 DB-backed tests skipped — no live DB
   in this sandbox), across 41/46 test files.
-- Production build: see the commit this handoff accompanies for the result
-  (running as this file is written).
-- No migration, deploy, credential, or environment change was made. No
-  Vercel or Supabase mutation occurred beyond read-only verification queries
-  run earlier in the session (advisor checks, migration-ledger reads).
+- `package-lock.json` untouched (nothing to restore).
+- No migration, deploy, credential, or environment change. No Twilio/Vapi/
+  Supabase account setup touched — that batch remains paused per the
+  standing user instruction recorded in `CURRENT_TASK.md`'s 2026-08-31/
+  2026-08-27 entries, unrelated to this task.
 
 ## Next safe action
 
-Push this branch. Given the now-visible convention (`AGENTS.md`/current
-`CLAUDE.md`: verified work from another agent is expected collaboration to
-review and push once independently verified, which is what happened here)
-and that this branch's task instructions named it explicitly, push to
-`claude/launch-terminal-q0czdf`, not directly to `master` — merging into
-`master` is a separate, explicit decision for the user, not this session's
-to make unilaterally given how much unrelated work has landed there since
-this branch's task began.
-
-Set `ACTIVE_WORK.md`'s Claude row back to idle once pushed.
+Commit and push this fix to `claude/launch-terminal-q0czdf` (already done
+by the time this handoff is read, if the task completed normally — check
+`git log` before re-doing it). Set `ACTIVE_WORK.md`'s Claude row back to
+idle once pushed. Standing priorities per the user's last direction remain,
+in order: (1) live Knowledge/Pinecone wiring into the AI receptionist flow
+— blocked on (2); (2) Twilio/Vapi live certification — paused, costs money,
+batched with Supabase Pro upgrade, wait for explicit user go-ahead; (3) the
+backup-restore drill — externally gated on plan tier.

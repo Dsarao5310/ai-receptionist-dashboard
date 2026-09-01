@@ -386,3 +386,20 @@ out-of-order guard (Twilio's status callback carries no timestamp to guard
 on, so this uses a terminal-state check, not a migration). Plus one
 confirmed-dead-code removal. The duplicate Undo fix was discarded in favor
 of the already-merged one. Verification recorded in `CURRENT_TASK.md`.
+
+## Claude addendum — UI/frontend review pass (2026-09-01)
+
+The day's remaining review pass: `src/app/` (non-API), `src/components/`,
+`src/features/`, checked against `.claude/rules/frontend.md`/
+`design-system.md`. Most of the layer was already correct (nav matching,
+KPI grid/density-token/table rules, dialog titles, filter-hook pagination
+resets, the admin "resolved by the server" role label — traced and
+confirmed genuine). One real bug found and fixed: `setInternalNotes`/
+`setFeatureFlag` in `src/lib/store/workspace-stores.tsx` applied their
+optimistic write but never rolled it back on a refused server action,
+unlike every other mutator in that file. Concretely this let the
+`/admin/settings` Internal Notes `SaveBar` disappear (nothing left to
+save) at the same moment its own failure toast said the save didn't
+happen. Fixed to match the file's own established rollback pattern.
+Typecheck/lint/tests clean (396/396 runnable). Full detail in
+`CURRENT_TASK.md` and `handoffs/latest.md`.

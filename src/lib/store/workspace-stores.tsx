@@ -490,21 +490,43 @@ export function WorkspaceStoresProvider({
         },
 
         async setInternalNotes(workspaceId, internalNotes) {
-          setState((s) =>
-            s
-              ? {
-                  ...s,
-                  integrations: {
-                    ...s.integrations,
-                    workspaces: s.integrations.workspaces.map((w) =>
-                      w.id === workspaceId ? { ...w, internalNotes } : w
-                    ),
-                  },
-                }
-              : s
-          );
+          // Same "apply locally, ask the server, roll back on refusal" shape as
+          // `commitConfiguration` above — without the rollback, a refused save left
+          // the optimistic notes in state while the SaveBar (driven by that same
+          // state) read them as already-matching and disappeared, so the failure
+          // toast and the form's own "nothing to save" state contradicted each other.
+          let rollback: string | undefined;
+          setState((s) => {
+            if (!s) return s;
+            rollback = s.integrations.workspaces.find((w) => w.id === workspaceId)?.internalNotes;
+            return {
+              ...s,
+              integrations: {
+                ...s.integrations,
+                workspaces: s.integrations.workspaces.map((w) =>
+                  w.id === workspaceId ? { ...w, internalNotes } : w
+                ),
+              },
+            };
+          });
           const result = await setWorkspaceNotesAction(internalNotes);
           if (!result.ok) {
+            const previous = rollback;
+            if (previous !== undefined) {
+              setState((s) =>
+                s
+                  ? {
+                      ...s,
+                      integrations: {
+                        ...s.integrations,
+                        workspaces: s.integrations.workspaces.map((w) =>
+                          w.id === workspaceId ? { ...w, internalNotes: previous } : w
+                        ),
+                      },
+                    }
+                  : s
+              );
+            }
             toast("Couldn't save those notes", { description: result.error });
             return false;
           }
@@ -512,21 +534,40 @@ export function WorkspaceStoresProvider({
         },
 
         setFeatureFlag(workspaceId, flag, enabled) {
-          setState((s) =>
-            s
-              ? {
-                  ...s,
-                  integrations: {
-                    ...s.integrations,
-                    workspaces: s.integrations.workspaces.map((w) =>
-                      w.id === workspaceId ? { ...w, featureFlags: { ...w.featureFlags, [flag]: enabled } } : w
-                    ),
-                  },
-                }
-              : s
-          );
+          let rollback: boolean | undefined;
+          setState((s) => {
+            if (!s) return s;
+            rollback = s.integrations.workspaces.find((w) => w.id === workspaceId)?.featureFlags[flag];
+            return {
+              ...s,
+              integrations: {
+                ...s.integrations,
+                workspaces: s.integrations.workspaces.map((w) =>
+                  w.id === workspaceId ? { ...w, featureFlags: { ...w.featureFlags, [flag]: enabled } } : w
+                ),
+              },
+            };
+          });
           void setFeatureFlagAction(flag, enabled).then((result) => {
-            if (!result.ok) toast("Couldn't change that flag", { description: result.error });
+            if (!result.ok) {
+              const previous = rollback;
+              if (previous !== undefined) {
+                setState((s) =>
+                  s
+                    ? {
+                        ...s,
+                        integrations: {
+                          ...s.integrations,
+                          workspaces: s.integrations.workspaces.map((w) =>
+                            w.id === workspaceId ? { ...w, featureFlags: { ...w.featureFlags, [flag]: previous } } : w
+                          ),
+                        },
+                      }
+                    : s
+                );
+              }
+              toast("Couldn't change that flag", { description: result.error });
+            }
           });
         },
       },

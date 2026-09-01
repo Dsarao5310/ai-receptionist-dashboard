@@ -549,3 +549,47 @@ Pivoting to no-cost prep for (1)/(2): building the Vapi function-calling
 webhook endpoint Knowledge search will need once a live assistant exists,
 matching Vapi's documented tool-call contract, code+tests only — stays
 unverified live until the user unblocks the costly step.
+
+## Claude — UI/frontend review pass, optimistic-write rollback bug fixed (2026-09-01)
+
+Breadth-first correctness/accessibility review of `src/app/` (excluding
+`api/`), `src/components/`, and `src/features/` — the frontend layer had been
+deliberately left untouched during today's earlier backend-focused review
+passes. Checked specifically for the failure modes named in
+`.claude/rules/frontend.md`/`.claude/rules/design-system.md`: non-functional
+controls, dishonest "server-resolved" labels, accessible-name regressions on
+icon-only controls (the class of bug already fixed in `Sidebar.tsx`), nav
+route-matching bypassing `isNavItemActive`/`findNavItem`, `KPICard`/`Table`/
+density-token/grid-breakpoint violations, cross-tenant display bugs, and
+ordinary hook/state correctness bugs.
+
+Most of the surface held up — nav matching, KPI grid breakpoints, table
+density tokens, dialog/drawer titles and focus, pagination/filter
+page-reset logic, and the admin "Your access" role label (which does read
+live from the verified session, per its own inline comment) were all
+already correct.
+
+**Found and fixed:** `src/lib/store/workspace-stores.tsx` —
+`setInternalNotes` and `setFeatureFlag` (used by `/admin/settings`) applied
+their optimistic write immediately but, unlike every other mutator in the
+same file (`commitConfiguration`/`commitKnowledge`, documented there as
+"apply locally, ask the server, roll back on refusal"), never rolled back
+on a refused server action. Concretely: `AdminSettingsView`'s "Internal
+notes" `SaveBar` derives its `dirty` flag
+from `notesDraft !== workspace.internalNotes`; because the optimistic write
+already set `workspace.internalNotes` to the attempted value before the
+server responded, a refusal left the SaveBar hidden (nothing to save) at
+the same moment the failure toast said the save didn't happen — and the
+stale, never-persisted value stayed on screen until an unrelated refresh.
+Feature flags had the same gap without a visible symptom (no dirty-state
+UI on the `Switch`), but the same silent-desync risk. Fixed both to capture
+the previous value inside the state updater and restore it when the server
+action returns `ok: false`, matching the established pattern exactly.
+
+No test file exists for this store (`src/lib/store/` has no `.test.*`
+siblings), so none was added, per this task's scope.
+
+Verification: `npx next typegen && npm run check` — typecheck, lint, and
+`vitest run` all passed (41 test files / 396 tests passed, 5 files / 199
+DB-backed tests skipped as expected, no live DB here). `package-lock.json`
+was untouched by `npm run check` (nothing to restore).
