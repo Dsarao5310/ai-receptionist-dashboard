@@ -859,3 +859,50 @@ schema was created, dropped, or altered. Only read-only SQL
 
 Verification: entirely read-only investigation, zero writes to any
 database. `npm run build`/`next typegen` output captured above.
+
+## Claude — runtime/log health check clean, test-coverage angle abandoned (2026-09-01)
+
+User asked to keep going, without yet answering whether to drop
+production's stale `app_test` (left open — see entry above, still
+untouched).
+
+**Vercel production runtime errors (7-day window, the max lookback):**
+3 error groups, all already-known history — same deployment IDs
+(`dpl_H6qiAb4cso2qcupiacXcrWJHpsw1`, `dpl_3EP4kdrsAYdydeF7a37qxnfRWYGN`)
+already investigated and dismissed as non-issues in this file's
+2026-08-27 entry. The one Postgres constraint error
+(`provider_document_id` NOT NULL violation) was thrown by the old
+`ConfigurationRepository.addKnowledge`, which no longer exists — deleted
+as dead code in the 2026-08-31 reconciliation entry above. **Zero new
+runtime errors since Aug 27** — 5 clean days, a genuine positive
+confirmation, not a new problem.
+
+**Supabase log check (24h window, the max per call) on both projects:**
+Both clean. Production's only non-routine `postgres_logs` entry in the
+window was one `relation "integration_records" does not exist` error —
+traced via `log_attributes.parsed.query`/`parsed.date` to a raw
+`execute_sql` MCP call from **2026-08-31T23:42:15Z**, an ad-hoc query
+missing the `app.` schema prefix. This is the exact first (failed)
+attempt behind this file's own 2026-08-31 "Twilio/Vapi live certification
+investigated" entry, which then re-ran the query correctly qualified and
+got its answer — a self-inflicted, already-superseded exploratory-query
+slip from a previous session, not an application bug. Staging's only
+non-routine entry was a single "Connection reset by peer" — routine
+client-disconnect noise. Nothing actionable in either.
+
+**Test-coverage gap sweep — attempted, abandoned as unreliable.** Started
+by diffing `src/server/{db/repositories,actions}/*.ts` against `.test.ts`
+siblings by filename; that produced a long "NO TEST" list, but checking
+the actual test layout (`find src/server -name "*.test.ts"`) showed this
+codebase groups tests thematically (`tenant-isolation.test.ts`,
+`schema-hardening.test.ts`, `knowledge.test.ts` covering several
+`knowledge/*` source files, etc.), not 1:1 by filename — so the filename
+diff was mostly false positives, not a real signal. No `vitest --coverage`
+config exists to get a reliable answer instead, and standing one up now
+would be scope creep that wouldn't even mean much here: the tests that
+would matter most for this question are DB-backed and skip in this
+sandbox regardless (no live DB). Dropped rather than report a misleading
+list.
+
+Verification: `get_runtime_errors`/`query_logs` are both read-only. No
+code or database change from this entry.
