@@ -29,6 +29,6 @@ Last updated: 2026-08-27
 ## Claude
 
 Status: idle
-Task: — (last: doc-staleness pass over docs/*.md, distinct from the code-review sweep — production-readiness.md's status matrix still listed the duplicate Vercel project as an active blocker needing approval, though it's been confirmed gone twice; fixed, plus added a dated addendum for everything since the 2026-08-27 audit. staging-foundation.md's "latest deployment" bullet named a commit staging has long since moved past (64fa59a now); reframed as historical, added a current-state note. Standing reminder unchanged: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready, see CURRENT_TASK.md's 2026-08-27/2026-08-31 entries.)
+Task: — (last: extended the doc-staleness pass to all 14 docs/*.md files, not just the 2 already fixed. Checked the rest for the same class of drift — stale deployment IDs, a wrong "active blocker" claim, misleading URLs/refs in the operational runbooks. Found one more (minor, consistency-only) item in knowledge-provider-readiness.md; everything else — n8n/twilio/vapi/calendar certification runbooks — checked clean against today's independently-confirmed facts (staging origin, project refs, production URL). Doc sweep now genuinely complete. Standing reminder unchanged: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready, see CURRENT_TASK.md's 2026-08-27/2026-08-31 entries.)
 Started: —
 Last updated: 2026-09-01
