@@ -32,11 +32,18 @@ Why this model:
 - Vercel Preview branch tracking: enabled for all non-production branches.
 - Staging origin:
   `https://ai-receptionist-dashboard-git-staging-dilpreet2.vercel.app`.
-- Latest verified Preview deployment: `dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`,
-  commit `ccf6272`, `READY` and five-role re-certified. Staging was later
-  redeployed at `0b444ac` (`dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, READY) after
-  PR #2 merged, bringing in the Business Knowledge/Pinecone application code;
-  see `docs/knowledge-provider-readiness.md` for the live certification.
+- Staging has since advanced well past the deployments below — it's currently
+  at commit `64fa59a` (`dpl_8SuiPxLYLawkfkZQu5KNgZQPMkKr`, READY), picked up
+  the rotated Pinecone key and the Knowledge reconciliation tooling. The
+  history below (`ccf6272`/`0b444ac`) is the original five-role/Knowledge
+  live-certification record and remains accurate for what it certified, just
+  not staging's current deployment.
+- Latest verified Preview deployment at the time of that original
+  certification: `dpl_5MHQZMfCnkUQdhBidnh6dVVDALFj`, commit `ccf6272`, `READY`
+  and five-role re-certified. Staging was later redeployed at `0b444ac`
+  (`dpl_5ypffPNJxgW3YNxzeni5Ufjsr63D`, READY) after PR #2 merged, bringing in
+  the Business Knowledge/Pinecone application code; see
+  `docs/knowledge-provider-readiness.md` for the live certification.
 - Required Preview values are scoped to branch `staging` only, including the
   rotated runtime `DATABASE_URL`. Other Preview branches remain fail-closed.
 - Production-only variables: `AUTH_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`,

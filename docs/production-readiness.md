@@ -1,6 +1,8 @@
 # Production readiness handoff
 
-Audit date: 2026-08-27 (America/Vancouver)
+Audit date: 2026-08-27 (America/Vancouver). Status matrix and evidence below
+are that audit's snapshot and remain the authoritative historical record;
+see the addendum after "Rollback rule" for what has changed since.
 
 ## Decision
 
@@ -19,7 +21,7 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 | Tenancy | LIVE VERIFIED | Ordinary users saw only their workspace; the operator switched between both; cross-workspace reads/mutations remain server-scoped and database-tested. |
 | Isolated staging | AUTH/RBAC RE-CERTIFIED; KNOWLEDGE LIVE-CERTIFIED | Stable branch alias, separate OAuth client and Supabase project, and branch-scoped Preview secrets remain isolated. After matching application code was deployed, a real owner passed Knowledge create, reload, scoped DB verification, semantic Pinecone retrieval, delete, tombstone, and provider-removal checks. |
 | Production deployment | DEPLOYED; PARTIALLY AUTH RE-CERTIFIED | Production has the current Business Knowledge application code but no Pinecone credential, so live Knowledge provider traffic remains fail-closed. Public health and the inspected error windows passed. A real Coastal owner passed business-route/privacy/tenant probes, and a no-membership identity failed closed; manager, staff, Harbour owner, and operator remain unverified in production. |
-| Duplicate Vercel project | MISCONFIGURED | `ai-receptionist-dashboard-dsarao` is also connected to the same repository and produces a second failing deployment stream. Its latest production build rejected an invalid `AUTH_URL`; removal/disconnection needs explicit approval. |
+| Duplicate Vercel project | RESOLVED | `ai-receptionist-dashboard-dsarao` no longer exists. Independently confirmed twice (2026-08-27 and 2026-08-31/09-01) via `list_projects`/`list_teams`: only one team and one project (`ai-receptionist-dashboard`) exist under this account. No removal action was needed by either agent — it was already gone by the time each checked. |
 | Google Calendar | LIVE VERIFIED | Real OAuth, encrypted token storage, CRUD, reconciliation, tombstone/replacement behavior, tenant isolation, idempotency, and `sync_required` behavior were verified previously. |
 | n8n | EXTERNALLY BLOCKED | Architecture and simulator coverage exist. Real instance URL, independent signing secrets, activated staging workflows/mappings, and execution of `n8n-live-certification.md` remain. |
 | Twilio | EXTERNALLY BLOCKED | Implementation and simulator tests pass; the account has no owned SMS-capable number and live callback certification is outstanding. |
@@ -66,8 +68,8 @@ monitoring, recovery proof, and live-certified privacy/operational controls.
 - Production origin returned HTTP 200 and the expected unauthenticated sign-in
   state. Owner business routes/privacy/tenant probes and no-workspace denial are
   authenticated; the remaining production roles are not claimed.
-- Duplicate project `ai-receptionist-dashboard-dsarao` remains connected to the
-  same repository and failing; its latest build reports an invalid `AUTH_URL`.
+- Duplicate project `ai-receptionist-dashboard-dsarao`: resolved, see status
+  matrix above — no longer exists.
 - Staging Google matrix: Coastal owner/manager/staff, Harbour owner, and platform
   operator; operator switching, cross-tenant isolation, account selection, and
   sign-out passed with no Vercel runtime errors during the test window.
@@ -203,3 +205,34 @@ Database migrations remain forward-only. Capture a verified backup, record the
 prior deployment ID, and prove application rollback compatibility before every
 production release. Never run `db:reset` against staging or production-shaped
 data. Follow `operations-runbook.md`.
+
+## Addendum since the 2026-08-27 audit (2026-09-01)
+
+- Duplicate Vercel project: resolved (see status matrix, corrected above).
+- Migration file 19's checksum drift (a pre-commit-draft mismatch, not a
+  content problem) was found and corrected; both environments' ledgers
+  match the committed migration file exactly. No new migration content.
+- PR #4 (calendar-Undo/reschedule now correctly syncs the calendar on undo)
+  merged and deployed, superseding an independently-discovered duplicate
+  fix from a separate session that was reconciled away in favor of this one.
+- Four additional real bugs fixed and deployed to `master`/production at
+  commit `99b8164`: a Knowledge-search validation bug that could fail an
+  entire search over one malformed provider match, a redundant DB round
+  trip in Knowledge namespace provisioning, an n8n payload-parsing bug that
+  rejected legitimate bookings/cancellations with an empty optional field,
+  and a missing out-of-order-callback guard on Twilio SMS status updates.
+  See `CURRENT_TASK.md`'s 2026-08-31 entries for full detail.
+- A UI bug (Admin Settings' Internal Notes/feature-flag optimistic writes
+  not rolling back on server refusal) was found, fixed, and verified, but
+  is not yet on `master` — sitting on branch `claude/launch-terminal-q0czdf`
+  pending the user's push. Not reflected in the status matrix above.
+- Full review passes (correctness bugs, not redesign) were run across
+  every provider integration, the repository/actions layer, the recovery/
+  reconciliation tooling, the UI/frontend layer, and the shared
+  `src/lib`/`src/services` business-logic layer. All findings from these
+  passes are fixed and recorded above or in `CURRENT_TASK.md`; nothing
+  outstanding from them.
+- Standing user instruction: a Supabase Pro upgrade plus n8n/Twilio/Vapi
+  live setup are batched together and explicitly paused pending the user's
+  own go-ahead — the "Shortest path to a limited pilot" steps below remain
+  accurate as a plan, but none of steps 1-3 should be started proactively.
