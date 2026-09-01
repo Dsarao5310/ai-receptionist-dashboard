@@ -34,9 +34,9 @@ Status: **STAGING CRUD AND HISTORICAL RECONCILIATION LIVE-CERTIFIED; SCHEMA 19/1
   at any point in the rotation — the user pasted the new key into `.env.local`
   and Vercel, and deleted the old key, directly in their own browser/editor.
 - Isolated staging deployment `dpl_5LyptvgEnbMsbLBx6zfQy8YT2TVa` is READY at
-  `64fa59a` and contains the protected reconciliation foundation. Production is
-  READY at `4899725` (`dpl_Ei7f5WEVuFtko1zFhYoaBNhXRh6N`) but has no Pinecone
-  credential.
+  `64fa59a` and contains the protected reconciliation foundation. Production was
+  READY at `4899725` at the time of this snapshot; it has since advanced to
+  `99b8164` (unrelated backend fixes) and still has no Pinecone credential.
 - Authenticated staging certification passed the complete add, reload, database,
   semantic-search, delete, tombstone, and provider-removal path. Test data was
   cleaned up.

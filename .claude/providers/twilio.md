@@ -14,6 +14,10 @@ Status: **BUILT + SIMULATOR VERIFIED**. It is not live-certified.
   carrier acceptance followed by local write failure becomes `sync_required`.
 - Carrier acceptance is not delivery. `delivered`, `undelivered`, or `failed` is learned
   asynchronously from the status callback.
+- Twilio's status callback carries no event timestamp, only a status string, and delivery
+  is not guaranteed in order. Once a message reaches `delivered`/`undelivered`/`failed` it is
+  terminal (Twilio never transitions out of it), so a later callback that would regress it is
+  refused — a terminal-state guard, not a timestamp comparison like Vapi's.
 - Client DTOs use SMS/business wording and redact Twilio, phone mappings, SIDs, callback
   details, credentials, and raw provider errors.
 - Live certification is blocked on a real SMS-capable number and account prerequisites.
