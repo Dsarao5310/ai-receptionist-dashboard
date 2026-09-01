@@ -72,12 +72,21 @@ for those) until/unless this reaches `master`, which still requires the
 user's own literal push command per the standing auto-mode-classifier
 pattern.
 
+## Master push completed
+
+User gave the literal `git push origin claude/launch-terminal-q0czdf:master`
+command; pushed and fast-forwarded `origin/master` from `99b8164` to
+`847be16`. The `ignoreCommand` rule is now live platform-wide — any future
+push to a branch other than `master`/`staging`, from this session, Codex,
+or anyone else, will no longer trigger a failed Preview build. Confirmed
+via `list_deployments`: production deployment `dpl_B7DnP5ssbzoxzeMdxzqRs6NYWKrN`
+at `847be16` started `BUILDING` immediately, correctly continuing (not
+skipping) since `VERCEL_GIT_COMMIT_REF=master`.
+
 ## Next safe action
 
-Nothing pending from this pass — it is closed pending the user's own
-`master` push if/when they want the vercel.json rule live for every
-branch platform-wide. Standing priorities per the user's last direction
-remain, in order: (1) live Knowledge/Pinecone wiring into the AI
+This task is fully closed. Standing priorities per the user's last
+direction remain, in order: (1) live Knowledge/Pinecone wiring into the AI
 receptionist flow — blocked on (2); (2) Twilio/Vapi live certification —
 paused, costs money, batched with Supabase Pro upgrade, wait for explicit
 user go-ahead; (3) the backup-restore drill — externally gated on plan

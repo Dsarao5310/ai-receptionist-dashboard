@@ -718,3 +718,14 @@ place once it's live.
 
 No code or doc file changed for this half (pure Gmail mailbox actions,
 nothing in the repo) beyond this entry.
+
+User then gave the literal push command themselves
+(`git push origin claude/launch-terminal-q0czdf:master`), satisfying the
+auto-mode classifier. Pushed: `origin/master` fast-forwarded
+`99b8164`→`847be16`, carrying both the `vercel.json` fix and its docs.
+Production deployment `dpl_B7DnP5ssbzoxzeMdxzqRs6NYWKrN` started building
+immediately (`VERCEL_GIT_COMMIT_REF=master` correctly continues the build
+under the new `ignoreCommand`, not skips it). The `ignoreCommand` rule is
+now live platform-wide: any future push to a branch other than
+`master`/`staging` (this session's, Codex's, or anyone else's) will no
+longer trigger a failed Preview build.
