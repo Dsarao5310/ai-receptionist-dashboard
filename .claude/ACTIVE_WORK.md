@@ -29,6 +29,6 @@ Last updated: 2026-08-27
 ## Claude
 
 Status: idle
-Task: — (last: reviewed src/services/ and src/lib/ against database.md's explicit business-hours/temporal/timezone failure modes and tenancy-auth.md's permissions rules — no bug found, well-covered by existing tests (191/191 pass in scope); one low-severity, low-confidence DST-bucketing edge case in buckets.ts flagged but left untouched. This closes out the full-codebase review sweep started today: backend, UI, and shared lib/services layers have each had a pass. Standing reminder unchanged: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready, see CURRENT_TASK.md's 2026-08-27/2026-08-31 entries.)
+Task: — (last: doc-staleness pass over docs/*.md, distinct from the code-review sweep — production-readiness.md's status matrix still listed the duplicate Vercel project as an active blocker needing approval, though it's been confirmed gone twice; fixed, plus added a dated addendum for everything since the 2026-08-27 audit. staging-foundation.md's "latest deployment" bullet named a commit staging has long since moved past (64fa59a now); reframed as historical, added a current-state note. Standing reminder unchanged: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready, see CURRENT_TASK.md's 2026-08-27/2026-08-31 entries.)
 Started: —
 Last updated: 2026-09-01
