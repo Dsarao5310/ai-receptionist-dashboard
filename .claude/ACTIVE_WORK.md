@@ -28,7 +28,7 @@ Last updated: 2026-08-27
 
 ## Claude
 
-Status: in-progress
-Task: Review pass on src/services/ and src/lib/ (scheduling, timezone, business-hours math, and other shared business logic underpinning both UI and backend) — no-cost, not yet given a dedicated pass today (only touched incidentally via imports from the UI/backend review passes). Standing reminder unchanged: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready, see CURRENT_TASK.md's 2026-08-27/2026-08-31 entries.
-Started: 2026-09-01
+Status: idle
+Task: — (last: reviewed src/services/ and src/lib/ against database.md's explicit business-hours/temporal/timezone failure modes and tenancy-auth.md's permissions rules — no bug found, well-covered by existing tests (191/191 pass in scope); one low-severity, low-confidence DST-bucketing edge case in buckets.ts flagged but left untouched. This closes out the full-codebase review sweep started today: backend, UI, and shared lib/services layers have each had a pass. Standing reminder unchanged: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready, see CURRENT_TASK.md's 2026-08-27/2026-08-31 entries.)
+Started: —
 Last updated: 2026-09-01
