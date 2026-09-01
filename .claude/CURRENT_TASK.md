@@ -789,3 +789,73 @@ public allowlist. No bug, no security gap, nothing to fix.
 Verification: read-only pass, no code changed. `npm audit`/`npm outdated`
 output captured above; dev-server boot and `/sign-in` response inspected
 directly (200, correct HTML, no error markers in response or server log).
+
+## Claude — stale hosted app_test schema found on production (investigation only) (2026-09-01)
+
+User asked to keep doing more no-cost maintenance. Three more pieces:
+
+**TODO/FIXME/XXX sweep**: `grep -rn "TODO|FIXME|XXX|HACK:" src/` — zero
+matches. Nothing forgotten.
+
+**Clean production build**: `npx next typegen && npm run build` — exit 0,
+compiled in 15.9s, all 26 routes correctly dynamic, zero warnings
+anywhere in the full build log (checked, not just the tail).
+
+**Supabase advisor refresh (read-only), with a real finding.** Security
+advisor: staging 0 findings; production 2 WARN
+(`function_search_path_mutable` on `app_test.create_default_workspace_
+privacy_policy`/`app_test.initialize_call_privacy_state`). Performance
+advisor: staging 152 findings, production 145 — every single one INFO-
+level (`unused_index` on fresh data, expected per `staging-foundation.md`)
+**except** 11 `unindexed_foreign_keys` INFO items on production, all on
+`app_test.email_messages`/`email_threads`/`privacy_erasure_requests`.
+
+Didn't take either finding at face value — traced both to ground truth
+with direct read-only SQL (`pg_constraint`, `pg_indexes`,
+`app.schema_migrations` vs `app_test.schema_migrations`) rather than
+assuming the advisor's framing:
+
+- The missing indexes and the two mutable-search-path functions both
+  come from one migration, `20260825151957_provider_privacy_advisor_
+  hardening.sql` — applied to production's `app` schema (Aug 25, checksum
+  `b39a49b990226412`) but **never applied to production's `app_test`
+  schema at all**.
+- Pulling the *full* `app` vs `app_test` migration-ledger diff on
+  production showed this isn't an isolated gap: production's hosted
+  `app_test` has only 3 of 19 migrations recorded (`call_privacy_
+  lifecycle`, `privacy_purge_scheduler`, `privacy_erasure_requests`, all
+  applied at the same instant, 2026-08-25 05:28:29 UTC) and even those
+  3 have **checksum mismatches** against `app`'s current ledger. All 16
+  foundational migrations (0001-0011 plus vapi/email/knowledge) were
+  never applied to production's `app_test` at all.
+- Checked staging's `app_test` for comparison: **zero** migrations
+  applied there — fully empty schema.
+
+**Read as a whole, this is not a live risk, and not something to fix by
+migrating `app_test` forward.** `app_test` is the disposable, test-shaped
+schema (`database.md`) that the DB-backed test harness tears down and
+fully rebuilds (`db:reset` + `db:migrate`) at the start of every real
+hosted-DB test run — staging's empty schema is exactly what that pattern
+looks like at rest between runs. Production's partial 3-migration remnant
+with mismatched checksums is leftover debris from one interrupted or
+early test run on Aug 25, sitting unused since; it holds no real tenant
+data and nothing in the running application reads or writes it. The
+correct fix if it's ever used again is the same `db:reset`+`db:migrate`
+cycle that already self-heals this — not a manual migration bridge, and
+not something this sandbox can even attempt (no `MIGRATION_DATABASE_URL`
+here).
+
+**The one optional, genuinely actionable item**: production's stale
+`app_test` schema is the literal source of the 2 security-advisor WARN
+findings (the only non-clean security findings across both projects).
+Dropping it (`DROP SCHEMA app_test CASCADE` on the production project)
+would clear that advisor noise for free, since it's explicitly disposable
+test-only data covered by `db:reset`'s own drop-and-recreate semantics —
+but this agent did not do it unprompted: it's a mutating action against a
+live hosted database project, however low-stakes the target, and that
+warrants asking first rather than assuming. Left exactly as found; no
+schema was created, dropped, or altered. Only read-only SQL
+(`select`/`pg_constraint`/`pg_indexes` introspection) was run.
+
+Verification: entirely read-only investigation, zero writes to any
+database. `npm run build`/`next typegen` output captured above.
