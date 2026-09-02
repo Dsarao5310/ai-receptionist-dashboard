@@ -29,6 +29,6 @@ Last updated: 2026-08-27
 ## Claude
 
 Status: idle
-Task: — (user asked this agent to use its own judgment going forward, noting they are a first-time non-expert builder. Responded with a plain-language project status summary rather than another technical audit. The stale app_test cleanup question remains open and was NOT actioned on the strength of general delegation language alone; a production database mutation still needs a specific yes. Standing reminder unchanged: Supabase Pro + n8n + Twilio + Vapi upgrade batch remains paused — user will say when ready.)
+Task: — (user confirmed the paused batch (Supabase Pro/n8n/Twilio/Vapi) is a cash-flow decision, not a readiness one — they want revenue in first, then to fund going live. Keep the practice/simulated version exactly as-is and working; do not push toward live setup or spend anything until they explicitly say ready. Stale app_test cleanup still open, still not actioned without a specific yes. See CURRENT_TASK.md's 2026-09-01 entry for full context.)
 Started: —
 Last updated: 2026-09-01

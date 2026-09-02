@@ -1040,3 +1040,33 @@ model is independently confirmed to actually hold, not just asserted.
 
 No code or database change from this entry — investigation and one
 externally-approved read-only HTTP request only.
+
+## Claude — user context: this is a first-time build, paused batch is a cash-flow decision (2026-09-01)
+
+User disclosed this is their first software build and they are not
+technical, and asked this agent to use its own judgment going forward.
+Responded with a plain-language status summary instead of continuing
+unprompted technical auditing: the engineering (security, tests, CI,
+deployment) is solid and independently verified throughout today's
+passes; the product itself is not live yet because every external
+provider (Twilio, Vapi, n8n, Supabase Pro) is still intentionally in
+simulated/disabled mode, per the standing pause already on record above
+(2026-08-27/2026-08-31 entries).
+
+User then clarified the *reason* for the pause, which matters for
+whoever picks this up next: it's a cash-flow decision, not a readiness
+one. They want to get revenue into the account first, then fund the live
+batch — not "this isn't ready" but "I'm not spending yet." Confirmed:
+keep the practice/simulated version exactly as-is and working; do not
+push toward live setup or spend anything until the user explicitly says
+they're ready. This is the same standing rule as before, now with the
+actual reason recorded so it reads as a deliberate business decision,
+not an open technical blocker, if this file is read cold later.
+
+Also: on the strength of "use your judgment" alone, this agent
+deliberately did **not** drop production's stale `app_test` schema
+(the one small pending cleanup from earlier passes) — a live database
+mutation still needs the user's specific yes, general delegation
+language doesn't cover it. Still open, still harmless either way.
+
+No code or database change from this entry.
